@@ -53,7 +53,7 @@ export default function LoginPage() {
             <div className="h-1.5 w-12 bg-[#3ea76e] rounded-full" />
           </div>
 
-          <div className="w-full space-y-6">
+          <div className="w-full space-y-4">
             <div className="relative group">
               <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3ea76e] transition-colors" size={18} />
               <input
@@ -61,9 +61,7 @@ export default function LoginPage() {
                 placeholder="아이디를 입력해주세요"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full pl-14 pr-6 py-5 bg-white border-2 border-[#D1D5DB] rounded-[24px] text-[16px] font-black tracking-tighter shadow-sm outline-none transition-all placeholder:text-gray-400 text-[#1B4332] focus:shadow-lg"
-                onFocus={e => e.target.style.borderColor = '#3ea76e'}
-                onBlur={e => e.target.style.borderColor = '#D1D5DB'}
+                className="w-full h-[64px] pl-14 pr-6 bg-white border-2 border-[#D1D5DB] rounded-full text-[16px] font-black tracking-tighter shadow-sm outline-none transition-all placeholder:text-gray-400 text-[#1B4332] focus:shadow-lg focus:border-[#3ea76e]"
               />
             </div>
 
@@ -74,9 +72,7 @@ export default function LoginPage() {
                 placeholder="비밀번호를 입력해주세요"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full pl-14 pr-14 py-5 bg-white border-2 border-[#D1D5DB] rounded-[24px] text-[16px] font-black tracking-tighter shadow-sm outline-none transition-all placeholder:text-gray-400 text-[#1B4332] focus:shadow-lg"
-                onFocus={e => e.target.style.borderColor = '#3ea76e'}
-                onBlur={e => e.target.style.borderColor = '#D1D5DB'}
+                className="w-full h-[64px] pl-14 pr-14 bg-white border-2 border-[#D1D5DB] rounded-full text-[16px] font-black tracking-tighter shadow-sm outline-none transition-all placeholder:text-gray-400 text-[#1B4332] focus:shadow-lg focus:border-[#3ea76e]"
               />
               <button
                 type="button"
@@ -87,9 +83,10 @@ export default function LoginPage() {
               </button>
             </div>
 
+            {/* 메인 버튼: 쨍한 그린 (Pill Shape) */}
             <button
               type="button"
-              className="w-full py-5 mt-4 rounded-[24px] bg-[#1B4332] text-white font-black text-xl tracking-tighter shadow-xl hover:bg-[#143225] hover:-translate-y-1 transition-all active:scale-[0.98] cursor-pointer border-none"
+              className="w-full h-[64px] rounded-full bg-[#3ea76e] text-white font-bold text-[18px] tracking-tighter hover:bg-[#2e8c56] transition-all active:scale-[0.98] shadow-md cursor-pointer border-none"
             >
               스위피 시작하기
             </button>
@@ -109,23 +106,29 @@ export default function LoginPage() {
               <span className="flex-shrink mx-4 text-[10px] font-black text-gray-400 tracking-[0.2em]">간편 로그인</span>
               <div className="flex-grow border-t border-gray-200"></div>
             </div>
+            
             <div className="flex flex-col gap-3">
+              {/* 구글: 화이트 배경 + 연한 테두리 + 타원형 */}
               <button
                 type="button"
-                className="w-full py-4 bg-white border-2 border-[#D1D5DB] text-[#1B4332] rounded-2xl font-black text-[15px] tracking-tighter flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-sm cursor-pointer"
+                className="w-full h-[56px] bg-white border border-gray-200 text-[#1B4332] rounded-full font-bold text-[15px] tracking-tighter flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-sm cursor-pointer"
               >
                 <GoogleIcon /> 구글 계정으로 로그인
               </button>
+
               <div className="grid grid-cols-2 gap-3">
+                {/* 카카오: 노란 배경 + 타원형 */}
                 <button
                   type="button"
-                  className="py-4 bg-[#FEE500] text-[#3C1E1E] rounded-2xl font-black text-[14px] tracking-tighter flex items-center justify-center gap-2 hover:opacity-90 transition-all cursor-pointer border-none"
+                  className="w-full h-[56px] rounded-full bg-[#FEE500] text-[#191919] flex items-center justify-center gap-2 font-bold text-[14px] tracking-tighter hover:brightness-95 transition-all cursor-pointer border-none"
                 >
                   <MessageCircle size={18} fill="currentColor" /> 카카오
                 </button>
+                
+                {/* 네이버: 네이버 그린 배경 + 타원형 */}
                 <button
                   type="button"
-                  className="py-4 bg-[#03C75A] text-white rounded-2xl font-black text-[14px] tracking-tighter flex items-center justify-center gap-2 hover:opacity-90 transition-all cursor-pointer border-none"
+                  className="w-full h-[56px] rounded-full bg-[#03C75A] text-white flex items-center justify-center gap-2 font-bold text-[14px] tracking-tighter hover:brightness-95 transition-all cursor-pointer border-none"
                 >
                   <span className="italic text-lg font-black pr-1">N</span> 네이버
                 </button>

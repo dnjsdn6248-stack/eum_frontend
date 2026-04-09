@@ -22,12 +22,12 @@ export default function SubscriptionPage() {
       <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-12 px-2">
         <span className="text-[14px] font-medium text-[#bbb]">{STORE_PRODUCTS.length}개의 제품</span>
         <div className="relative">
-          <select
+        <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            className="appearance-none border border-[#eee] rounded-md px-4 py-2 pr-10 text-[14px] font-medium text-[#888] bg-white outline-none cursor-pointer"
+            onChange={e => { setSortBy(e.target.value); setCurrentPage(1) }}
+            className="appearance-none border border-[#eee] rounded-full px-6 py-2 pr-10 text-[14px] font-bold text-[#888] bg-white outline-none cursor-pointer focus:border-[#3ea76e] transition-all tracking-tighter"
           >
-            <option value="인기상품순">인기상품</option>
+            <option value="인기상품순">인기상품순</option>
             <option value="신상품순">신상품순</option>
             <option value="낮은가격순">낮은가격순</option>
             <option value="높은가격순">높은가격순</option>

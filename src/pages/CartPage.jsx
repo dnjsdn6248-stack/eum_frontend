@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MOCK_CART } from '../mock'
 
 export default function CartPage() {
+  
   const navigate = useNavigate()
   const [cartItems, setCartItems] = useState(
     MOCK_CART.map((item, i) => ({ ...item, id: i + 1, checked: true, qty: 1 }))

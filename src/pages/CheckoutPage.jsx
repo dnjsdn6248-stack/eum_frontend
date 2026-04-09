@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { ChevronLeft, ChevronUp, ShoppingBag, X, Search } from "lucide-react";
 
 const CheckoutPage = () => {
-  // 상태 관리: 배송지 선택, 결제 수단, 입력 필드 등
-  const [addrType, setAddrType] = useState("same"); // 'same' (회원정보와 동일), 'new' (새로운 배송지)
-  const [paymentMethod, setPaymentMethod] = useState("bank"); // 결제 수단 선택상태
-  const [isAddrOpen, setIsAddrOpen] = useState(true); // 섹션 접기/펴기
+ 
+  const [addrType, setAddrType] = useState("same"); 
+  const [paymentMethod, setPaymentMethod] = useState("bank"); 
+  const [isAddrOpen, setIsAddrOpen] = useState(true); 
 
-  // 결제 수단 옵션 데이터
+
   const paymentOptions = [
     { id: "bank", label: "계좌이체" },
     { id: "card", label: "카드결제" },
@@ -157,7 +157,7 @@ const CheckoutPage = () => {
           )}
         </section>
 
-        {/* --- 주문상품 섹션 --- */}
+   
         <section className="bg-white p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-base font-bold">주문상품</h2>
@@ -274,7 +274,6 @@ const CheckoutPage = () => {
         </section>
       </main>
 
-      {/* --- 고정 푸터 결제 버튼 --- */}
       <footer className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50">
         <button className="w-full bg-blue-600 text-white py-5 font-bold text-base shadow-[0_-4px_10px_rgba(0,0,0,0.1)] active:bg-blue-700 transition-colors">
           22,500원 결제하기
