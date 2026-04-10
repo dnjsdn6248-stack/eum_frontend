@@ -18,6 +18,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex overflow-hidden bg-white">
+
+      {/* 왼쪽 배너 */}
       <div className="hidden lg:flex flex-[1.1] relative items-center justify-center p-20 bg-[#3ea76e] overflow-hidden">
         <button
           onClick={() => navigate(-1)}
@@ -25,6 +27,7 @@ export default function LoginPage() {
         >
           <X size={24} strokeWidth={2.5} />
         </button>
+
         <div className="relative z-10 w-full h-full flex flex-col justify-between">
           <div className="text-left">
             <div className="text-white text-4xl font-black tracking-[-0.08em] select-none mb-24">
@@ -35,7 +38,7 @@ export default function LoginPage() {
                 말하지 않아도 <br />
                 <span className="text-[#1B4332]">전해지는 진심.</span>
               </h1>
-              <p className="text-xl text-white/70 font-black tracking-tighter max-w-xs leading-relaxed">
+              <p className="text-[18px] text-white/70 font-bold tracking-tight max-w-xs leading-relaxed">
                 스위피와 함께 만드는 <br /> 우리 아이와의 깊은 기록.
               </p>
             </div>
@@ -46,95 +49,93 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* 오른쪽 로그인 폼 */}
       <div className="flex-1 bg-[#FCFBF9] flex items-center justify-center p-8 lg:p-16">
         <div className="w-full max-w-[420px]">
-          <div className="mb-12">
-            <h2 className="text-[56px] font-black text-[#1B4332] tracking-[-0.07em] leading-none mb-3">Login</h2>
+
+          <div className="mb-10">
+            <h2 className="text-[48px] font-black text-[#1B4332] tracking-[-0.07em] leading-none mb-3">Login</h2>
             <div className="h-1.5 w-12 bg-[#3ea76e] rounded-full" />
           </div>
 
           <div className="w-full space-y-4">
             <div className="relative group">
-              <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3ea76e] transition-colors" size={18} />
+              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type="text"
                 placeholder="아이디를 입력해주세요"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full h-[64px] pl-14 pr-6 bg-white border-2 border-[#D1D5DB] rounded-full text-[16px] font-black tracking-tighter shadow-sm outline-none transition-all placeholder:text-gray-400 text-[#1B4332] focus:shadow-lg focus:border-[#3ea76e]"
+                className="w-full h-14 pl-12 pr-6 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
             </div>
 
             <div className="relative group">
-              <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3ea76e] transition-colors" size={18} />
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="비밀번호를 입력해주세요"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full h-[64px] pl-14 pr-14 bg-white border-2 border-[#D1D5DB] rounded-full text-[16px] font-black tracking-tighter shadow-sm outline-none transition-all placeholder:text-gray-400 text-[#1B4332] focus:shadow-lg focus:border-[#3ea76e]"
+                className="w-full h-14 pl-12 pr-12 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
               <button
                 type="button"
-                className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#3ea76e] cursor-pointer bg-transparent border-none"
                 onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-[#bbb] hover:text-[#3ea76e] cursor-pointer bg-transparent border-none transition-colors"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            {/* 메인 버튼: 쨍한 그린 (Pill Shape) */}
             <button
               type="button"
-              className="w-full h-[64px] rounded-full bg-[#3ea76e] text-white font-bold text-[18px] tracking-tighter hover:bg-[#2e8c56] transition-all active:scale-[0.98] shadow-md cursor-pointer border-none"
+              className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none"
             >
               스위피 시작하기
             </button>
           </div>
 
-          <div className="mt-8 mb-16 flex justify-center gap-8 text-[#666] font-black text-[14px] tracking-tighter">
-            <Link to="/signup" className="hover:text-[#3ea76e]">회원가입</Link>
-            <span className="text-gray-200 font-light text-lg">|</span>
-            <button className="hover:text-[#3ea76e] cursor-pointer text-[#666] font-black text-[14px] tracking-tighter bg-transparent border-none">
+          <div className="mt-8 mb-10 flex justify-center gap-8 text-[#888] font-bold text-[13px] tracking-tight">
+            <Link to="/signup" className="hover:text-[#3ea76e] transition-colors">회원가입</Link>
+            <span className="text-[#eee] font-light text-base">|</span>
+            <button className="hover:text-[#3ea76e] transition-colors cursor-pointer text-[#888] font-bold text-[13px] tracking-tight bg-transparent border-none">
               비밀번호 찾기
             </button>
           </div>
 
           <div className="space-y-3">
-            <div className="relative flex items-center mb-8">
-              <div className="flex-grow border-t border-gray-200"></div>
-              <span className="flex-shrink mx-4 text-[10px] font-black text-gray-400 tracking-[0.2em]">간편 로그인</span>
-              <div className="flex-grow border-t border-gray-200"></div>
+            <div className="relative flex items-center mb-6">
+              <div className="flex-grow border-t border-[#eee]"></div>
+              <span className="flex-shrink mx-4 text-[11px] font-bold text-[#bbb] tracking-[0.15em]">간편 로그인</span>
+              <div className="flex-grow border-t border-[#eee]"></div>
             </div>
-            
+
             <div className="flex flex-col gap-3">
-              {/* 구글: 화이트 배경 + 연한 테두리 + 타원형 */}
               <button
                 type="button"
-                className="w-full h-[56px] bg-white border border-gray-200 text-[#1B4332] rounded-full font-bold text-[15px] tracking-tighter flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-sm cursor-pointer"
+                className="w-full h-14 bg-white border border-[#eee] text-[#111] rounded-2xl font-bold text-[14px] tracking-tight flex items-center justify-center gap-3 hover:bg-[#f9f9f9] transition-all cursor-pointer"
               >
                 <GoogleIcon /> 구글 계정으로 로그인
               </button>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* 카카오: 노란 배경 + 타원형 */}
                 <button
                   type="button"
-                  className="w-full h-[56px] rounded-full bg-[#FEE500] text-[#191919] flex items-center justify-center gap-2 font-bold text-[14px] tracking-tighter hover:brightness-95 transition-all cursor-pointer border-none"
+                  className="h-14 rounded-2xl bg-[#FEE500] text-[#191919] flex items-center justify-center gap-2 font-bold text-[14px] tracking-tight hover:brightness-95 transition-all cursor-pointer border-none"
                 >
-                  <MessageCircle size={18} fill="currentColor" /> 카카오
+                  <MessageCircle size={17} fill="currentColor" /> 카카오
                 </button>
-                
-                {/* 네이버: 네이버 그린 배경 + 타원형 */}
                 <button
                   type="button"
-                  className="w-full h-[56px] rounded-full bg-[#03C75A] text-white flex items-center justify-center gap-2 font-bold text-[14px] tracking-tighter hover:brightness-95 transition-all cursor-pointer border-none"
+                  className="h-14 rounded-2xl bg-[#03C75A] text-white flex items-center justify-center gap-2 font-bold text-[14px] tracking-tight hover:brightness-95 transition-all cursor-pointer border-none"
                 >
-                  <span className="italic text-lg font-black pr-1">N</span> 네이버
+                  <span className="italic text-base font-black pr-1">N</span> 네이버
                 </button>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

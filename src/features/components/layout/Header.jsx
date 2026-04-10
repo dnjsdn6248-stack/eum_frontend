@@ -35,9 +35,9 @@ export default function Header() {
 
         <div className="flex-shrink-0 flex justify-end gap-10 pt-1">
           {[
-            { label: 'MY', icon: <User size={28} strokeWidth={1.5} />, to: '/login' }, // strokeWidth 조절로 세련미 추가
-            { label: '주문조회', icon: <ReceiptText size={28} strokeWidth={1.5} />, to: '/order/list' },
-            { label: '장바구니', icon: <ShoppingBag size={28} strokeWidth={1.5} />, to: '/cart', badge: '2' },
+          { label: '로그인', icon: <User size={26} strokeWidth={1.8} />, to: '/mypage' },
+           { label: '주문조회', icon: <ReceiptText size={28} strokeWidth={1.5} />, to: '/order/list' },
+          { label: '장바구니', icon: <ShoppingBag size={28} strokeWidth={1.5} />, to: '/cart', badge: '2' },
           ].map((item, idx) => (
             <Link key={idx} to={item.to} className="flex flex-col items-center group text-[#222]">
               <div className="relative group-hover:text-[#3ea76e] transition-colors">

@@ -1,155 +1,129 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-
-const IconMail = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-    <polyline points="22,6 12,13 2,6"/>
-  </svg>
-)
-
-const IconLock = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-  </svg>
-)
-
-const IconUser = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-    <circle cx="12" cy="7" r="4"/>
-  </svg>
-)
-
-const IconPhone = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-  </svg>
-)
-
-const IconEye = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-    <circle cx="12" cy="12" r="3"/>
-  </svg>
-)
-
-const IconEyeOff = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-    <line x1="1" y1="1" x2="23" y2="23"/>
-  </svg>
-)
-
-const inputStyle = { border: '1.5px solid transparent', background: '#F8F8F8' }
-const inputFocusStyle = { border: '1.5px solid #3ea76e', background: '#ffffff' }
+import { Mail, Lock, Eye, EyeOff, User, Phone, X } from 'lucide-react'
 
 export default function SignupPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({ email: '', password: '', name: '', phoneNumber: '' })
-  const [focusField, setFocusField] = useState('')
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-[420px]">
-        <div className="bg-white rounded-3xl shadow-xl shadow-black/5 px-8 py-10 relative">
-          <button
-            onClick={() => navigate(-1)}
-            style={{ border: 'none', background: 'none' }}
-            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-all cursor-pointer"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
+    <div className="min-h-screen flex overflow-hidden bg-white">
+      
+      {/* 1. 왼쪽 배너 (LoginPage와 동일하게 유지) */}
+      <div className="hidden lg:flex flex-[1.1] relative items-center justify-center p-20 bg-[#3ea76e] overflow-hidden">
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-10 left-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white transition-all border border-white/20 z-20"
+        >
+          <X size={24} strokeWidth={2.5} />
+        </button>
 
-          <div className="text-center mb-8">
-            <h1 className="text-[36px] font-black text-[#1A1A1A] mb-2">회원가입</h1>
-            <p className="text-[13px] text-gray-400">스위피 회원이 되어 다양한 혜택을 누리세요</p>
+        <div className="relative z-10 w-full h-full flex flex-col justify-between">
+          <div className="text-left">
+            <div className="text-white text-4xl font-black tracking-[-0.08em] select-none mb-24">
+              SWIFFY<span className="text-xs align-top ml-0.5 opacity-70 italic font-black">®</span>
+            </div>
+            <div className="space-y-6">
+              <h1 className="text-[64px] font-black text-white leading-[1.05] tracking-[-0.05em]">
+                말하지 않아도 <br />
+                <span className="text-[#1B4332]">전해지는 진심.</span>
+              </h1>
+              <p className="text-[18px] text-white/70 font-bold tracking-tight max-w-xs leading-relaxed">
+                스위피와 함께 만드는 <br /> 우리 아이와의 깊은 기록.
+              </p>
+            </div>
+          </div>
+          <div className="relative self-end mb-10 mr-[-5%]">
+            <img src="/dog.png" alt="Swiffy Dog" className="w-[440px] h-auto rounded-[48px] rotate-[-4deg] drop-shadow-[0_45px_45px_rgba(0,0,0,0.3)]" />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. 오른쪽 회원가입 폼 (LoginPage의 스타일과 통일) */}
+      <div className="flex-1 bg-[#FCFBF9] flex items-center justify-center p-8 lg:p-16">
+        <div className="w-full max-w-[420px]">
+          
+          <div className="mb-10">
+            <h2 className="text-[48px] font-black text-[#1B4332] tracking-[-0.07em] leading-none mb-3">Sign Up</h2>
+            <div className="h-1.5 w-12 bg-[#3ea76e] rounded-full" />
           </div>
 
-          <div className="space-y-3 mb-6">
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"><IconUser /></span>
+          <div className="w-full space-y-4">
+            {/* 이름 입력 */}
+            <div className="relative group">
+              <User className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type="text"
-                value={formData.name}
                 placeholder="이름 *"
+                value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                onFocus={() => setFocusField('name')}
-                onBlur={() => setFocusField('')}
-                style={focusField === 'name' ? inputFocusStyle : inputStyle}
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-[14px] outline-none transition-all placeholder:text-gray-300"
+                className="w-full h-14 pl-12 pr-6 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
             </div>
 
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"><IconPhone /></span>
+            {/* 전화번호 입력 */}
+            <div className="relative group">
+              <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type="tel"
-                value={formData.phoneNumber}
                 placeholder="전화번호"
+                value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                onFocus={() => setFocusField('phone')}
-                onBlur={() => setFocusField('')}
-                style={focusField === 'phone' ? inputFocusStyle : inputStyle}
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-[14px] outline-none transition-all placeholder:text-gray-300"
+                className="w-full h-14 pl-12 pr-6 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
             </div>
 
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"><IconMail /></span>
+            {/* 이메일 입력 */}
+            <div className="relative group">
+              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type="email"
-                value={formData.email}
                 placeholder="이메일 *"
+                value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                onFocus={() => setFocusField('email')}
-                onBlur={() => setFocusField('')}
-                style={focusField === 'email' ? inputFocusStyle : inputStyle}
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-[14px] outline-none transition-all placeholder:text-gray-300"
+                className="w-full h-14 pl-12 pr-6 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
             </div>
 
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300"><IconLock /></span>
+            {/* 비밀번호 입력 */}
+            <div className="relative group">
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type={showPassword ? 'text' : 'password'}
-                value={formData.password}
                 placeholder="비밀번호 *"
+                value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                onFocus={() => setFocusField('password')}
-                onBlur={() => setFocusField('')}
-                style={focusField === 'password' ? inputFocusStyle : inputStyle}
-                className="w-full pl-11 pr-12 py-3.5 rounded-2xl text-[14px] outline-none transition-all placeholder:text-gray-300"
+                className="w-full h-14 pl-12 pr-12 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ border: 'none', background: 'none' }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 cursor-pointer"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-[#bbb] hover:text-[#3ea76e] cursor-pointer bg-transparent border-none transition-colors"
               >
-                {showPassword ? <IconEyeOff /> : <IconEye />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
             <button
               type="button"
-              style={{ border: 'none', background: '#3ea76e' }}
-              className="w-full py-3.5 rounded-2xl text-white font-bold text-[14px] hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none"
             >
               회원가입
             </button>
-
-            <div className="text-center text-[13px] text-gray-400">
-              <Link to="/login" className="hover:text-[#3ea76e] transition-colors">이미 계정이 있으신가요? 로그인</Link>
-            </div>
           </div>
+
+          <div className="mt-8 flex justify-center text-[#888] font-bold text-[13px] tracking-tight">
+            <Link to="/login" className="hover:text-[#3ea76e] transition-colors">
+              이미 계정이 있으신가요? <span className="underline ml-1">로그인</span>
+            </Link>
+          </div>
+
+          <p className="text-center text-[11px] text-[#ccc] mt-10 font-medium">
+            가입 시 이용약관 및 개인정보처리방침에 동의합니다
+          </p>
+
         </div>
-        <p className="text-center text-[12px] text-gray-300 mt-5">가입 시 이용약관 및 개인정보처리방침에 동의합니다</p>
       </div>
     </div>
   )

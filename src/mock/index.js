@@ -145,6 +145,56 @@ export const PHOTO_REVIEWS = [
   { img: 'https://swiffy.cafe24.com/web/product/tiny/202603/3e38ede9b50f13af99b9ecc5802c2b59.jpg', title: '❤️ 이 링크에서만 10% 할인❤️ 오독오독 ...', rating: '★ 4.9(159)', href: '#' },
   { img: 'https://swiffy.cafe24.com/web/product/tiny/202308/1d405c874cb17ca9b20719d4f7b3be89.jpg', title: '어글어글 스팀 100g 8종', rating: '★ 4.8(89)', href: '#' },
 ]
+
+// ─── ProductDetailPage ────────────────────────────────
+export const BUNDLE_PRODUCTS = [
+  {
+    id: 'b1',
+    name: '[100g 증정] 어글어글 스팀 1kg 대용량 8종',
+    originalPrice: 24000,
+    discountPrice: 21600,
+    img: 'https://swiffy.cafe24.com/web/product/medium/202308/ff7cee434eec6f04709bfcb3d3289310.jpg',
+    options: ['- [필수] 제품을 선택해 주세요 -', '닭가슴살 스팀 100g', '연어 스팀 100g', '오리 스팀 100g'],
+  },
+  {
+    id: 'b2',
+    name: '[5+1] 어글어글 우유껌 7종 대용량 골라담기',
+    originalPrice: 6500,
+    discountPrice: null,
+    img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e33c42600c960242e5ec86ab1d7a.png',
+    options: ['- [필수] 제품을 선택해 주세요 -', '제주 베리클리 우유껌', '산양유 우유껌', '오트밀 우유껌'],
+  },
+  {
+    id: 'b3',
+    name: '냉매제 추가 (아이스팩)',
+    originalPrice: 500,
+    discountPrice: null,
+    img: 'https://swiffy.cafe24.com/web/product/medium/202203/c8c8493601aaee3f1b8355a403744344.jpg',
+    options: ['- 냉매제 선택 -', '아이스팩(물)', '아이스팩(젤)'],
+  },
+]
+
+export const PRODUCT_TEST_IMAGES = [
+  'https://swiffy.cafe24.com/web/product/medium/202303/4778723bd20adbc67a8ec2f817e7db68.jpg',
+  'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg',
+  'https://swiffy.cafe24.com/web/product/medium/202204/b7dfd74171a920aa986c690b1faaa079.jpg',
+  'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png',
+  'https://swiffy.cafe24.com/web/product/medium/202308/ff7cee434eec6f04709bfcb3d3289310.jpg',
+  'https://swiffy.cafe24.com/web/product/medium/202603/88dc41a9da050cd48f2b0d436b510bff.jpg',
+  'https://swiffy.cafe24.com/web/product/medium/202203/6db698101c622e01aa9c995264ac7738.jpg',
+  'https://swiffy.cafe24.com/web/product/medium/202603/5b3ea48600b39acab71bd618b2d95bce.jpg',
+  'https://swiffy.cafe24.com/web/product/medium/202412/c574e33c42600c960242e5ec86ab1d7a.png',
+  'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png',
+]
+
+// ─── SubscriptionDetailPage ───────────────────────────
+export const BUNDLE_OPTIONS = [
+  { qty: 1, price: 4320, save: 0 },
+  { qty: 2, price: 5600, save: 40 },
+  { qty: 4, price: 8020, save: 260 },
+  { qty: 6, price: 10270, save: 650 },
+  { qty: 10, price: 13720, save: 2480 },
+]
 // ─── CartPage ─────────────────────────────────────────
 export const MOCK_CART = [
   {
@@ -153,13 +203,51 @@ export const MOCK_CART = [
     delivery: '[무료] / 기본배송',
     price: 50400,
     qty: 1,
+    option: '',
+    options: ['제주 닭 안심 육포 50g', '강원도 황태채 40g', '우유껌 50g'],
     img: 'https://swiffy.cafe24.com/web/product/medium/202204/4a56950d703c6dee57c0f31d48d4644f.jpg'
   }
 ]
-// mock/index.js 맨 아래 추가
+
+// ─── NAV_ITEMS ────────────────────────────────────────
 export const NAV_ITEMS = [
-  { label: 'STORE ', to: '/product/list' },
-  { label: '정기배송 ', to: '/subscription' },
-  { label: '베스트셀러 ', to: '/best' },
-  { label: '브랜드 스토리', to: '/brand-story' }, ,
+  { label: 'STORE', to: '/product/list' },
+  { label: '정기배송', to: '/subscription' },
+  { label: '베스트셀러', to: '/best' },
+  { label: '브랜드 스토리', to: '/brand-story' },
+]
+// ─── MyPage ───────────────────────────────────────────
+export const MOCK_USER = {
+  rank: 'PLATINUM',
+  name: '허서령',
+  coupons: 2,
+  points: '3,080',
+  orderCount: 1,
+  wishlistCount: 3,
+}
+
+export const MOCK_DELIVERY_STATUS = [
+  { label: '입금전', count: 0 },
+  { label: '배송준비중', count: 0 },
+  { label: '배송중', count: 0 },
+  { label: '배송완료', count: 2 },
+]
+// ─── WishListPage ─────────────────────────────────────
+export const MOCK_WISH_ITEMS = [
+  {
+    id: 1,
+    name: '어글어글 우유껌 50g 7종',
+    price: 6500,
+    currentOption: '제주 브로콜리 우유껌 50g',
+    options: ['바삭 고구마', '바삭 당근', '바삭 시금치', '바삭 덕브로콜리 (+5,000원)', '바삭 치킨블루베리', '바삭 연어껍질'],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e33c42600c960242e5ec86ab1d7a.png',
+  },
+  {
+    id: 2,
+    name: '[판매 1위] 오독오독 바삭 10종 골라담기',
+    price: 15900,
+    currentOption: '치킨 오독오독 10종',
+    options: ['바삭 고구마', '바삭 당근', '바삭 시금치', '바삭 연어껍질'],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg',
+  },
 ]

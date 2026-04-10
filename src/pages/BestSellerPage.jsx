@@ -52,49 +52,21 @@ export default function BestSellerPage() {
 
       <StoreProductGrid products={paginated} />
 
-      {totalPages > 1 && (
-        <div className="py-20 flex items-center justify-center gap-6 mt-10">
-          <div className="flex gap-3">
+     {totalPages > 1 && (
+        <div className="py-16 flex items-center justify-center gap-2 border-t border-[#eee] mt-12">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <button
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-              className="text-[#ccc] hover:text-[#3ea76e] transition-colors text-xl font-light disabled:opacity-30 cursor-pointer bg-transparent border-none"
-            >«</button>
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="text-[#ccc] hover:text-[#3ea76e] transition-colors text-xl font-light disabled:opacity-30 cursor-pointer bg-transparent border-none"
-            >‹</button>
-          </div>
-
-          <div className="flex gap-3">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-10 h-10 flex items-center justify-center rounded-full text-[15px] font-bold transition-all cursor-pointer border-2 ${
-                  currentPage === page
-                    ? 'bg-[#3ea76e] text-white border-[#3ea76e] shadow-sm'
-                    : 'bg-white text-[#ccc] border-[#eee] hover:border-[#3ea76e] hover:text-[#3ea76e]'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="text-[#ccc] hover:text-[#3ea76e] transition-colors text-xl font-light disabled:opacity-30 cursor-pointer bg-transparent border-none"
-            >›</button>
-            <button
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="text-[#ccc] hover:text-[#3ea76e] transition-colors text-xl font-light disabled:opacity-30 cursor-pointer bg-transparent border-none"
-            >»</button>
-          </div>
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`w-10 h-10 flex items-center justify-center rounded-full text-[14px] !font-medium transition-all cursor-pointer border-none ${
+                currentPage === page 
+                  ? 'bg-[#3ea76e] !text-white shadow-md' 
+                  : 'bg-transparent text-[#999999] hover:bg-[#3ea76e] hover:!text-white'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
         </div>
       )}
     </main>
