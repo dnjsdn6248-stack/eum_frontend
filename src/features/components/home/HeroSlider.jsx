@@ -1,0 +1,76 @@
+import { useState, useEffect } from 'react'
+
+const slides = [
+  // { id: 1, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/9a0028bc3d5dbdfca49729f733ad5bf8.png', alt: '오독오독 캥거루', href: '#' },
+  { id: 1, img: '/1.png', alt: '오독오독 캥거루', href: '#' },
+  // { id: 2, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/7db388a3e36cf78f1b64d09b3d71efa0.png', alt: '오독오독 황태', href: '#' },
+  { id: 2, img: '/2.png', alt: '오독오독 황태', href: '#' },
+  // { id: 3, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/c812180e1d05f591d86b33d36e2bbee7.png', alt: '꽈배기츄', href: '#' },
+  { id: 3, img: '/3.png', alt: '꽈배기츄', href: '#' },
+]
+
+export default function HeroSlider() {
+  const [current, setCurrent] = useState(0)
+
+  const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length)
+  const prevSlide = () => setCurrent((prev) => (prev - 1 + slides.length) % slides.length)
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 5000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="w-full max-w-[1200px] mx-auto px-0 py-4">
+      <div className="relative w-full overflow-hidden rounded-[32px] bg-white border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.06)] group">
+        <div
+          className="flex transition-transform duration-1000 ease-[cubic-bezier(0.4,0,0.2,1)]"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+        >
+          {slides.map((slide) => (
+            <a key={slide.id} href={slide.href} className="flex-none w-full block relative bg-white">
+              <div className="absolute inset-0 bg-[#3ea76e]/[0.01] pointer-events-none z-10" />
+              <div className="relative aspect-[21/8] flex items-center justify-center overflow-hidden">
+                <img
+                  src={slide.img}
+                  alt={slide.alt}
+                  className="w-full h-full object-contain p-10 transition-transform duration-[2000ms] group-hover:scale-105"
+                />
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <button
+          onClick={prevSlide}
+          className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-md shadow-md opacity-0 group-hover:opacity-100 transition-all hover:bg-[#3ea76e] hover:text-white z-20"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#1B4332] group-hover:text-inherit">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+        </button>
+
+        <button
+          onClick={nextSlide}
+          className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 transition-all hover:bg-[#3ea76e] hover:text-white z-20"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#1B4332] group-hover:text-inherit">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        </button>
+
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                i === current ? 'w-10 bg-[#3ea76e]' : 'w-1.5 bg-gray-200 hover:bg-gray-300'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}

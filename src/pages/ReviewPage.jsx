@@ -1,0 +1,149 @@
+import React, { useState } from 'react';
+import { Star, Search, ChevronDown, Check } from 'lucide-react';
+import ReviewList from '../features/components/review/ReviewList';
+
+export default function SwiffyReviewSummary() {
+  
+  const [activeDropdown, setActiveDropdown] = useState(null); 
+
+  const toggleDropdown = (name) => {
+    setActiveDropdown(activeDropdown === name ? null : name);
+  };
+
+  return (
+    <div className="w-full bg-[#FCFBF9] min-h-screen pb-28 px-4 text-[#111]">
+      <div className="max-w-[1200px] mx-auto text-center py-24">
+        <h1 className="text-[36px] font-black tracking-[-0.05em] text-[#111]">리뷰</h1>
+      </div>
+
+      <main className="max-w-[1100px] mx-auto px-4">
+        <section className="bg-white rounded-[40px] border border-[#eee] p-8 md:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.03)] mb-6">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pb-12 border-b border-[#eee]">
+            <div className="space-y-8 md:pr-12 md:border-r border-[#eee]">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2">
+                  <Star className="w-10 h-10 fill-[#3ea76e] text-[#3ea76e]" />
+                  <span className="text-[52px] font-black leading-none text-[#111]">4.9</span>
+                </div>
+                <button className="mt-4 bg-[#f5f5f5] px-5 py-2 rounded-full text-[13px] font-bold text-[#888] hover:bg-[#3ea76e] hover:text-white transition-all border-none cursor-pointer">
+                  5개의리뷰
+                </button>
+              </div>
+              <div className="space-y-2.5 max-w-[320px] mx-auto w-full">
+                {[
+                  { label: '최고', pct: 82, color: 'bg-[#3ea76e]' },
+                  { label: '좋음', pct: 12, color: 'bg-[#3ea76e]' },
+                  { label: '보통', pct: 4, color: 'bg-[#eee]' },
+                  { label: '별로', pct: 1, color: 'bg-[#eee]' },
+                  { label: '나쁨', pct: 1, color: 'bg-[#eee]' },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-3 text-[12px] font-bold">
+                    <span className="w-8 text-[#555]">{item.label}</span>
+                    <div className="flex-1 h-1.5 bg-[#f5f5f5] rounded-full overflow-hidden">
+                      <div className={`h-full ${item.color}`} style={{ width: `${item.pct}%` }}></div>
+                    </div>
+                    <span className="w-8 text-right text-[#aaa]">{item.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-center space-y-6">
+              {[
+                { label: '기호도', desc: '잘 먹어요!', pct: 100 },
+                { label: '재구매의사', desc: '있어요', pct: 100 },
+                { label: '신선도', desc: '아주 만족해요', pct: 51 },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-6 group">
+                  <span className="text-[#3ea76e] text-[14px] font-black w-20 shrink-0">{item.label}</span>
+                  <span className="text-[13px] font-bold text-[#aaa] w-28 text-right shrink-0">{item.desc}</span>
+                  <div className="flex-1 h-2 bg-[#f5f5f5] rounded-full overflow-hidden">
+                    <div className="h-full bg-[#3ea76e] rounded-full transition-all group-hover:opacity-80" style={{ width: `${item.pct}%` }}></div>
+                  </div>
+                  <span className="w-12 text-right text-[13px] font-black text-[#111]">{item.pct}%</span>
+                </div>
+              ))}
+              <div className="pt-2 text-right">
+                <button className="text-[12px] font-bold text-[#aaa] hover:text-[#3ea76e] flex items-center gap-1 ml-auto">
+                  자세히 보기 <ChevronDown size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          
+          <div className="flex items-center justify-between pt-8 relative">
+            <div className="flex gap-2">
+              <button className="p-3 bg-[#f5f5f5] border border-[#eee] rounded-full hover:border-[#3ea76e] hover:bg-white transition-all cursor-pointer group">
+                <Search size={16} className="text-[#888] group-hover:text-[#3ea76e]" />
+              </button>
+              
+              
+              <div className="relative">
+                <button 
+                  onClick={() => toggleDropdown('type')}
+                  className={`px-5 py-2.5 border rounded-full text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${activeDropdown === 'type' ? 'border-[#3ea76e] bg-white text-[#3ea76e]' : 'bg-[#f5f5f5] border-[#eee] text-[#555]'}`}
+                >
+                  리뷰 종류 <ChevronDown size={13} />
+                </button>
+                {activeDropdown === 'type' && (
+                  <div className="absolute top-12 left-0 w-[240px] bg-white border border-[#eee] rounded-2xl shadow-xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    <div className="p-4 flex gap-2">
+                      {['동영상', '사진', '텍스트'].map(t => (
+                        <button key={t} className="px-3 py-2 bg-[#f5f5f5] rounded-lg text-[12px] font-bold text-[#555] hover:bg-[#eee] flex-1">{t}</button>
+                      ))}
+                    </div>
+                    <button onClick={() => setActiveDropdown(null)} className="w-full py-3 bg-[#3ea76e] text-white text-[13px] font-black">완료</button>
+                  </div>
+                )}
+              </div>
+
+              
+              <div className="relative">
+                <button 
+                  onClick={() => toggleDropdown('rating')}
+                  className={`px-5 py-2.5 border rounded-full text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${activeDropdown === 'rating' ? 'border-[#3ea76e] bg-white text-[#3ea76e]' : 'bg-[#f5f5f5] border-[#eee] text-[#555]'}`}
+                >
+                  별점 <ChevronDown size={13} />
+                </button>
+                {activeDropdown === 'rating' && (
+                  <div className="absolute top-12 left-0 w-[260px] bg-white border border-[#eee] rounded-2xl shadow-xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    <div className="p-4 flex gap-1.5">
+                      {['5점', '4점', '3점', '2점', '1점'].map(r => (
+                        <button key={r} className="px-3 py-2 bg-[#f5f5f5] rounded-lg text-[12px] font-bold text-[#555] hover:bg-[#eee] flex-1">{r}</button>
+                      ))}
+                    </div>
+                    <button onClick={() => setActiveDropdown(null)} className="w-full py-3 bg-[#3ea76e] text-white text-[13px] font-black">완료</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            
+            <div className="relative">
+              <button 
+                onClick={() => toggleDropdown('sort')}
+                className={`px-5 py-2.5 border rounded-full text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${activeDropdown === 'sort' ? 'border-[#3ea76e] bg-white text-[#3ea76e]' : 'bg-[#f5f5f5] border-[#eee] text-[#555]'}`}
+              >
+                유형순 <ChevronDown size={13} />
+              </button>
+              {activeDropdown === 'sort' && (
+                <div className="absolute top-12 right-0 w-[160px] bg-white border border-[#eee] rounded-xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2">
+                  {['유형순', '최신순', '추천순', '별점순'].map((s) => (
+                    <button key={s} className="w-full px-5 py-2.5 text-left text-[13px] font-bold hover:bg-[#f9f9f9] flex justify-between items-center group">
+                      <span className="group-hover:text-[#3ea76e]">{s}</span>
+                      {s === '유형순' && <Check size={14} className="text-[#3ea76e]" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <ReviewList />
+      </main>
+    </div>
+  );
+}
