@@ -37,8 +37,8 @@ export default function BestSellerPage() {
             onChange={e => { setSortBy(e.target.value); setCurrentPage(1) }}
             className="appearance-none border border-[#eee] rounded-full px-6 py-2 pr-10 text-[14px] font-bold text-[#888] bg-white outline-none cursor-pointer focus:border-[#3ea76e] transition-all tracking-tighter"
           >
-            <option value="인기상품순">인기상품순</option>
-            <option value="신상품순">신상품순</option>
+           <option value="최신순">최신순</option>
+            <option value="판매량순">판매량순</option>
             <option value="낮은가격순">낮은가격순</option>
             <option value="높은가격순">높은가격순</option>
           </select>

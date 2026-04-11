@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 
 const slides = [
-  { id: 1, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/9a0028bc3d5dbdfca49729f733ad5bf8.png', alt: '오독오독 캥거루', href: '#' },
-  { id: 2, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/7db388a3e36cf78f1b64d09b3d71efa0.png', alt: '오독오독 황태', href: '#' },
-  { id: 3, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/c812180e1d05f591d86b33d36e2bbee7.png', alt: '꽈배기츄', href: '#' },
+  // { id: 1, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/9a0028bc3d5dbdfca49729f733ad5bf8.png', alt: '오독오독 캥거루', href: '#' },
+  { id: 1, img: '/1.png', alt: '오독오독 캥거루', href: '#' },
+  // { id: 2, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/7db388a3e36cf78f1b64d09b3d71efa0.png', alt: '오독오독 황태', href: '#' },
+  { id: 2, img: '/2.png', alt: '오독오독 황태', href: '#' },
+  // { id: 3, img: 'https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/c812180e1d05f591d86b33d36e2bbee7.png', alt: '꽈배기츄', href: '#' },
+  { id: 3, img: '/3.png', alt: '꽈배기츄', href: '#' },
 ]
 
 export default function HeroSlider() {

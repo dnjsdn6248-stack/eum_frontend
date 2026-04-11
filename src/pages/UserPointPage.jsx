@@ -17,16 +17,16 @@ export default function UserPointPage() {
   ];
 
   return (
-    // 전체 배경: 스위피 시그니처 베이지 (#FCFBF9)
+    
     <div className="bg-[#FCFBF9] min-h-screen text-[#111] font-sans pb-28">
       <main className="max-w-[800px] mx-auto px-6">
         
-        {/* 타이틀 헤더 */}
+       
         <div className="py-24 text-center">
           <h1 className="text-[36px] font-black tracking-[-0.05em] text-[#111]">적립금</h1>
         </div>
 
-        {/* 적립금 요약 카드 (White Rounded Card) */}
+    
         <section className="bg-white rounded-[32px] border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.02)] overflow-hidden mb-10">
           <div className="bg-[#fbfbfb]/80 px-10 py-6 border-b border-[#eee] flex items-center gap-3">
             <div className="bg-[#f0faf4] p-2 rounded-xl text-[#3ea76e]">
@@ -54,7 +54,7 @@ export default function UserPointPage() {
           </div>
         </section>
 
-        {/* 적립금 상세 내역 메뉴 (List Style Card) */}
+      
         <div className="bg-white rounded-[32px] border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.02)] overflow-hidden">
           {menuLinks.map((menu, index) => (
             <button
@@ -76,3 +76,4 @@ export default function UserPointPage() {
     </div>
   );
 }
+

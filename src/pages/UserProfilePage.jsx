@@ -10,8 +10,8 @@ const menuItems = [
   { title: '쿠폰', count: 2, to: '/coupon' },
   { title: '게시물관리', to: '/profile/posts' },
   { title: '배송 주소록 관리', to: '/address' },
-  { title: '정기배송 관리', to: '/subscription' },
-]
+ { title: '정기배송 관리', to: '/user-subscription' },
+];
 
 export default function UserProfilePage() {
   const user = MOCK_USER

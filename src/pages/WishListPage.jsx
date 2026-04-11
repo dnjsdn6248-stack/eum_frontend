@@ -22,7 +22,6 @@ const MOCK_WISHLIST = [
   }
 ]
 
-// 2. [컴포넌트] 옵션 드롭다운 (디자인 시스템 반영)
 function OptionDropdown({ currentOption, options = [], onSelect }) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -58,9 +57,8 @@ function OptionDropdown({ currentOption, options = [], onSelect }) {
   )
 }
 
-// 3. [컴포넌트] 개별 아이템 (에러 방어 로직 추가)
 function WishItem({ item, onRemove }) {
-  // 🔴 에러 방어: item이 없으면 렌더링하지 않음
+  
   if (!item) return null;
 
   const [selectedOption, setSelectedOption] = useState(item.currentOption || '옵션 선택')
@@ -68,15 +66,14 @@ function WishItem({ item, onRemove }) {
   return (
     <div className="bg-white rounded-[30px] border border-[#eee] p-6 shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-center gap-6">
-        {/* 체크박스 */}
+      
         <input type="checkbox" className="w-5 h-5 rounded border-[#eee] accent-[#3ea76e] cursor-pointer" />
         
-        {/* 이미지 */}
+     
         <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#f9f9f9] border border-[#f5f5f5] shrink-0">
           <img src={item.img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" />
         </div>
 
-        {/* 정보 */}
         <div className="flex-1 min-w-0">
           <h4 className="text-[15px] font-bold text-[#111] mb-2 truncate">{item.name}</h4>
           <OptionDropdown 
@@ -86,7 +83,7 @@ function WishItem({ item, onRemove }) {
           />
         </div>
 
-        {/* 가격 및 삭제 */}
+
         <div className="text-right flex flex-col items-end gap-3 shrink-0">
           <button onClick={() => onRemove(item.id)} className="text-[#eee] group-hover:text-[#bbb] transition-colors cursor-pointer">
             <X size={20} />
@@ -101,7 +98,7 @@ function WishItem({ item, onRemove }) {
   )
 }
 
-// 4. [페이지] 메인 관심상품 페이지
+
 export default function WishListPage() {
   const navigate = useNavigate()
   const [items, setItems] = useState(MOCK_WISHLIST)
@@ -117,7 +114,6 @@ export default function WishListPage() {
           <h1 className="text-[28px] font-bold tracking-tight">관심상품</h1>
         </div>
 
-        {/* 요약 섹션: 디자인 시스템 반영 */}
         <section className="bg-white rounded-[30px] border border-[#eee] p-6 mb-8 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-10 ml-4">
             <div className="flex flex-col">
@@ -138,14 +134,14 @@ export default function WishListPage() {
           </button>
         </section>
 
-        {/* 컨트롤 영역 */}
+    
         <div className="flex justify-end pr-2 mb-4">
           <button onClick={() => setItems([])} className="text-[11px] font-bold text-[#bbb] hover:text-red-400 transition-colors bg-transparent border-none cursor-pointer">
             전체삭제
           </button>
         </div>
 
-        {/* 리스트 출력 */}
+     
         {items.length === 0 ? (
           <div className="bg-white rounded-[30px] border border-[#eee] py-32 text-center shadow-sm">
             <Heart size={40} className="text-[#f5f5f5] mx-auto mb-4" />

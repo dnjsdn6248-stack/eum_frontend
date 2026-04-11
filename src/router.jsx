@@ -25,6 +25,8 @@ import UserCouponPage from "./pages/UserCouponPage";
 import UserPointPage from "./pages/UserPointPage"
 import UserSubscriptionPage from "./pages/UserSubscriptionPage";
 import UserAddressPage from './pages/UserAddressPage ';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 
 
 function AppInit({ children }) {
@@ -40,6 +42,7 @@ export default function Router() {
       <AppInit>
         <Routes>
           <Route element={<Layout />}>
+          <Route path="/terms" element={<TermsPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/product/list" element={<StorePage />} />
             <Route path="/product/list/odog" element={<OdogPage />} />
@@ -56,8 +59,7 @@ export default function Router() {
             <Route path="/coupon" element={<UserCouponPage />} />
             <Route path="/point" element={<UserPointPage />} />
             <Route path="/address" element={<UserAddressPage />} /> 
-            <Route path="/user-subscription" element={<UserSubscriptionPage />} /> 
-
+         <Route path="/user-subscription" element={<UserSubscriptionPage />} />
             <Route path="/brand-story" element={<BrandStoryPage />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="*" element={<HomePage />} />

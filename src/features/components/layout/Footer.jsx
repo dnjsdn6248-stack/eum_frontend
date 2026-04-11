@@ -1,3 +1,6 @@
+import React from 'react';
+import { Link } from 'react-router-dom'; // import는 맨 위로!
+
 export default function Footer() {
   return (
     <footer className="bg-white px-6 py-12 border-t border-[#eee]">
@@ -51,12 +54,20 @@ export default function Footer() {
             ))}
           </div>
 
+          {/* 🟢 이용약관 / 개인정보처리방침 링크 섹션 */}
           <div className="flex gap-5 shrink-0">
-            {['이용약관', '개인정보처리방침'].map((text) => (
-              <a key={text} href="#" className="text-[12px] font-bold text-[#555] hover:text-[#111] transition-colors">
-                {text}
-              </a>
-            ))}
+            <Link 
+              to="/terms" 
+              className="text-[12px] font-bold text-[#555] hover:text-[#3ea76e] transition-colors no-underline"
+            >
+              이용약관
+            </Link>
+            <Link 
+              to="/privacy" 
+              className="text-[12px] font-bold text-[#555] hover:text-[#3ea76e] transition-colors no-underline"
+            >
+              개인정보처리방침
+            </Link>
           </div>
         </div>
 
@@ -66,5 +77,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

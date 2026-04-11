@@ -4,12 +4,19 @@ import { STORE_PRODUCTS } from '../mock'
 
 const TABS = ['ALL', 'Snack & Jerky', 'Meal', 'Bakery']
 
+const SUB_CATEGORIES = {
+  'Snack & Jerky': ['오독오독', '청정 육포', '어글어글 육포', '어글어글 우유껌', '오래먹는 간식'],
+  'Meal': ['스위피 테린', '어글어글 스팀', '샐러드', '두유'],
+  'Bakery': ['마들렌', '치즈번', '스콘'],
+}
+
 const ITEMS_PER_PAGE = 12
 
 export default function StorePage() {
   const [activeTab, setActiveTab] = useState('ALL')
+  const [activeSub, setActiveSub] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [sortBy, setSortBy] = useState('인기상품순')
+  const [sortBy, setSortBy] = useState('최신순')
 
   useEffect(() => { window.scrollTo(0, 0) }, [currentPage, activeTab])
 
@@ -17,36 +24,70 @@ export default function StorePage() {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
-  const handleTabChange = (tab) => { setActiveTab(tab); setCurrentPage(1) }
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    setActiveSub(null)
+    setCurrentPage(1)
+  }
+
+  const handleSubChange = (sub) => {
+    setActiveSub(activeSub === sub ? null : sub)
+    setCurrentPage(1)
+  }
+
+    const subList = SUB_CATEGORIES[activeTab] || []
+    const showSubTabs = activeTab !== 'ALL' && subList.length > 0
+    const showMainTabs = activeTab === 'ALL'
 
   return (
     <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
-      <div className="flex justify-center gap-3 py-10">
-        {TABS.map(tab => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`hover-primary px-7 py-2.5 text-[14px] !font-medium tracking-tighter transition-all cursor-pointer ${activeTab === tab ? 'active shadow-sm' : ''}`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+
+      {showMainTabs && (
+        <div className="flex justify-center gap-3 py-10">
+          {TABS.map(tab => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`hover-primary px-7 py-2.5 text-[14px] !font-medium tracking-tighter transition-all cursor-pointer ${activeTab === tab ? 'active shadow-sm' : ''}`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showSubTabs && (
+        <div className={`${activeSub ? 'pt-10' : ''} mb-8`}>
+         
+          <p className="text-center text-[18px] font-black text-[#111] tracking-tight mb-5">{activeTab}</p>
+          <div className="flex justify-center flex-wrap gap-2">
+            {subList.map(sub => (
+              <button
+                key={sub}
+                onClick={() => handleSubChange(sub)}
+                className={`hover-primary px-5 py-2 text-[13px] !font-medium tracking-tighter transition-all cursor-pointer ${activeSub === sub ? 'active shadow-sm' : ''}`}
+              >
+                {sub}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between pb-6 border-b border-gray-100 mb-10">
-        <span className="text-[14px] !font-normal text-[#111111] tracking-tighter">
+        <span className="text-[14px] font-normal text-[#111] tracking-tighter">
           총 <span className="text-[#3ea76e] font-bold">{filtered.length}</span>개의 제품
         </span>
-      <select
-            value={sortBy}
-            onChange={e => { setSortBy(e.target.value); setCurrentPage(1) }}
-            className="appearance-none border border-[#eee] rounded-full px-6 py-2 pr-10 text-[14px] font-bold text-[#888] bg-white outline-none cursor-pointer focus:border-[#3ea76e] transition-all tracking-tighter"
-          >
-            <option value="인기상품순">인기상품순</option>
-            <option value="신상품순">신상품순</option>
-            <option value="낮은가격순">낮은가격순</option>
-            <option value="높은가격순">높은가격순</option>
-          </select>
+        <select
+          value={sortBy}
+          onChange={e => { setSortBy(e.target.value); setCurrentPage(1) }}
+          className="appearance-none border border-[#eee] rounded-full px-6 py-2 pr-10 text-[14px] font-bold text-[#888] bg-white outline-none cursor-pointer focus:border-[#3ea76e] transition-all tracking-tighter"
+        >
+          <option value="최신순">최신순</option>
+          <option value="판매량순">판매량순</option>
+          <option value="낮은가격순">낮은가격순</option>
+          <option value="높은가격순">높은가격순</option>
+        </select>
       </div>
 
       <StoreProductGrid products={paginated} />
@@ -57,8 +98,8 @@ export default function StorePage() {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`w-10 h-10 flex items-center justify-center rounded-full text-[14px] !font-medium transition-all cursor-pointer ${
-                currentPage === page ? 'bg-[#3ea76e] !text-white shadow-md' : 'bg-transparent text-[#999999] hover:bg-[#3ea76e] hover:!text-white'
+              className={`w-10 h-10 flex items-center justify-center rounded-full text-[14px] font-medium transition-all cursor-pointer ${
+                currentPage === page ? 'bg-[#3ea76e] text-white shadow-md' : 'bg-transparent text-[#999] hover:bg-[#3ea76e] hover:text-white'
               }`}
             >
               {page}

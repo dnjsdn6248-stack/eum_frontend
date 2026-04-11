@@ -39,15 +39,11 @@ export default function ProductDetailPage() {
 
   return (
     <>
-      {/* 옵션 미선택 알림 모달 */}
       {alertMsg && <Alert message={alertMsg} onConfirm={() => setAlertMsg('')} />}
 
       <div className="max-w-[1200px] mx-auto px-6 py-10 text-[#111]">
-
-        {/* 상단: 이미지 + 상품정보 */}
         <div className="flex flex-col md:flex-row gap-12 mb-10">
 
-          {/* 이미지 슬라이드 */}
           <div className="w-full md:w-[500px] shrink-0">
             <div className="relative aspect-square rounded-[32px] overflow-hidden bg-[#f8f8f8] border border-[#eee] group">
               <div className="flex h-full transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${currentIdx * 100}%)` }}>
@@ -71,7 +67,6 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             </div>
-            {/* 썸네일 */}
             <div className="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
               {productImages.map((img, idx) => (
                 <div key={idx} onClick={() => setCurrentIdx(idx)} className={`w-20 h-20 shrink-0 rounded-2xl overflow-hidden cursor-pointer border-2 transition-all ${currentIdx === idx ? 'border-[#3ea76e] opacity-100' : 'border-transparent opacity-40 hover:opacity-100'}`}>
@@ -81,7 +76,6 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* 상품 정보 */}
           <div className="flex-1 flex flex-col gap-5 py-2">
             <div>
               <p className="text-[13px] text-[#3ea76e] font-bold mb-2">어글어글</p>
@@ -94,25 +88,29 @@ export default function ProductDetailPage() {
               <p className="text-[13px] text-[#bbb] mt-1 font-bold">50,000원 이상 구매 시 무료배송 (기본 배송비 5,000원)</p>
             </div>
 
-            {/* 옵션 선택 */}
-            <div>
-              <p className="text-[14px] font-bold text-[#555] mb-2">중량 선택</p>
-              <select
-                value={selectedOption}
-                onChange={e => { setSelectedOption(e.target.value); setOptionError(false) }}
-                className={`w-full border rounded-2xl px-5 py-3 text-[14px] text-[#333] outline-none cursor-pointer bg-white transition-colors font-bold ${optionError ? 'border-red-400 bg-red-50' : 'border-[#eee] focus:border-[#3ea76e]'}`}
-              >
-                <option value="">- 제품을 선택해 주세요 -</option>
-                {product.options.map(opt => (
-                  <option key={opt.label} value={opt.label}>
-                    {opt.label} {opt.extra > 0 ? `(+${opt.extra.toLocaleString()}원)` : ''}
-                  </option>
-                ))}
-              </select>
-              {optionError && <p className="text-red-400 text-[13px] font-bold mt-2 ml-1">옵션을 선택해주세요.</p>}
+            <div className="space-y-3">
+              {(product.optionGroups || [{ label: '중량 선택', options: product.options }]).map((group, gi) => (
+                <div key={gi}>
+                  <p className="text-[14px] font-bold text-[#555] mb-2">{group.label}</p>
+                  <select
+                    value={gi === 0 ? selectedOption : ''}
+                    onChange={e => {
+                      if (gi === 0) { setSelectedOption(e.target.value); setOptionError(false) }
+                    }}
+                    className={`w-full border rounded-2xl px-5 py-3 text-[14px] text-[#333] outline-none cursor-pointer bg-white transition-colors font-bold ${gi === 0 && optionError ? 'border-red-400 bg-red-50' : 'border-[#eee] focus:border-[#3ea76e]'}`}
+                  >
+                    <option value="">- {group.label}을 선택해 주세요 -</option>
+                    {group.options.map(opt => (
+                      <option key={opt.label} value={opt.label}>
+                        {opt.label} {opt.extra > 0 ? `(+${opt.extra.toLocaleString()}원)` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {gi === 0 && optionError && <p className="text-red-400 text-[13px] font-bold mt-2 ml-1">옵션을 선택해주세요.</p>}
+                </div>
+              ))}
             </div>
 
-            {/* 수량 */}
             {selectedOption && (
               <div className="flex items-center gap-4">
                 <p className="text-[14px] font-bold text-[#555]">수량</p>
@@ -124,13 +122,11 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* 총 금액 */}
             <div className="pt-5 border-t border-[#f0f0f0] flex items-center justify-between">
               <p className="text-[14px] font-bold text-[#aaa]">총 금액</p>
               <p className="text-[24px] font-black text-[#3ea76e] tracking-tight">{totalPrice.toLocaleString()}원</p>
             </div>
 
-            {/* 장바구니 / 구매하기 */}
             <div className="flex gap-3">
               <button onClick={handleCart} className="flex-1 py-4 border-2 border-[#3ea76e] text-[#3ea76e] font-black text-[15px] rounded-2xl hover:bg-[#f0faf4] transition-all cursor-pointer bg-transparent">
                 장바구니
@@ -142,7 +138,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* 함께 구매하면 좋은 제품 */}
         <div className="mb-10 bg-[#FCFBF9] rounded-[40px] border border-[#eee] overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
           <button onClick={() => setBundleOpen(!bundleOpen)} className="w-full flex items-center justify-between px-10 py-6 bg-transparent border-none cursor-pointer hover:bg-black/5 transition-colors">
             <span className="text-[16px] font-black text-[#111] tracking-tight">함께 구매하면 좋은 제품</span>
@@ -183,7 +178,6 @@ export default function ProductDetailPage() {
           )}
         </div>
 
-        {/* 상세 탭 */}
         <div className="flex mb-10 border-b border-[#eee] sticky top-0 bg-white z-10">
           {[
             { key: 'detail', label: '상세정보' },
@@ -198,7 +192,6 @@ export default function ProductDetailPage() {
           ))}
         </div>
 
-        {/* 탭 컨텐츠 */}
         {activeTab === 'detail' && (
           <div className="flex flex-col items-center">
             {product.detailImgs.map((src, i) => <img key={i} src={src} alt={`상세 ${i + 1}`} className="w-full max-w-[860px]" />)}

@@ -3,14 +3,14 @@ import { ChevronDown, Info, Ticket, Plus } from "lucide-react";
 
 export default function UserCouponPage() {
   const [couponCode, setCouponCode] = useState("");
-  const [currentPage, setCurrentPage] = useState(1); // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1); 
 
   const coupons = [
     { id: 1, title: "2026 리틀버디 할인 쿠폰", discount: "5%", reward: "0원", expiry: "2026.12.31" },
     { id: 2, title: "첫 구매 감사 쿠폰", discount: "3,000원", reward: "0원", expiry: "2026.06.30" },
   ];
 
-  const totalPages = 1; // 데이터 양에 따라 계산
+  const totalPages = 1; 
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111] pb-28 font-sans">
@@ -20,7 +20,7 @@ export default function UserCouponPage() {
           <h1 className="text-[36px] font-black tracking-[-0.05em] text-[#111]">마이쿠폰</h1>
         </div>
 
-        {/* 쿠폰 등록 섹션 */}
+      
         <section className="bg-white rounded-[32px] p-10 mb-12 border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-3 mb-8">
             <div className="bg-[#f0faf4] p-2.5 rounded-xl">
@@ -37,7 +37,7 @@ export default function UserCouponPage() {
               onChange={(e) => setCouponCode(e.target.value)}
               className="flex-1 h-[56px] bg-[#f8f8f8] border border-[#f0f0f0] rounded-2xl px-6 outline-none focus:ring-2 focus:ring-[#3ea76e]/20 transition-all text-[14px] font-bold"
             />
-            {/* 🔴 검정 버튼 대신 스위피 그린 버튼으로 변경 */}
+           
             <button className="h-[56px] px-10 bg-[#3ea76e] text-white rounded-2xl text-[14px] font-black hover:bg-[#318a57] transition-all flex items-center gap-2 cursor-pointer border-none shrink-0 shadow-lg shadow-green-50">
               <Plus size={16} /> 쿠폰번호 인증
             </button>
@@ -51,7 +51,7 @@ export default function UserCouponPage() {
           </div>
         </section>
 
-        {/* 쿠폰 리스트 섹션 */}
+   
         <div className="flex items-end justify-between mb-6 px-4">
           <h3 className="text-[18px] font-black text-[#111]">
             보유 쿠폰 <span className="text-[#3ea76e] ml-1">{coupons.length}</span>
