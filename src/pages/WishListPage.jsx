@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ChevronDown, Check, X, Heart, ShoppingBag } from 'lucide-react'
 
-// 1. 샘플 데이터 (데이터가 없을 때를 대비한 Mock)
+
 const MOCK_WISHLIST = [
   {
     id: 1,

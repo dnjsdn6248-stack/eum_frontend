@@ -175,7 +175,6 @@ export default function SignupPage() {
 
           <div className="w-full space-y-4">
 
-            {/* 이메일 인증 버튼 — 맨 위 */}
             <button
               type="button"
               onClick={() => setShowEmailModal(true)}

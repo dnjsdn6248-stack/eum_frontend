@@ -141,19 +141,19 @@ export default function TermsPage() {
   return (
     <div className="bg-[#FCFBF9] min-h-screen font-sans text-[#111] pb-32">
       <main className="max-w-[1000px] mx-auto px-6 py-24">
-        {/* 중앙 정렬된 검정색 타이틀 */}
+       
         <div className="text-center mb-16">
           <h1 className="text-[32px] font-black tracking-tight text-[#111]">이용약관</h1>
           <div className="w-12 h-1 bg-[] mx-auto mt-4"></div>
         </div>
 
         <div className="bg-white rounded-[40px] border border-[#eee] p-10 md:p-16 shadow-[0_10px_40px_rgba(0,0,0,0.02)]">
-          {/* 텍스트 컬러 회색 통일 및 간격 조정 */}
+         
           <div className="whitespace-pre-wrap text-[14px] md:text-[15px] text-[#666] font-medium leading-[2.2] tracking-tight">
             {termsText}
           </div>
 
-          {/* 시행일 강조 */}
+         
           <div className="mt-20 pt-10 border-t border-[#f2f2f2]">
             <p className="text-[14px] text-[#222] font-black">
               본 약관은 2026년 4월 10일부터 시행됩니다.

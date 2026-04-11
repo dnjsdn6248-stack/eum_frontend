@@ -5,11 +5,11 @@ import { STORE_PRODUCTS } from '../mock'
 const TABS = ['ALL', 'Snack & Jerky', 'Meal', 'Bakery']
 
 const SUB_CATEGORIES = {
-  'Snack & Jerky': ['오독오독', '청정 육포', '어글어글 육포', '어글어글 우유껌', '오래먹는 간식'],
+  'Snack & Jerky': ['오독오독', '청정 육포', '어글어글 육포', '어글어글 우유껌', '기타'],
   'Meal': ['스위피 테린', '어글어글 스팀', '샐러드', '두유'],
-  'Bakery': ['마들렌', '치즈번', '스콘'],
-}
 
+  'Bakery': []
+}
 const ITEMS_PER_PAGE = 12
 
 export default function StorePage() {
