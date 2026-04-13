@@ -58,11 +58,7 @@ export default function BestSellerPage() {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`w-10 h-10 flex items-center justify-center rounded-full text-[14px] !font-medium transition-all cursor-pointer border-none ${
-                currentPage === page 
-                  ? 'bg-[#3ea76e] !text-white shadow-md' 
-                  : 'bg-transparent text-[#999999] hover:bg-[#3ea76e] hover:!text-white'
-              }`}
+              className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
             >
               {page}
             </button>

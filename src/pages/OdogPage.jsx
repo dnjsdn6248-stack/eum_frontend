@@ -66,9 +66,7 @@ export default function OdogPage() {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`w-7 h-7 flex items-center justify-center rounded-full text-[13px] font-medium transition-colors cursor-pointer border-none ${
-                currentPage === page ? 'bg-[#222] text-white' : 'bg-transparent text-[#555] hover:bg-[#f0f0f0]'
-              }`}
+              className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
             >
               {page}
             </button>

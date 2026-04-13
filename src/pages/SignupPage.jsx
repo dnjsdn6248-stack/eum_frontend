@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, User, Phone, X, AtSign, CheckCircle } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, User, Phone, X, AtSign, CheckCircle, ChevronRight, AlertCircle } from 'lucide-react'
+import { useGetTermsQuery, useSignupMutation } from '@/api/authApi'
+
+// ─── 이메일 인증 모달 ──────────────────────────────────────────────────────────
 
 function EmailVerifyModal({ onClose, onVerified }) {
   const [email, setEmail] = useState('')
@@ -114,16 +117,110 @@ function EmailVerifyModal({ onClose, onVerified }) {
   )
 }
 
+// ─── 약관 전문 모달 ────────────────────────────────────────────────────────────
+
+function TermsContentModal({ term, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-[32px] w-full max-w-[600px] max-h-[80vh] flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between px-10 pt-10 pb-6 border-b border-[#f5f5f5]">
+          <div>
+            <span className={`text-[11px] font-black px-2 py-0.5 rounded-full mr-2 ${term.isRequired ? 'bg-[#e8f7ef] text-[#3ea76e]' : 'bg-[#f5f5f5] text-[#aaa]'}`}>
+              {term.isRequired ? '필수' : '선택'}
+            </span>
+            <span className="text-[18px] font-black text-[#111]">{term.title}</span>
+          </div>
+          <button onClick={onClose} className="text-[#bbb] hover:text-[#111] bg-transparent border-none cursor-pointer ml-4 shrink-0">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-10 py-8">
+          <p className="text-[13px] text-[#555] leading-relaxed whitespace-pre-line">{term.content}</p>
+        </div>
+        <div className="px-10 pb-10 pt-6 border-t border-[#f5f5f5]">
+          <button
+            onClick={onClose}
+            className="w-full h-14 rounded-full bg-[#3ea76e] text-white font-black text-[15px] border-none cursor-pointer hover:bg-[#318a57] transition-all"
+          >
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── 메인 SignupPage ───────────────────────────────────────────────────────────
+
 export default function SignupPage() {
   const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', name: '', phoneNumber: '' })
-  const [emailVerified, setEmailVerified] = useState(false)
+
+  const [showPassword, setShowPassword]     = useState(false)
+  const [formData, setFormData]             = useState({ username: '', email: '', password: '', name: '', phoneNumber: '' })
+  const [emailVerified, setEmailVerified]   = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
+  const [termsAgreed, setTermsAgreed]       = useState({})
+  const [viewingTerm, setViewingTerm]       = useState(null)
+  const [error, setError]                   = useState('')
+
+  const { data: termsData, isLoading: termsLoading } = useGetTermsQuery()
+  const [signup, { isLoading: isSigningUp }]          = useSignupMutation()
+
+  const terms         = termsData?.terms ?? []
+  const allChecked    = terms.length > 0 && terms.every(t => termsAgreed[t.id])
+  const someChecked   = terms.some(t => termsAgreed[t.id])
 
   const handleEmailVerified = (email) => {
     setFormData(prev => ({ ...prev, email }))
     setEmailVerified(true)
+  }
+
+  const handleAllAgree = (checked) => {
+    const next = {}
+    terms.forEach(t => { next[t.id] = checked })
+    setTermsAgreed(next)
+  }
+
+  const handleTermToggle = (id) => {
+    setTermsAgreed(prev => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  const handleSubmit = async () => {
+    setError('')
+
+    if (!emailVerified) {
+      setError('이메일 인증을 완료해 주세요.')
+      return
+    }
+    if (!formData.username || !formData.name || !formData.password || !formData.phoneNumber) {
+      setError('모든 필수 항목을 입력해 주세요.')
+      return
+    }
+
+    const requiredTerms      = terms.filter(t => t.isRequired)
+    const allRequiredAgreed  = requiredTerms.every(t => termsAgreed[t.id])
+    if (!allRequiredAgreed) {
+      setError('필수 약관에 모두 동의해야 합니다.')
+      return
+    }
+
+    // termsAgreed: 동의하지 않은 항목은 false로 채워서 전송
+    const termsPayload = {}
+    terms.forEach(t => { termsPayload[t.id] = !!termsAgreed[t.id] })
+
+    try {
+      await signup({ ...formData, termsAgreed: termsPayload }).unwrap()
+      navigate('/login', { state: { fromSignup: true } })
+    } catch (err) {
+      const detail = err?.data?.details
+      if (detail) {
+        const messages = Object.values(detail).join(' ')
+        setError(messages)
+      } else {
+        setError(err?.data?.error || '회원가입 중 오류가 발생했습니다.')
+      }
+    }
   }
 
   return (
@@ -136,6 +233,14 @@ export default function SignupPage() {
         />
       )}
 
+      {viewingTerm && (
+        <TermsContentModal
+          term={viewingTerm}
+          onClose={() => setViewingTerm(null)}
+        />
+      )}
+
+      {/* 좌측 브랜드 패널 */}
       <div className="hidden lg:flex flex-[1.1] relative items-center justify-center p-20 bg-[#3ea76e] overflow-hidden">
         <button
           onClick={() => navigate(-1)}
@@ -165,8 +270,9 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-[#FCFBF9] flex items-center justify-center p-8 lg:p-16">
-        <div className="w-full max-w-[420px]">
+      {/* 우측 폼 패널 */}
+      <div className="flex-1 bg-[#FCFBF9] flex items-center justify-center p-8 lg:p-16 overflow-y-auto">
+        <div className="w-full max-w-[420px] py-8">
 
           <div className="mb-10">
             <h2 className="text-[48px] font-black text-[#1B4332] tracking-[-0.07em] leading-none mb-3">Sign Up</h2>
@@ -175,6 +281,7 @@ export default function SignupPage() {
 
           <div className="w-full space-y-4">
 
+            {/* 이메일 인증 버튼 */}
             <button
               type="button"
               onClick={() => setShowEmailModal(true)}
@@ -189,17 +296,19 @@ export default function SignupPage() {
               {emailVerified ? `${formData.email} ✓` : '이메일 인증하기'}
             </button>
 
+            {/* 아이디 */}
             <div className="relative group">
               <AtSign className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type="text"
-                placeholder="아이디 *"
+                placeholder="아이디 * (영문+숫자 4~20자)"
                 value={formData.username}
                 onChange={e => setFormData({ ...formData, username: e.target.value })}
                 className="w-full h-14 pl-12 pr-6 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
             </div>
 
+            {/* 이름 */}
             <div className="relative group">
               <User className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
@@ -211,22 +320,24 @@ export default function SignupPage() {
               />
             </div>
 
+            {/* 전화번호 */}
             <div className="relative group">
               <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type="tel"
-                placeholder="전화번호"
+                placeholder="전화번호 * (010-1234-5678)"
                 value={formData.phoneNumber}
                 onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className="w-full h-14 pl-12 pr-6 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
             </div>
 
+            {/* 비밀번호 */}
             <div className="relative group">
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#bbb] group-focus-within:text-[#3ea76e] transition-colors" size={17} />
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="비밀번호 *"
+                placeholder="비밀번호 * (8~20자, 대소문자+숫자+특수문자)"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
                 className="w-full h-14 pl-12 pr-12 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
@@ -240,11 +351,99 @@ export default function SignupPage() {
               </button>
             </div>
 
+            {/* ─── 약관 동의 섹션 ─────────────────────────────────────────── */}
+            <div className="bg-white border border-[#eee] rounded-2xl p-5 space-y-3">
+
+              {/* 전체 동의 */}
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div
+                  className={`w-5 h-5 rounded-[6px] border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                    allChecked
+                      ? 'bg-[#3ea76e] border-[#3ea76e]'
+                      : someChecked
+                        ? 'bg-[#3ea76e]/20 border-[#3ea76e]'
+                        : 'border-[#ddd] bg-white'
+                  }`}
+                  onClick={() => handleAllAgree(!allChecked)}
+                >
+                  {(allChecked || someChecked) && (
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+                <span className="text-[14px] font-black text-[#111]">전체 동의</span>
+              </label>
+
+              <div className="border-t border-[#f5f5f5]" />
+
+              {/* 개별 약관 목록 */}
+              {termsLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="w-5 h-5 border-2 border-[#3ea76e] border-t-transparent rounded-full animate-spin" />
+                  <span className="ml-2 text-[13px] text-[#aaa] font-bold">약관 불러오는 중...</span>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {terms.map(term => (
+                    <div key={term.id} className="flex items-center gap-3">
+                      {/* 체크박스 */}
+                      <div
+                        className={`w-5 h-5 rounded-[6px] border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                          termsAgreed[term.id]
+                            ? 'bg-[#3ea76e] border-[#3ea76e]'
+                            : 'border-[#ddd] bg-white'
+                        }`}
+                        onClick={() => handleTermToggle(term.id)}
+                      >
+                        {termsAgreed[term.id] && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* 라벨 */}
+                      <span
+                        className="flex-1 text-[13px] font-bold text-[#555] cursor-pointer"
+                        onClick={() => handleTermToggle(term.id)}
+                      >
+                        <span className={`mr-1.5 text-[11px] font-black ${term.isRequired ? 'text-[#3ea76e]' : 'text-[#aaa]'}`}>
+                          [{term.isRequired ? '필수' : '선택'}]
+                        </span>
+                        {term.title}
+                      </span>
+
+                      {/* 보기 버튼 */}
+                      <button
+                        type="button"
+                        onClick={() => setViewingTerm(term)}
+                        className="text-[#aaa] hover:text-[#3ea76e] bg-transparent border-none cursor-pointer shrink-0 transition-colors"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 에러 메시지 */}
+            {error && (
+              <div className="flex items-start gap-2 px-4 py-3 bg-red-50 rounded-2xl">
+                <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                <p className="text-[13px] font-bold text-red-500">{error}</p>
+              </div>
+            )}
+
+            {/* 회원가입 버튼 */}
             <button
               type="button"
-              className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none"
+              onClick={handleSubmit}
+              disabled={isSigningUp}
+              className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
             >
-              회원가입
+              {isSigningUp ? '가입 중...' : '회원가입'}
             </button>
           </div>
 
@@ -253,11 +452,6 @@ export default function SignupPage() {
               이미 계정이 있으신가요? <span className="underline ml-1">로그인</span>
             </Link>
           </div>
-
-          <p className="text-center text-[11px] text-[#ccc] mt-10 font-medium">
-            가입 시 이용약관 및 개인정보처리방침에 동의합니다
-          </p>
-
         </div>
       </div>
     </div>

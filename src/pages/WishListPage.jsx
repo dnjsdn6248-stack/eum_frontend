@@ -1,25 +1,18 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ChevronDown, Check, X, Heart, ShoppingBag } from 'lucide-react'
+import Pagination from '../shared/components/Pagination'
 
+const PAGE_SIZE = 4
 
 const MOCK_WISHLIST = [
-  {
-    id: 1,
-    name: '[판매 2위] 어글어글 육포 50g 5종',
-    price: 7500,
-    img: 'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png',
-    currentOption: '제주 닭 안심 육포 50g',
-    options: ['제주 닭 안심 육포 50g', '강원도 황태채 40g', '우유껌 50g'],
-  },
-  {
-    id: 2,
-    name: '어글어글 우유껌 50g 7종',
-    price: 6500,
-    img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e33c42600c960242e5ec86ab1d7a.png',
-    currentOption: '산양유 우유껌',
-    options: ['제주 베리클리 우유껌', '산양유 우유껌', '오트밀 우유껌'],
-  }
+  { id: 1, name: '[판매 2위] 어글어글 육포 50g 5종', price: 7500, img: 'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png', currentOption: '제주 닭 안심 육포 50g', options: ['제주 닭 안심 육포 50g', '강원도 황태채 40g', '우유껌 50g'] },
+  { id: 2, name: '어글어글 우유껌 50g 7종', price: 6500, img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e23c42600c960242e5ec86ab1d7a.png', currentOption: '산양유 우유껌', options: ['제주 베리클리 우유껌', '산양유 우유껌', '오트밀 우유껌'] },
+  { id: 3, name: '[판매 1위] 오독오독 바삭 10종 골라담기', price: 15900, img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg', currentOption: '바삭 고구마 120g', options: ['바삭 고구마 120g', '바삭 당근 120g', '바삭 시금치 120g', '바삭 연어껍질 120g'] },
+  { id: 4, name: '스위피 꽈배기츄 40g', price: 12900, img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png', currentOption: '기본', options: [] },
+  { id: 5, name: '소고기 테린 100g', price: 6200, img: 'https://swiffy.cafe24.com/web/product/medium/202204/b7dfd74171a920aa986c690b1faaa079.jpg', currentOption: '기본', options: [] },
+  { id: 6, name: '스팀 고구마 큐브 100g', price: 5500, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg', currentOption: '기본', options: [] },
+  { id: 7, name: '어글어글 스팀 100g 8종', price: 8000, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg', currentOption: '닭가슴살 스팀 100g', options: ['닭가슴살 스팀 100g', '연어 스팀 100g', '오리 스팀 100g'] },
 ]
 
 function OptionDropdown({ currentOption, options = [], onSelect }) {
@@ -102,9 +95,12 @@ function WishItem({ item, onRemove }) {
 export default function WishListPage() {
   const navigate = useNavigate()
   const [items, setItems] = useState(MOCK_WISHLIST)
+  const [page, setPage] = useState(1)
 
-  const handleRemove = (id) => setItems(prev => prev.filter(item => item.id !== id))
+  const handleRemove = (id) => { setItems(prev => prev.filter(item => item.id !== id)); setPage(1) }
   const totalPrice = items.reduce((acc, item) => acc + (item.price || 0), 0)
+  const totalPages = Math.ceil(items.length / PAGE_SIZE)
+  const pagedItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111] pb-20">
@@ -148,11 +144,14 @@ export default function WishListPage() {
             <p className="text-[#bbb] font-bold text-[15px]">관심상품이 비어있습니다.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {items.map(item => (
-              <WishItem key={item.id} item={item} onRemove={handleRemove} />
-            ))}
-          </div>
+          <>
+            <div className="space-y-4">
+              {pagedItems.map(item => (
+                <WishItem key={item.id} item={item} onRemove={handleRemove} />
+              ))}
+            </div>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          </>
         )}
       </main>
     </div>

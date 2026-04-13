@@ -7,9 +7,9 @@ const TABS = ['ALL', 'Snack & Jerky', 'Meal', 'Bakery']
 const SUB_CATEGORIES = {
   'Snack & Jerky': ['오독오독', '청정 육포', '어글어글 육포', '어글어글 우유껌', '기타'],
   'Meal': ['스위피 테린', '어글어글 스팀', '샐러드', '두유'],
-
-  'Bakery': []
+  'Bakery': [],
 }
+
 const ITEMS_PER_PAGE = 12
 
 export default function StorePage() {
@@ -20,9 +20,14 @@ export default function StorePage() {
 
   useEffect(() => { window.scrollTo(0, 0) }, [currentPage, activeTab])
 
-  const filtered = activeTab === 'ALL' ? STORE_PRODUCTS : STORE_PRODUCTS.filter(p => p.category === activeTab)
+  const filtered = activeTab === 'ALL'
+    ? STORE_PRODUCTS
+    : STORE_PRODUCTS.filter(p => p.category === activeTab)
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  const subList = SUB_CATEGORIES[activeTab] || []
+  const showSubTabs = activeTab !== 'ALL' && subList.length > 0
 
   const handleTabChange = (tab) => {
     setActiveTab(tab)
@@ -35,14 +40,10 @@ export default function StorePage() {
     setCurrentPage(1)
   }
 
-    const subList = SUB_CATEGORIES[activeTab] || []
-    const showSubTabs = activeTab !== 'ALL' && subList.length > 0
-    const showMainTabs = activeTab === 'ALL'
-
   return (
     <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
 
-      {showMainTabs && (
+      {activeTab === 'ALL' && (
         <div className="flex justify-center gap-3 py-10">
           {TABS.map(tab => (
             <button
@@ -58,7 +59,6 @@ export default function StorePage() {
 
       {showSubTabs && (
         <div className={`${activeSub ? 'pt-10' : ''} mb-8`}>
-         
           <p className="text-center text-[18px] font-black text-[#111] tracking-tight mb-5">{activeTab}</p>
           <div className="flex justify-center flex-wrap gap-2">
             {subList.map(sub => (
@@ -98,15 +98,14 @@ export default function StorePage() {
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`w-10 h-10 flex items-center justify-center rounded-full text-[14px] font-medium transition-all cursor-pointer ${
-                currentPage === page ? 'bg-[#3ea76e] text-white shadow-md' : 'bg-transparent text-[#999] hover:bg-[#3ea76e] hover:text-white'
-              }`}
+              className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
             >
               {page}
             </button>
           ))}
         </div>
       )}
+
     </main>
   )
 }

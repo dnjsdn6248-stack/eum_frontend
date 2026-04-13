@@ -9,13 +9,12 @@ import StorePage from './pages/StorePage'
 import OdogPage from './pages/OdogPage'
 import ProductDetailPage from './pages/ProductDetailPage'
 import OrderPage from './pages/OrderPage'
+import OrderDetailPage from './pages/OrderDetailPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import CSPage from './pages/CSPage'
 import CartPage from './pages/CartPage'
 import BrandStoryPage from './pages/BrandStoryPage'
-import SubscriptionPage from './pages/SubscriptionPage'
-import SubscriptionDetailPage from './pages/SubscriptionDetailPage.jsx'
 import BestSellerPage from './pages/BestSellerPage'
 import CheckoutPage from './pages/CheckoutPage'
 import UserProfilePage from './pages/UserProfilePage'
@@ -47,9 +46,10 @@ export default function Router() {
             <Route path="/product/list" element={<StorePage />} />
             <Route path="/product/list/odog" element={<OdogPage />} />
             <Route path="/product/detail/:id" element={<ProductDetailPage />} />
-            <Route path="/subscription/detail/:id" element={<SubscriptionDetailPage />} />
+            <Route path="/subscription/detail/:id" element={<ProductDetailPage />} />
             <Route path="/best" element={<BestSellerPage />} />
             <Route path="/order/list" element={<OrderPage />} />
+            <Route path="/order/detail/:id" element={<OrderDetailPage />} />
             <Route path="/cs" element={<CSPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
@@ -61,7 +61,6 @@ export default function Router() {
             <Route path="/address" element={<UserAddressPage />} /> 
          <Route path="/user-subscription" element={<UserSubscriptionPage />} />
             <Route path="/brand-story" element={<BrandStoryPage />} />
-            <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="*" element={<HomePage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />

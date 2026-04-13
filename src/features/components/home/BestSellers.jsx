@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { BEST_SELLERS } from '../../../mock'
 
 export default function BestSellers() {
@@ -11,7 +12,7 @@ export default function BestSellers() {
 
       <div className="grid grid-cols-3 gap-10">
         {BEST_SELLERS.map((product, idx) => (
-          <a key={idx} href={product.href} className="flex flex-col group">
+          <Link key={idx} to={`/product/detail/${product.id}`} className="flex flex-col group">
             <div className="relative aspect-square overflow-hidden rounded-[24px] mb-5">
               <img
                 src={product.img}
@@ -30,7 +31,7 @@ export default function BestSellers() {
                 {product.price}
               </p>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </div>

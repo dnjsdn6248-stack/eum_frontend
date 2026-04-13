@@ -32,6 +32,14 @@ export const authApi = createApi({
       }),
     }),
 
+    signup: builder.mutation({
+      query: (userData) => ({
+        url: '/auth/signup',
+        method: 'POST',
+        body: userData,
+      }),
+    }),
+
     logout: builder.mutation({
       query: () => ({ url: '/auth/logout', method: 'POST' }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -60,6 +68,10 @@ export const authApi = createApi({
 
     // ─── Queries ────────────────────────────────────────────────────────────
 
+    getTerms: builder.query({
+      query: () => ({ url: '/auth/terms' }),
+    }),
+
     getMe: builder.query({
       query: () => ({ url: '/auth/me' }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -78,9 +90,11 @@ export const authApi = createApi({
 export const {
   useLoginMutation,
   useRegisterMutation,
+  useSignupMutation,
   useLogoutMutation,
   useUpdateProfileMutation,
   useChangePasswordMutation,
   useGetMeQuery,
   useLazyGetMeQuery,
+  useGetTermsQuery,
 } = authApi

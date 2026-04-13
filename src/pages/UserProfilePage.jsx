@@ -72,7 +72,7 @@ export default function UserProfilePage() {
             ))}
           </div>
 
-          <div className="flex justify-around py-5 bg-[#f9f9f9] rounded-2xl border border-[#eee]">
+          <div className="flex justify-around py-5 bg-[#f9f9f9] rounded-2xl border border-[#eee] mb-8">
             {[
               { label: '취소', count: 2 },
               { label: '교환', count: 0 },
@@ -85,6 +85,7 @@ export default function UserProfilePage() {
               </div>
             ))}
           </div>
+
         </section>
 
         <section className="bg-white rounded-[40px] border border-[#eee] overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.03)]">

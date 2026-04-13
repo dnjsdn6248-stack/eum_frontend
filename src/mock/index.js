@@ -56,11 +56,13 @@ export const ODOG_PRODUCTS = [
   { id: 12, name: '오독오독 포켓 3종 대용량 (5개입)', img: 'https://swiffy.cafe24.com/web/product/medium/202412/a2bc279e1f9da3e33fbd1d5b759c8716.jpg', originalPrice: '19,000원', discountPrice: '', set: false, href: '#' },
 ]
 
-// ─── ProductDetailPage ───────────────────────────────
+// ─── ProductDetailPage (통합 — isSubscribable로 UI 분기) ─
 export const DETAIL_PRODUCTS = [
   {
+    // ── 공통 필드 ──────────────────────────────────────
     id: 1,
     name: '어글어글 제주 야채 믹스 샐러드',
+    brand: '어글어글',
     desc: '원물을 그대로 말린 제품으로 채소를 골고루 잘 먹는 댕댕이들에게 추천합니다!',
     price: 6500,
     img: 'https://swiffy.co.kr/web/product/small/202303/a221b9c1eee2dc27e3131515ef3c9514.jpg',
@@ -77,6 +79,43 @@ export const DETAIL_PRODUCTS = [
       'https://ai.esmplus.com/swiffy0903/uglugl/SNACK/SALAD_01.jpg',
       'https://ai.esmplus.com/swiffy0903/uglugl/SNACK/SALAD_CHECK.jpg',
       'https://ai.esmplus.com/swiffy0903/uglugl/SNACK/UGLUGL.jpg',
+    ],
+
+    // ── 일반 상품 전용 필드 ─────────────────────────────
+    isSubscribable: false,
+    relatedProducts: [
+      { id: 'r1', name: '어글어글 스팀 100g 8종', originalPrice: 8000, discountPrice: null, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg', options: ['- 제품을 선택해 주세요 -', '닭가슴살 스팀 100g', '연어 스팀 100g'] },
+      { id: 'r2', name: '냉매제 추가 (아이스팩)', originalPrice: 500, discountPrice: null, img: 'https://swiffy.cafe24.com/web/product/medium/202203/c8c8493601aaee3f1b8355a403744344.jpg', options: ['- 냉매제 선택 -', '아이스팩(물)', '아이스팩(젤)'] },
+    ],
+  },
+  {
+    // ── 일반 구매 전용 상품 ─────────────────────────────
+    id: 2,
+    name: '[판매 1위] 오독오독 바삭 10종 골라담기',
+    brand: '오독오독',
+    desc: '100% 자연산 식재료로 만든 스위피 대표 간식. 바삭바삭 식감이 살아있어요!',
+    price: 15900,
+    img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg',
+    options: [
+      { label: '바삭 고구마 120g', extra: 0 },
+      { label: '바삭 당근 120g', extra: 0 },
+      { label: '바삭 시금치 120g', extra: 0 },
+      { label: '바삭 덕브로콜리 120g', extra: 5000 },
+      { label: '바삭 연어껍질 120g', extra: 0 },
+    ],
+    reviews: [
+      { name: '네이****', date: '24.07.14', rating: 5, text: '항상 시켜먹어요 울집 개달이 넘 좋아해요.' },
+      { name: 'ho****', date: '24.02.15', rating: 5, text: '전반적으로 만족스러워요. 정기 구매 결정했어요.' },
+    ],
+    detailImgs: [
+      'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg',
+    ],
+
+    // ── 일반 상품 전용 필드 ─────────────────────────────
+    isSubscribable: false,
+    relatedProducts: [
+      { id: 'r1', name: '어글어글 스팀 100g 8종', originalPrice: 8000, discountPrice: null, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg', options: ['- 제품을 선택해 주세요 -', '닭가슴살 스팀 100g', '연어 스팀 100g'] },
+      { id: 'r2', name: '냉매제 추가 (아이스팩)', originalPrice: 500, discountPrice: null, img: 'https://swiffy.cafe24.com/web/product/medium/202203/c8c8493601aaee3f1b8355a403744344.jpg', options: ['- 냉매제 선택 -', '아이스팩(물)', '아이스팩(젤)'] },
     ],
   },
 ]
@@ -131,12 +170,113 @@ export const MOCK_ORDERS = [
     ],
     productPrice: 12000, shippingPrice: 0, discountPrice: 0, total: 12000,
   },
+  {
+    id: '20260320-0000172',
+    date: '2026-03-20',
+    status: '배송완료',
+    items: [
+      { name: '[판매 1위] 오독오독 바삭 10종 골라담기', option: '바삭 고구마 120g', qty: 2, price: 15900, img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg' },
+    ],
+    productPrice: 31800, shippingPrice: 0, discountPrice: 0, total: 31800,
+  },
+  {
+    id: '20260310-0000145',
+    date: '2026-03-10',
+    status: '배송완료',
+    items: [
+      { name: '테린 2주 세트 (14개)', option: '기본', qty: 1, price: 50400, img: 'https://swiffy.cafe24.com/web/product/medium/202204/4a56950d703c6dee57c0f31d48d4644f.jpg' },
+      { name: '스위피 꽈배기츄 40g', option: '기본', qty: 1, price: 12900, img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png' },
+    ],
+    productPrice: 63300, shippingPrice: 0, discountPrice: 0, total: 63300,
+  },
+  {
+    id: '20260225-0000118',
+    date: '2026-02-25',
+    status: '배송완료',
+    items: [
+      { name: '어글어글 우유껌 50g 7종', option: '산양유 우유껌', qty: 3, price: 6500, img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e33c42600c960242e5ec86ab1d7a.png' },
+    ],
+    productPrice: 19500, shippingPrice: 5000, discountPrice: 0, total: 24500,
+  },
+  {
+    id: '20260210-0000099',
+    date: '2026-02-10',
+    status: '배송완료',
+    items: [
+      { name: '소고기 테린 100g', option: '기본', qty: 2, price: 6200, img: 'https://swiffy.cafe24.com/web/product/medium/202204/b7dfd74171a920aa986c690b1faaa079.jpg' },
+      { name: '연어 테린 60g', option: '기본', qty: 2, price: 4000, img: 'https://swiffy.cafe24.com/web/product/medium/202203/a5af436848536b61ecee509e6b700cac.jpg' },
+    ],
+    productPrice: 20400, shippingPrice: 5000, discountPrice: 0, total: 25400,
+  },
+  {
+    id: '20260130-0000082',
+    date: '2026-01-30',
+    status: '배송완료',
+    items: [
+      { name: '스팀 고구마 큐브 100g', option: '기본', qty: 4, price: 5500, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg' },
+    ],
+    productPrice: 22000, shippingPrice: 5000, discountPrice: 0, total: 27000,
+  },
+  {
+    id: '20260115-0000061',
+    date: '2026-01-15',
+    status: '배송완료',
+    items: [
+      { name: '어글어글 스팀 100g 8종', option: '닭가슴살 스팀 100g', qty: 1, price: 8000, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg' },
+      { name: '[판매 3위] 스위피 꽈배기츄 40g', option: '기본', qty: 1, price: 12900, img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png' },
+    ],
+    productPrice: 20900, shippingPrice: 5000, discountPrice: 0, total: 25900,
+  },
+]
+
+// ─── UserSubscriptionPage ────────────────────────────
+export const MOCK_SUBSCRIPTIONS = [
+  {
+    id: 'SUB-001',
+    name: '어글어글 우유껌 50g 7종',
+    option: '산양유 우유껌',
+    img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e33c42600c960242e5ec86ab1d7a.png',
+    cycle: '30일',
+    nextDate: '2026-05-01',
+    price: 6500,
+    status: '구독중',
+  },
+  {
+    id: 'SUB-002',
+    name: '테린 2주 세트 (14개)',
+    option: '기본',
+    img: 'https://swiffy.cafe24.com/web/product/medium/202204/4a56950d703c6dee57c0f31d48d4644f.jpg',
+    cycle: '14일',
+    nextDate: '2026-04-20',
+    price: 50400,
+    status: '구독중',
+  },
+  {
+    id: 'SUB-003',
+    name: '[판매 1위] 오독오독 바삭 10종 골라담기',
+    option: '바삭 고구마 120g',
+    img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg',
+    cycle: '30일',
+    nextDate: '2026-05-12',
+    price: 15900,
+    status: '구독중',
+  },
+  {
+    id: 'CANCEL-001',
+    name: '스위피 꽈배기츄 40g',
+    option: '기본',
+    img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png',
+    cycle: '7일',
+    nextDate: '-',
+    price: 12900,
+    status: '해지',
+  },
 ]
 // ─── BestSellers ─────────────────────────────────────
 export const BEST_SELLERS = [
-  { name: '[판매 1위] 오독오독 바삭 10종 골라담기', desc: '100% 자연산 식재료로 만든 스위피 대표 제품', price: '15,900원', img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg', href: '#' },
-  { name: '[판매 2위] 어글어글 육포 50g 5종', desc: '5개 이상 구매시 1개 추가증정 이벤트', price: '7,500원', img: 'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png', href: '#' },
-  { name: '[판매 3위] 스위피 꽈배기츄 40g', desc: '천천히 오래 씹는 재미, 스트레스 해소에 최고', price: '12,900원', img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png', href: '#' },
+  { id: 1, name: '[판매 1위] 오독오독 바삭 10종 골라담기', desc: '100% 자연산 식재료로 만든 스위피 대표 제품', price: '15,900원', img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg' },
+  { id: 11, name: '[판매 2위] 어글어글 육포 50g 5종', desc: '5개 이상 구매시 1개 추가증정 이벤트', price: '7,500원', img: 'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png' },
+  { id: 3, name: '[판매 3위] 스위피 꽈배기츄 40g', desc: '천천히 오래 씹는 재미, 스트레스 해소에 최고', price: '12,900원', img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png' },
 ]
 
 // ─── PhotoReviews ─────────────────────────────────────
@@ -205,14 +345,84 @@ export const MOCK_CART = [
     qty: 1,
     option: '',
     options: ['제주 닭 안심 육포 50g', '강원도 황태채 40g', '우유껌 50g'],
-    img: 'https://swiffy.cafe24.com/web/product/medium/202204/4a56950d703c6dee57c0f31d48d4644f.jpg'
-  }
+    img: 'https://swiffy.cafe24.com/web/product/medium/202204/4a56950d703c6dee57c0f31d48d4644f.jpg',
+  },
+  {
+    id: 2,
+    name: '어글어글 우유껌 50g 7종',
+    delivery: '[유료] / 기본배송',
+    price: 6500,
+    qty: 1,
+    option: '제주 베리클리 우유껌',
+    options: ['제주 베리클리 우유껌', '산양유 우유껌', '오트밀 우유껌'],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e33c42600c960242e5ec86ab1d7a.png',
+  },
+  {
+    id: 3,
+    name: '[판매 2위] 어글어글 육포 50g 5종',
+    delivery: '[유료] / 기본배송',
+    price: 7500,
+    qty: 2,
+    option: '제주 닭 안심 육포 50g',
+    options: ['제주 닭 안심 육포 50g', '강원도 황태채 40g', '제주 흑돼지 안심 육포'],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png',
+  },
+  {
+    id: 4,
+    name: '[판매 1위] 오독오독 바삭 10종 골라담기',
+    delivery: '[유료] / 기본배송',
+    price: 15900,
+    qty: 1,
+    option: '바삭 고구마 120g',
+    options: ['바삭 고구마 120g', '바삭 당근 120g', '바삭 시금치 120g', '바삭 연어껍질 120g'],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg',
+  },
+  {
+    id: 5,
+    name: '스위피 꽈배기츄 40g',
+    delivery: '[유료] / 기본배송',
+    price: 12900,
+    qty: 1,
+    option: '',
+    options: [],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png',
+  },
+  {
+    id: 6,
+    name: '어글어글 스팀 100g 8종',
+    delivery: '[유료] / 기본배송',
+    price: 8000,
+    qty: 3,
+    option: '닭가슴살 스팀 100g',
+    options: ['닭가슴살 스팀 100g', '연어 스팀 100g', '오리 스팀 100g'],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg',
+  },
+  {
+    id: 7,
+    name: '냉매제 추가 (아이스팩)',
+    delivery: '[유료] / 기본배송',
+    price: 500,
+    qty: 1,
+    option: '아이스팩(물)',
+    options: ['아이스팩(물)', '아이스팩(젤)'],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202203/c8c8493601aaee3f1b8355a403744344.jpg',
+  },
+  {
+    id: 8,
+    name: '소고기 테린 100g',
+    delivery: '[유료] / 기본배송',
+    price: 6200,
+    qty: 1,
+    option: '',
+    options: [],
+    img: 'https://swiffy.cafe24.com/web/product/medium/202204/b7dfd74171a920aa986c690b1faaa079.jpg',
+  },
 ]
 
 // ─── NAV_ITEMS ────────────────────────────────────────
 export const NAV_ITEMS = [
   { label: 'STORE', to: '/product/list' },
-  { label: '정기배송', to: '/subscription' },
+  { label: '정기배송', to: '/user-subscription' },
   { label: '베스트셀러', to: '/best' },
   { label: '브랜드 스토리', to: '/brand-story' },
 ]

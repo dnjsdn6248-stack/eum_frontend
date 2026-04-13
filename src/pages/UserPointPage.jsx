@@ -1,19 +1,16 @@
 import React from "react";
-import { Wallet, ChevronRight, History, CircleDollarSign, Info } from "lucide-react";
+import { Wallet, ChevronRight, History, Info } from "lucide-react";
 
 export default function UserPointPage() {
   const pointSummary = [
     { label: "총 적립금", value: "3,080원", highlight: false },
     { label: "사용가능 적립금", value: "3,080원", highlight: true },
     { label: "사용된 적립금", value: "0원", highlight: false },
-    { label: "미가용 적립금", value: "0원", highlight: false },
     { label: "환불예정 적립금", value: "0원", highlight: false },
   ];
 
   const menuLinks = [
     { title: "적립내역", icon: <History size={18} /> },
-    { title: "미가용 적립내역", icon: <CircleDollarSign size={18} /> },
-    { title: "미가용쿠폰/회원등급 적립내역", icon: <CircleDollarSign size={18} /> },
   ];
 
   return (

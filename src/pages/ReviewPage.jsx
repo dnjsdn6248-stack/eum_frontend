@@ -3,8 +3,10 @@ import { Star, Search, ChevronDown, Check } from 'lucide-react';
 import ReviewList from '../features/components/review/ReviewList';
 
 export default function SwiffyReviewSummary() {
-  
-  const [activeDropdown, setActiveDropdown] = useState(null); 
+
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const toggleDropdown = (name) => {
     setActiveDropdown(activeDropdown === name ? null : name);
@@ -18,7 +20,8 @@ export default function SwiffyReviewSummary() {
 
       <main className="max-w-[1100px] mx-auto px-4">
         <section className="bg-white rounded-[40px] border border-[#eee] p-8 md:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.03)] mb-6">
-          
+
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pb-12 border-b border-[#eee]">
             <div className="space-y-8 md:pr-12 md:border-r border-[#eee]">
               <div className="flex flex-col items-center">
@@ -74,14 +77,9 @@ export default function SwiffyReviewSummary() {
 
           
           <div className="flex items-center justify-between pt-8 relative">
-            <div className="flex gap-2">
-              <button className="p-3 bg-[#f5f5f5] border border-[#eee] rounded-full hover:border-[#3ea76e] hover:bg-white transition-all cursor-pointer group">
-                <Search size={16} className="text-[#888] group-hover:text-[#3ea76e]" />
-              </button>
-              
-              
+            <div className="flex items-center gap-2">
               <div className="relative">
-                <button 
+                <button
                   onClick={() => toggleDropdown('type')}
                   className={`px-5 py-2.5 border rounded-full text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${activeDropdown === 'type' ? 'border-[#3ea76e] bg-white text-[#3ea76e]' : 'bg-[#f5f5f5] border-[#eee] text-[#555]'}`}
                 >
@@ -99,9 +97,8 @@ export default function SwiffyReviewSummary() {
                 )}
               </div>
 
-              
               <div className="relative">
-                <button 
+                <button
                   onClick={() => toggleDropdown('rating')}
                   className={`px-5 py-2.5 border rounded-full text-[13px] font-bold flex items-center gap-2 transition-all cursor-pointer ${activeDropdown === 'rating' ? 'border-[#3ea76e] bg-white text-[#3ea76e]' : 'bg-[#f5f5f5] border-[#eee] text-[#555]'}`}
                 >
@@ -118,6 +115,30 @@ export default function SwiffyReviewSummary() {
                   </div>
                 )}
               </div>
+
+              {searchOpen ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    placeholder="리뷰 검색"
+                    className="w-[260px] h-10 px-5 rounded-full border border-[#3ea76e] bg-white text-[13px] font-bold text-[#111] outline-none placeholder:text-[#ccc]"
+                  />
+                  <button
+                    onClick={() => { setSearchOpen(false); setSearchText(''); }}
+                    className="text-[#ccc] hover:text-[#aaa] bg-transparent border-none cursor-pointer text-[18px] font-bold"
+                  >✕</button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="p-3 bg-[#f5f5f5] border border-[#eee] rounded-full hover:border-[#3ea76e] hover:bg-white transition-all cursor-pointer group"
+                >
+                  <Search size={16} className="text-[#888] group-hover:text-[#3ea76e]" />
+                </button>
+              )}
             </div>
 
             

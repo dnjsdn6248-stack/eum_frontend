@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, X, MessageCircle } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Mail, Lock, Eye, EyeOff, X, MessageCircle, AlertCircle } from 'lucide-react'
+import { useLoginMutation } from '@/api/authApi'
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24">
@@ -12,9 +13,32 @@ const GoogleIcon = () => (
 )
 
 export default function LoginPage() {
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+  const location  = useLocation()
   const [showPassword, setShowPassword] = useState(false)
-  const [formData, setFormData] = useState({ username: '', password: '' })
+  const [formData, setFormData]         = useState({ username: '', password: '' })
+  const [error, setError]               = useState('')
+
+  const [login, { isLoading }] = useLoginMutation()
+
+  const handleLogin = async () => {
+    setError('')
+    if (!formData.username || !formData.password) {
+      setError('아이디와 비밀번호를 입력해 주세요.')
+      return
+    }
+    try {
+      await login(formData).unwrap()
+      const redirectTo = location.state?.from || '/'
+      navigate(redirectTo, { replace: true })
+    } catch (err) {
+      setError(err?.data?.error || '아이디 또는 비밀번호가 올바르지 않습니다.')
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleLogin()
+  }
 
   return (
     <div className="min-h-screen flex overflow-hidden bg-white">
@@ -66,6 +90,7 @@ export default function LoginPage() {
                 placeholder="아이디를 입력해주세요"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onKeyDown={handleKeyDown}
                 className="w-full h-14 pl-12 pr-6 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
             </div>
@@ -77,6 +102,7 @@ export default function LoginPage() {
                 placeholder="비밀번호를 입력해주세요"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onKeyDown={handleKeyDown}
                 className="w-full h-14 pl-12 pr-12 bg-white border border-[#eee] rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] focus:shadow-sm"
               />
               <button
@@ -88,11 +114,20 @@ export default function LoginPage() {
               </button>
             </div>
 
+            {error && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-red-50 rounded-2xl">
+                <AlertCircle size={15} className="text-red-400 shrink-0" />
+                <p className="text-[13px] font-bold text-red-500">{error}</p>
+              </div>
+            )}
+
             <button
               type="button"
-              className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none"
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
             >
-              스위피 시작하기
+              {isLoading ? '로그인 중...' : '스위피 시작하기'}
             </button>
           </div>
 

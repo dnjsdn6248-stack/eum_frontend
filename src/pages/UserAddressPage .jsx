@@ -1,23 +1,23 @@
 import { useState } from 'react'
-import { Plus, Trash2, Edit2, Search, X, MapPin } from 'lucide-react'
+import { Plus, Search, X, MapPin } from 'lucide-react'
+import Pagination from '../shared/components/Pagination'
 
 const EMPTY_FORM = {
   title: '', name: '', phone: '', zipcode: '', addr1: '', addr2: '', isDefault: false
 }
 
+const PAGE_SIZE = 5
+
 export default function UserAddressPage() {
   const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      title: '우리집',
-      name: '서령님',
-      phone: '010-6482-2955',
-      zipcode: '22664',
-      addr1: '인천광역시 서구 보듬로 158 (오류동)',
-      addr2: '공존동 4층 430호',
-      isDefault: true,
-    },
+    { id: 1, title: '우리집', name: '서령님', phone: '010-6482-2955', zipcode: '22664', addr1: '인천광역시 서구 보듬로 158 (오류동)', addr2: '공존동 4층 430호', isDefault: true },
+    { id: 2, title: '회사', name: '허서령', phone: '010-1234-5678', zipcode: '06236', addr1: '서울특별시 강남구 테헤란로 123', addr2: '스위피 빌딩 5층', isDefault: false },
+    { id: 3, title: '부모님댁', name: '허부모', phone: '010-9876-5432', zipcode: '48060', addr1: '부산광역시 해운대구 해운대로 45', addr2: '101동 202호', isDefault: false },
+    { id: 4, title: '친구집', name: '김친구', phone: '010-5555-6666', zipcode: '16678', addr1: '경기도 수원시 영통구 광교로 78', addr2: '광교타운 303호', isDefault: false },
+    { id: 5, title: '별장', name: '서령님', phone: '010-6482-2955', zipcode: '33450', addr1: '충청남도 태안군 안면읍 해변로 11', addr2: '', isDefault: false },
+    { id: 6, title: '캠핑장', name: '서령님', phone: '010-6482-2955', zipcode: '25500', addr1: '강원도 강릉시 주문진읍 해안로 300', addr2: '', isDefault: false },
   ])
+  const [page, setPage] = useState(1)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('add')
@@ -38,7 +38,7 @@ export default function UserAddressPage() {
     setIsModalOpen(true)
   }
 
-  const handleDelete = (id) => setAddresses(prev => prev.filter(a => a.id !== id))
+  const handleDelete = (id) => { setAddresses(prev => prev.filter(a => a.id !== id)); setPage(1) }
 
   const handleSubmit = () => {
     if (!form.title || !form.name || !form.addr1) return
@@ -87,7 +87,7 @@ export default function UserAddressPage() {
               <p className="text-[#bbb] font-bold text-[14px]">등록된 배송지가 없어요</p>
             </div>
           )}
-          {addresses.map((item) => (
+          {addresses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((item) => (
             <div key={item.id} className="bg-white border border-[#eee] rounded-[24px] px-6 py-5 shadow-[0_4px_16px_rgba(0,0,0,0.02)] hover:border-[#ddd] transition-all">
               <div className="flex justify-between items-center">
                 <div className="space-y-1.5">
@@ -125,6 +125,11 @@ export default function UserAddressPage() {
               </div>
             </div>
           ))}
+          <Pagination
+            page={page}
+            totalPages={Math.ceil(addresses.length / PAGE_SIZE)}
+            onChange={setPage}
+          />
         </div>
       </div>
 
