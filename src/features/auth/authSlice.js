@@ -1,59 +1,54 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 /**
- * authSlice — 클라이언트 인증 상태만 관리
+ * authSlice — 클라이언트 인증 상태 관리
  *
- * 서버 통신(login, logout, getMe 등)은 authApi(RTK Query)가 담당하며,
- * onQueryStarted 콜백에서 setCredentials / clearCredentials를 dispatch해
- * 이 슬라이스를 업데이트합니다.
- *
- * loading / error 상태는 RTK Query가 반환하는 isLoading / error로 대체됩니다.
+ * - accessToken: 메모리(JS 변수)에만 저장. localStorage/sessionStorage 금지.
+ * - refreshToken: 서버가 HttpOnly 쿠키로 관리. JS 접근 불가.
+ * - user: /auth/me 응답으로 채움.
  */
 
 const initialState = {
-  /** @type {{ id: number, email: string, name: string, role: 'USER'|'ADMIN', profileImage: string|null } | null} */
   user: null,
-  accessToken: localStorage.getItem('accessToken') ?? null,
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  accessToken: null,    // 메모리 전용 — 새로고침 시 withReauth가 /auth/refresh로 복원
+  isInitialized: false, // AuthInitializer 완료 신호
 }
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    /** login / updateProfile 성공 후 authApi.onQueryStarted에서 호출 */
-    setCredentials(state, action) {
-      const { user, accessToken } = action.payload
-      if (user !== undefined) state.user = user
-      if (accessToken !== undefined) {
-        state.accessToken     = accessToken
-        state.isAuthenticated = true
-      }
+    /** /auth/me 성공 시 user 저장 */
+    setUser(state, action) {
+      state.user = action.payload
     },
 
-    /** logout / 토큰 만료 시 authApi.onQueryStarted 또는 axiosInstance 인터셉터에서 호출 */
-    clearCredentials(state) {
-      state.user            = null
-      state.accessToken     = null
-      state.isAuthenticated = false
+    /** 로그인·/auth/refresh 성공 시 accessToken 메모리 저장 */
+    setAccessToken(state, action) {
+      state.accessToken = action.payload
     },
 
-    /** axiosInstance 토큰 갱신 인터셉터에서 호출 (기존 호환 유지) */
-    setToken(state, action) {
-      state.accessToken     = action.payload
-      state.isAuthenticated = !!action.payload
+    /** AuthInitializer의 getMe finally 블록에서 반드시 호출 */
+    setInitialized(state) {
+      state.isInitialized = true
+    },
+
+    /** 로그아웃 또는 withReauth 갱신 실패 시 호출 */
+    logout(state) {
+      state.user = null
+      state.accessToken = null
     },
   },
 })
 
-export const { setCredentials, clearCredentials, setToken } = authSlice.actions
+export const { setUser, setAccessToken, setInitialized, logout } = authSlice.actions
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
-export const selectAuth            = (state) => state.auth
-export const selectCurrentUser     = (state) => state.auth.user
-export const selectAccessToken     = (state) => state.auth.accessToken
-export const selectIsAuthenticated = (state) => state.auth.isAuthenticated
-export const selectIsAdmin         = (state) => state.auth.user?.role === 'ADMIN'
+export const selectCurrentUser   = (state) => state.auth.user
+export const selectAccessToken   = (state) => state.auth.accessToken
+export const selectIsInitialized = (state) => state.auth.isInitialized
+export const selectIsLoggedIn    = (state) => state.auth.user !== null
+export const selectIsAdmin       = (state) => state.auth.user?.role === 'ROLE_ADMIN'
 
 export default authSlice.reducer

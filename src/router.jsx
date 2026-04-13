@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useGetCategoriesQuery } from '@/api/categoryApi'
-import { useGetMeQuery } from '@/api/authApi'
+import { useGetMeQuery, useGetCsrfQuery } from '@/api/authApi'
 import useAppSelector from '@/hooks/useAppSelector'
-import { selectIsAuthenticated } from '@/features/auth/authSlice'
+import { selectIsInitialized } from '@/features/auth/authSlice'
 import Layout from './features/components/layout/Layout'
 import HomePage from './pages/HomePage'
 import StorePage from './pages/StorePage'
@@ -28,17 +28,20 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 
 
-function AppInit({ children }) {
-  const isAuthenticated = useAppSelector(selectIsAuthenticated)
+function AuthInitializer({ children }) {
+  useGetCsrfQuery()        // 앱 시작 시 XSRF-TOKEN 쿠키 발급
   useGetCategoriesQuery()
-  useGetMeQuery(undefined, { skip: !isAuthenticated })
+  useGetMeQuery()          // 401 → withReauth → /auth/refresh → 재시도
+  const isInitialized = useAppSelector(selectIsInitialized)
+
+  if (!isInitialized) return null
   return children
 }
 
 export default function Router() {
   return (
     <BrowserRouter>
-      <AppInit>
+      <AuthInitializer>
         <Routes>
           <Route element={<Layout />}>
           <Route path="/terms" element={<TermsPage />} />
@@ -66,7 +69,7 @@ export default function Router() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
         </Routes>
-      </AppInit>
+      </AuthInitializer>
     </BrowserRouter>
   )
 }
