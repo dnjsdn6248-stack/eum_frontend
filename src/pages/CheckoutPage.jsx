@@ -1,14 +1,20 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronUp, Check, ChevronDown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import AddressSearch from '@/features/user/AddressSearch'
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
+  const availableCoupons = [
+    { id: 1, title: '2026 리틀버디 할인 쿠폰' },
+    { id: 2, title: '첫 구매 감사 쿠폰' },
+  ]
   const [addrTab, setAddrTab] = useState('direct')
   const [payType, setPayType] = useState('recent')
   const [paymentMethod, setPaymentMethod] = useState('bank')
   const [isAddrOpen, setIsAddrOpen] = useState(true)
   const [isAgreed, setIsAgreed] = useState(false)
+  const [shippingAddr, setShippingAddr] = useState({ postcode: '', baseAddress: '', extraAddress: '', addressType: '', detailAddress: '' })
 
   const paymentOptions = [
     { id: 'bank', label: '계좌이체' },
@@ -75,13 +81,13 @@ export default function CheckoutPage() {
                   <label className="text-[14px] font-bold text-[#555] self-start pt-3">주소 <span className="text-[#3ea76e]">*</span></label>
                   <div className="space-y-2">
                     <div className="flex gap-2">
-                      <input type="text" className="flex-[0.4] h-12 bg-[#f9f9f9] border border-[#eee] rounded-2xl px-5 font-bold text-[14px] text-[#bbb]" placeholder="우편번호" readOnly />
-                      <button className="h-12 px-5 rounded-2xl bg-white border border-[#eee] text-[#111] font-bold text-[13px] hover:bg-[#3ea76e] hover:text-white hover:border-[#3ea76e] transition-all cursor-pointer">
-                        주소검색
-                      </button>
+                      <input type="text" value={shippingAddr.postcode} readOnly className="flex-[0.4] h-12 bg-[#f9f9f9] border border-[#eee] rounded-2xl px-5 font-bold text-[14px] text-[#bbb]" placeholder="우편번호" />
+                      <AddressSearch onSelect={({ postcode, baseAddress, extraAddress, addressType }) =>
+                        setShippingAddr(prev => ({ ...prev, postcode, baseAddress, extraAddress, addressType }))
+                      } />
                     </div>
-                    <input type="text" className="w-full h-12 bg-[#f9f9f9] border border-[#eee] rounded-2xl px-5 font-bold text-[14px] text-[#bbb]" placeholder="기본주소" readOnly />
-                    <input type="text" className="w-full h-12 bg-white border border-[#eee] rounded-2xl px-5 font-bold text-[14px] outline-none focus:border-[#3ea76e] transition-all" placeholder="나머지 주소" />
+                    <input type="text" value={`${shippingAddr.baseAddress} ${shippingAddr.extraAddress}`.trim()} readOnly className="w-full h-12 bg-[#f9f9f9] border border-[#eee] rounded-2xl px-5 font-bold text-[14px] text-[#bbb]" placeholder="기본주소" />
+                    <input type="text" value={shippingAddr.detailAddress} onChange={e => setShippingAddr(prev => ({ ...prev, detailAddress: e.target.value }))} className="w-full h-12 bg-white border border-[#eee] rounded-2xl px-5 font-bold text-[14px] outline-none focus:border-[#3ea76e] transition-all" placeholder="나머지 주소" />
                   </div>
 
                   <label className="text-[14px] font-bold text-[#555]">휴대폰 <span className="text-[#3ea76e]">*</span></label>
@@ -148,7 +154,7 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-[13px] font-bold text-[#555]">쿠폰 할인</label>
-                  <span className="text-[13px] font-bold text-[#3ea76e]">보유쿠폰 2개</span>
+                  <span className="text-[13px] font-bold text-[#3ea76e]">보유쿠폰 {availableCoupons.length}개</span>
                 </div>
                 <div className="flex gap-3">
                   <div className="flex-1 h-12 bg-[#f9f9f9] border border-[#eee] rounded-2xl px-5 flex items-center justify-end">

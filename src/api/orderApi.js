@@ -1,14 +1,8 @@
-import { createApi } from '@reduxjs/toolkit/query/react'
-import baseQuery from './baseQuery'
+import { apiSlice } from './apiSlice'
 import { setLastCreatedOrder } from '@/features/order/orderSlice'
 
-export const orderApi = createApi({
-  reducerPath: 'orderApi',
-  baseQuery,
-  tagTypes: ['Order'],
+export const orderApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-
-    // ─── Queries ────────────────────────────────────────────────────────────
 
     /** 주문 목록 */
     getOrders: builder.query({
@@ -27,8 +21,6 @@ export const orderApi = createApi({
       query: (orderId) => ({ url: `/orders/${orderId}` }),
       providesTags: (result, error, orderId) => [{ type: 'Order', id: orderId }],
     }),
-
-    // ─── Mutations ──────────────────────────────────────────────────────────
 
     /** 주문 생성 — 완료 후 lastCreatedOrder 저장 */
     createOrder: builder.mutation({

@@ -1,13 +1,7 @@
-import { createApi } from '@reduxjs/toolkit/query/react'
-import baseQuery from './baseQuery'
+import { apiSlice } from './apiSlice'
 
-export const productApi = createApi({
-  reducerPath: 'productApi',
-  baseQuery,
-  tagTypes: ['Product'],
+export const productApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-
-    // ─── Queries ────────────────────────────────────────────────────────────
 
     /** 상품 목록 (필터·페이지네이션 포함) */
     getProducts: builder.query({

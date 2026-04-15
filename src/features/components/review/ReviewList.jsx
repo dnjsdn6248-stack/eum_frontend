@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Star } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ReviewItem from './ReviewItem'
 import Pagination from '../../../shared/components/Pagination'
 
@@ -13,35 +13,19 @@ const INIT_REVIEWS = [
 
 const PAGE_SIZE = 3
 
-export default function ReviewList() {
+export default function ReviewList({ writeReviewState = null }) {
+  const navigate = useNavigate()
   const [reviews, setReviews] = useState(INIT_REVIEWS)
   const [page, setPage] = useState(1)
-  const [showForm, setShowForm] = useState(false)
-  const [rating, setRating] = useState(5)
-  const [hovered, setHovered] = useState(0)
-  const [text, setText] = useState('')
 
   const totalPages = Math.ceil(reviews.length / PAGE_SIZE)
   const pagedReviews = reviews.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const handleSubmit = () => {
-    if (!text.trim()) return
-    const newReview = {
-      id: Date.now(),
-      name: '나****',
-      date: new Date().toLocaleDateString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit' }).replace(/\. /g, '. '),
-      views: 0,
-      rating,
-      text: text.trim(),
-      imgs: [],
-      comments: [],
+  useEffect(() => {
+    if (page > Math.max(totalPages, 1)) {
+      setPage(Math.max(totalPages, 1))
     }
-    setReviews(prev => [newReview, ...prev])
-    setText('')
-    setRating(5)
-    setShowForm(false)
-    setPage(1)
-  }
+  }, [page, totalPages])
 
   const handleAddComment = (reviewId, commentText) => {
     const newComment = {
@@ -62,55 +46,12 @@ export default function ReviewList() {
           전체 리뷰 <span className="text-[#3ea76e]">{reviews.length}</span>
         </h3>
         <button
-          onClick={() => setShowForm(prev => !prev)}
+          onClick={() => navigate('/review/write', { state: writeReviewState ?? undefined })}
           className="h-10 px-5 rounded-full bg-[#3ea76e] text-white font-black text-[13px] border-none cursor-pointer hover:bg-[#318a57] transition-all"
         >
-          {showForm ? '작성 취소' : '리뷰 작성'}
+          리뷰 작성
         </button>
       </div>
-
-      {showForm && (
-        <div className="mb-8 p-6 bg-[#f9f9f9] rounded-[24px] border border-[#eee]">
-          <p className="text-[14px] font-black text-[#111] mb-4">별점</p>
-          <div className="flex items-center gap-1 mb-5">
-            {[1, 2, 3, 4, 5].map(n => (
-              <button
-                key={n}
-                onMouseEnter={() => setHovered(n)}
-                onMouseLeave={() => setHovered(0)}
-                onClick={() => setRating(n)}
-                className="bg-transparent border-none cursor-pointer p-0"
-              >
-                <Star
-                  size={28}
-                  className={`transition-colors ${n <= (hovered || rating) ? 'fill-[#f5a623] text-[#f5a623]' : 'fill-[#ddd] text-[#ddd]'}`}
-                />
-              </button>
-            ))}
-            <span className="ml-2 text-[14px] font-black text-[#111]">{hovered || rating}점</span>
-          </div>
-
-          <p className="text-[14px] font-black text-[#111] mb-2">후기</p>
-          <textarea
-            value={text}
-            onChange={e => setText(e.target.value)}
-            placeholder="상품은 어떠셨나요? 솔직한 후기를 남겨주세요 🐾"
-            maxLength={500}
-            rows={4}
-            className="w-full bg-white rounded-2xl px-5 py-4 text-[14px] font-bold text-[#333] outline-none border border-[#eee] focus:border-[#3ea76e] resize-none transition-colors"
-          />
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-[12px] font-bold text-[#bbb]">{text.length}/500</span>
-            <button
-              onClick={handleSubmit}
-              disabled={!text.trim()}
-              className="h-10 px-6 bg-[#3ea76e] text-white rounded-full font-black text-[13px] border-none cursor-pointer hover:bg-[#318a57] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              등록하기
-            </button>
-          </div>
-        </div>
-      )}
 
       <div>
         {pagedReviews.map(review => (

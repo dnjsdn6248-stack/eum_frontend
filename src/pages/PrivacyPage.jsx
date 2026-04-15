@@ -1,6 +1,7 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom'
 
 export default function PrivacyPage() {
+  const navigate = useNavigate()
   const privacyText = `(주)스위피(이하 "회사")는 "정보통신망 이용촉진 및 정보보호 등에 관한 법률" 등 관련 법령을 준수하며, 이용자의 개인정보를 소중히 취급하고 안전하게 관리하기 위해 최선을 다하고 있습니다.
 
 ■ 수집하는 개인정보의 항목 및 수집방법
@@ -85,7 +86,7 @@ export default function PrivacyPage() {
         {/* 하단 버튼 */}
         <div className="mt-16 text-center">
           <button 
-            onClick={() => window.history.back()}
+            onClick={() => navigate(-1)}
             className="w-full md:w-auto md:px-24 py-6 bg-[#3ea76e] text-white rounded-[24px] font-black text-base hover:bg-[#318a57] transition-all border-none cursor-pointer"
           >
             확인 및 돌아가기

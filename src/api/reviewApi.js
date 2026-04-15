@@ -1,13 +1,7 @@
-import { createApi } from '@reduxjs/toolkit/query/react'
-import baseQuery from './baseQuery'
+import { apiSlice } from './apiSlice'
 
-export const reviewApi = createApi({
-  reducerPath: 'reviewApi',
-  baseQuery,
-  tagTypes: ['Review'],
+export const reviewApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-
-    // ─── Queries ────────────────────────────────────────────────────────────
 
     /** 상품별 리뷰 목록 */
     getProductReviews: builder.query({
@@ -25,8 +19,6 @@ export const reviewApi = createApi({
       query: (params) => ({ url: '/reviews/mine', params }),
       providesTags: [{ type: 'Review', id: 'MINE' }],
     }),
-
-    // ─── Mutations ──────────────────────────────────────────────────────────
 
     /** 리뷰 작성 */
     createReview: builder.mutation({

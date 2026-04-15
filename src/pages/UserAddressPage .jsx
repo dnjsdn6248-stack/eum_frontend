@@ -1,21 +1,24 @@
-import { useState } from 'react'
-import { Plus, Search, X, MapPin } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, X, MapPin } from 'lucide-react'
 import Pagination from '../shared/components/Pagination'
+import AddressSearch from '@/features/user/AddressSearch'
 
 const EMPTY_FORM = {
-  title: '', name: '', phone: '', zipcode: '', addr1: '', addr2: '', isDefault: false
+  title: '', name: '', phone: '',
+  postcode: '', baseAddress: '', extraAddress: '', addressType: '',
+  detailAddress: '', isDefault: false,
 }
 
 const PAGE_SIZE = 5
 
 export default function UserAddressPage() {
   const [addresses, setAddresses] = useState([
-    { id: 1, title: '우리집', name: '서령님', phone: '010-6482-2955', zipcode: '22664', addr1: '인천광역시 서구 보듬로 158 (오류동)', addr2: '공존동 4층 430호', isDefault: true },
-    { id: 2, title: '회사', name: '허서령', phone: '010-1234-5678', zipcode: '06236', addr1: '서울특별시 강남구 테헤란로 123', addr2: '스위피 빌딩 5층', isDefault: false },
-    { id: 3, title: '부모님댁', name: '허부모', phone: '010-9876-5432', zipcode: '48060', addr1: '부산광역시 해운대구 해운대로 45', addr2: '101동 202호', isDefault: false },
-    { id: 4, title: '친구집', name: '김친구', phone: '010-5555-6666', zipcode: '16678', addr1: '경기도 수원시 영통구 광교로 78', addr2: '광교타운 303호', isDefault: false },
-    { id: 5, title: '별장', name: '서령님', phone: '010-6482-2955', zipcode: '33450', addr1: '충청남도 태안군 안면읍 해변로 11', addr2: '', isDefault: false },
-    { id: 6, title: '캠핑장', name: '서령님', phone: '010-6482-2955', zipcode: '25500', addr1: '강원도 강릉시 주문진읍 해안로 300', addr2: '', isDefault: false },
+    { id: 1, title: '우리집', name: '서령님', phone: '010-6482-2955', postcode: '22664', baseAddress: '인천광역시 서구 보듬로 158', extraAddress: '(오류동)', addressType: 'ROAD', detailAddress: '공존동 4층 430호', isDefault: true },
+    { id: 2, title: '회사', name: '허서령', phone: '010-1234-5678', postcode: '06236', baseAddress: '서울특별시 강남구 테헤란로 123', extraAddress: '', addressType: 'ROAD', detailAddress: '스위피 빌딩 5층', isDefault: false },
+    { id: 3, title: '부모님댁', name: '허부모', phone: '010-9876-5432', postcode: '48060', baseAddress: '부산광역시 해운대구 해운대로 45', extraAddress: '', addressType: 'ROAD', detailAddress: '101동 202호', isDefault: false },
+    { id: 4, title: '친구집', name: '김친구', phone: '010-5555-6666', postcode: '16678', baseAddress: '경기도 수원시 영통구 광교로 78', extraAddress: '', addressType: 'ROAD', detailAddress: '광교타운 303호', isDefault: false },
+    { id: 5, title: '별장', name: '서령님', phone: '010-6482-2955', postcode: '33450', baseAddress: '충청남도 태안군 안면읍 해변로 11', extraAddress: '', addressType: 'ROAD', detailAddress: '', isDefault: false },
+    { id: 6, title: '캠핑장', name: '서령님', phone: '010-6482-2955', postcode: '25500', baseAddress: '강원도 강릉시 주문진읍 해안로 300', extraAddress: '', addressType: 'ROAD', detailAddress: '', isDefault: false },
   ])
   const [page, setPage] = useState(1)
 
@@ -23,6 +26,13 @@ export default function UserAddressPage() {
   const [modalMode, setModalMode] = useState('add')
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
+  const totalPages = Math.ceil(addresses.length / PAGE_SIZE)
+
+  useEffect(() => {
+    if (page > Math.max(totalPages, 1)) {
+      setPage(Math.max(totalPages, 1))
+    }
+  }, [page, totalPages])
 
   const openAdd = () => {
     setForm(EMPTY_FORM)
@@ -32,7 +42,7 @@ export default function UserAddressPage() {
   }
 
   const openEdit = (item) => {
-    setForm({ title: item.title, name: item.name, phone: item.phone, zipcode: item.zipcode, addr1: item.addr1, addr2: item.addr2, isDefault: item.isDefault })
+    setForm({ title: item.title, name: item.name, phone: item.phone, postcode: item.postcode, baseAddress: item.baseAddress, extraAddress: item.extraAddress, addressType: item.addressType, detailAddress: item.detailAddress, isDefault: item.isDefault })
     setModalMode('edit')
     setEditId(item.id)
     setIsModalOpen(true)
@@ -41,7 +51,7 @@ export default function UserAddressPage() {
   const handleDelete = (id) => { setAddresses(prev => prev.filter(a => a.id !== id)); setPage(1) }
 
   const handleSubmit = () => {
-    if (!form.title || !form.name || !form.addr1) return
+    if (!form.title || !form.name || !form.baseAddress) return
     if (modalMode === 'add') {
       const newItem = { ...form, id: Date.now() }
       if (form.isDefault) {
@@ -102,7 +112,7 @@ export default function UserAddressPage() {
                     <span className="text-[#888] font-medium">{item.phone}</span>
                   </div>
                   <p className="text-[13px] text-[#aaa] font-medium">
-                    <span className="text-[#3ea76e] font-bold">[{item.zipcode}]</span> {item.addr1} {item.addr2}
+                    <span className="text-[#3ea76e] font-bold">[{item.postcode}]</span> {item.baseAddress} {item.extraAddress} {item.detailAddress}
                   </p>
                 </div>
 
@@ -127,7 +137,7 @@ export default function UserAddressPage() {
           ))}
           <Pagination
             page={page}
-            totalPages={Math.ceil(addresses.length / PAGE_SIZE)}
+            totalPages={totalPages}
             onChange={setPage}
           />
         </div>
@@ -166,13 +176,16 @@ export default function UserAddressPage() {
                 <p className="text-[12px] font-bold text-[#aaa] mb-1.5 ml-1">주소 *</p>
                 <div className="space-y-2">
                   <div className="flex gap-2">
-                    <input type="text" value={form.zipcode} onChange={e => set('zipcode', e.target.value)} placeholder="우편번호" className="w-28 bg-[#f8f8f8] rounded-2xl px-4 py-3 text-[13px] font-bold outline-none border-none" />
-                    <button className="h-[44px] px-4 bg-[#111] text-white text-[12px] font-black rounded-2xl border-none cursor-pointer hover:bg-[#333] transition-all flex items-center gap-1.5">
-                      <Search size={13} /> 검색
-                    </button>
+                    <input type="text" value={form.postcode} readOnly placeholder="우편번호" className="w-28 bg-[#f8f8f8] rounded-2xl px-4 py-3 text-[13px] font-bold outline-none border-none" />
+                    <AddressSearch onSelect={({ postcode, baseAddress, extraAddress, addressType }) => {
+                      set('postcode', postcode)
+                      set('baseAddress', baseAddress)
+                      set('extraAddress', extraAddress)
+                      set('addressType', addressType)
+                    }} />
                   </div>
-                  <input type="text" value={form.addr1} onChange={e => set('addr1', e.target.value)} placeholder="기본주소" className="w-full bg-[#f8f8f8] rounded-2xl px-4 py-3 text-[13px] font-bold outline-none border-none" />
-                  <input type="text" value={form.addr2} onChange={e => set('addr2', e.target.value)} placeholder="나머지 주소 (선택)" className="w-full bg-[#f8f8f8] rounded-2xl px-4 py-3 text-[13px] font-bold outline-none border-none" />
+                  <input type="text" value={`${form.baseAddress} ${form.extraAddress}`.trim()} readOnly placeholder="기본주소" className="w-full bg-[#f8f8f8] rounded-2xl px-4 py-3 text-[13px] font-bold outline-none border-none" />
+                  <input type="text" value={form.detailAddress} onChange={e => set('detailAddress', e.target.value)} placeholder="나머지 주소 (선택)" className="w-full bg-[#f8f8f8] rounded-2xl px-4 py-3 text-[13px] font-bold outline-none border-none" />
                 </div>
               </div>
 

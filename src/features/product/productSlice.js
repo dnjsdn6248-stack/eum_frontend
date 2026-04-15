@@ -15,6 +15,11 @@ const initialState = {
     page: 1,
     size: 12,
   },
+  storeView: {
+    activeTab: 'ALL',
+    activeSubCategory: null,
+    sortLabel: '최신순',
+  },
   filters: {
     categoryId:  null,
     petType:     null,    // 'DOG'|'CAT'|'ALL'
@@ -46,6 +51,21 @@ const productSlice = createSlice({
       state.searchKeyword   = action.payload
       state.pagination.page = 1
     },
+    setStoreActiveTab(state, action) {
+      state.storeView.activeTab = action.payload
+      state.storeView.activeSubCategory = null
+      state.pagination.page = 1
+    },
+    toggleStoreSubCategory(state, action) {
+      const nextSubCategory = action.payload
+      state.storeView.activeSubCategory =
+        state.storeView.activeSubCategory === nextSubCategory ? null : nextSubCategory
+      state.pagination.page = 1
+    },
+    setStoreSortLabel(state, action) {
+      state.storeView.sortLabel = action.payload
+      state.pagination.page = 1
+    },
   },
 })
 
@@ -54,6 +74,9 @@ export const {
   resetFilters,
   setPage,
   setSearchKeyword,
+  setStoreActiveTab,
+  toggleStoreSubCategory,
+  setStoreSortLabel,
 } = productSlice.actions
 
 // ─── Selectors ────────────────────────────────────────────────────────────────
@@ -61,5 +84,6 @@ export const {
 export const selectProductFilters    = (state) => state.product.filters
 export const selectProductPagination = (state) => state.product.pagination
 export const selectSearchKeyword     = (state) => state.product.searchKeyword
+export const selectStoreView         = (state) => state.product.storeView
 
 export default productSlice.reducer

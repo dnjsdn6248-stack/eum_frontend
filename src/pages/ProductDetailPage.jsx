@@ -8,12 +8,12 @@ import Toast from '../features/components/ui/Toast'
 const PREVIEW_COUNT = 2
 
 function ProductReviewSection({ product, onMore }) {
-  const previewReviews = product.reviews.slice(0, PREVIEW_COUNT)
+  const previewReviews = product.reviews?.slice(0, PREVIEW_COUNT) || []
   return (
     <div className="bg-white rounded-[32px] border border-[#eee] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#f5f5f5]">
         <h3 className="text-[17px] font-black text-[#111]">
-          사용후기 <span className="text-[#3ea76e]">{product.reviews.length}</span>
+          사용후기 <span className="text-[#3ea76e]">{product.reviews?.length || 0}</span>
         </h3>
       </div>
       <div className="space-y-5">
@@ -86,7 +86,7 @@ function TabContent({ activeTab, product, setActiveTab }) {
       <div className="flex mb-10 border-b border-[#eee] sticky top-0 bg-white z-10">
         {[
           { key: 'detail', label: '상세정보' },
-          { key: 'review', label: `사용후기 (${product.reviews.length})` },
+          { key: 'review', label: `사용후기 (${product.reviews?.length || 0})` },
           { key: 'qna', label: '제품문의' },
           { key: 'info', label: '배송/교환/반품' },
         ].map(tab => (
@@ -108,10 +108,18 @@ function TabContent({ activeTab, product, setActiveTab }) {
 
       {activeTab === 'detail' && (
         <div className="flex flex-col items-center">
-          {product.detailImgs.map((src, i) => <img key={i} src={src} alt={`상세 ${i + 1}`} className="w-full max-w-[860px]" />)}
+          {product.detailImgs?.map((src, i) => <img key={i} src={src} alt={`상세 ${i + 1}`} className="w-full max-w-[860px]" />)}
         </div>
       )}
-      {(activeTab === 'review' || activeTab === 'review-all') && <SwiffyReviewSummary />}
+      {(activeTab === 'review' || activeTab === 'review-all') && (
+        <SwiffyReviewSummary
+          writeReviewState={{
+            productId: product.id,
+            productName: product.name,
+            productImage: product.img ?? product.images?.[0] ?? null,
+          }}
+        />
+      )}
       {activeTab === 'qna' && <div className="text-center py-24 text-[#bbb] font-bold text-[15px]">게시물이 없습니다.</div>}
       {activeTab === 'info' && (
         <div className="flex flex-col gap-8 text-[14px] text-[#555] leading-relaxed py-4">
@@ -133,15 +141,6 @@ function TabContent({ activeTab, product, setActiveTab }) {
 }
 
 // ─── 메인 컴포넌트 ───────────────────────────────────────────────────────────────
-/**
- * ProductDetailPage — 일반 구매 / 정기배송 통합 상세 페이지
- *
- * product.isSubscribable 로 UI 분기:
- *   false → 수량 스텝퍼 + 함께 구매하면 좋은 제품
- *   true  → 구매방법 라디오 + 배송주기 + 번들 수량 그리드
- *
- * 라우터: /product/detail/:id  /subscription/detail/:id 둘 다 이 컴포넌트 사용
- */
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -149,19 +148,16 @@ export default function ProductDetailPage() {
   const productImages = product.images || PRODUCT_TEST_IMAGES
   const isSubscribable = product.isSubscribable ?? false
 
-  // ── 공통 상태 ─────────────────────────────────────────
   const [selectedOption, setSelectedOption] = useState('')
   const [optionError, setOptionError] = useState(false)
   const [activeTab, setActiveTab] = useState('detail')
   const [alertMsg, setAlertMsg] = useState('')
   const [alertNav, setAlertNav] = useState('')
 
-  // ── 일반 구매 전용 상태 ───────────────────────────────
   const [qty, setQty] = useState(1)
   const [relatedSelections, setRelatedSelections] = useState({})
   const [relatedOpen, setRelatedOpen] = useState(true)
 
-  // ── 정기배송 전용 상태 ────────────────────────────────
   const [purchaseType, setPurchaseType] = useState('regular')
   const [deliveryCycle, setDeliveryCycle] = useState('')
   const [totalQty, setTotalQty] = useState(1)
@@ -179,12 +175,11 @@ export default function ProductDetailPage() {
     setActiveTab('detail')
   }, [id])
 
-  // ── 가격 계산 ─────────────────────────────────────────
   const optionExtra = selectedOption
     ? product.options?.find(o => o.label === selectedOption)?.extra ?? 0
     : 0
 
-  let totalPrice
+  let totalPrice = 0
   if (isSubscribable) {
     const bundleOpts = product.bundleOptions ?? []
     const bundle = bundleOpts.find(b => b.qty === totalQty) ?? bundleOpts[0] ?? { price: product.price, save: 0 }
@@ -194,12 +189,12 @@ export default function ProductDetailPage() {
     totalPrice = (product.price + optionExtra) * qty
   }
 
-  // ── 유효성 검사 ───────────────────────────────────────
   const validate = () => {
     let ok = true
     if (!selectedOption && product.options?.length > 0) {
       if (isSubscribable) setOptionError(true)
       else setAlertMsg('상품 옵션을 선택해주세요.')
+      // ok = 
       ok = false
     }
     if (isSubscribable && purchaseType === 'regular' && !deliveryCycle) {
@@ -234,15 +229,11 @@ export default function ProductDetailPage() {
         />
       )}
 
-
       <div className="max-w-[1200px] mx-auto px-6 py-10 text-[#111]">
-
-        {/* ── 상단: 이미지 + 구매 패널 ── */}
         <div className="flex flex-col md:flex-row gap-12 mb-10">
           <ImageSlider images={productImages} />
 
           <div className="flex-1 flex flex-col gap-5 py-2">
-            {/* 상품 기본 정보 */}
             <div>
               <div className="flex justify-between items-start mb-2">
                 <p className="text-[13px] text-[#3ea76e] font-bold">{product.brand ?? '어글어글'}</p>
@@ -259,13 +250,11 @@ export default function ProductDetailPage() {
               {product.desc && <p className="text-[14px] text-[#aaa] font-bold">{product.desc}</p>}
             </div>
 
-            {/* 가격 */}
             <div className="pt-5 border-t border-[#f0f0f0]">
-              <p className="text-[30px] font-black text-[#111] tracking-tight">{product.price.toLocaleString()}원</p>
+              <p className="text-[30px] font-black text-[#111] tracking-tight">{product.price?.toLocaleString()}원</p>
               <p className="text-[13px] text-[#bbb] mt-1 font-bold">50,000원 이상 구매 시 무료배송 (기본 배송비 5,000원)</p>
             </div>
 
-            {/* ── 정기배송 상품 전용: 구매방법 + 배송주기 ── */}
             {isSubscribable && (
               <div className="space-y-4 pt-2 border-t border-[#f0f0f0]">
                 <div className="flex items-center gap-6">
@@ -304,7 +293,6 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* 옵션 선택 (공통) */}
             {product.options?.length > 0 && (
               <div className="space-y-2">
                 <p className="text-[14px] font-bold text-[#555]">옵션 선택</p>
@@ -324,7 +312,6 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* ── 일반 구매 전용: 수량 스텝퍼 ── */}
             {!isSubscribable && selectedOption && (
               <div className="flex items-center gap-4">
                 <p className="text-[14px] font-bold text-[#555]">수량</p>
@@ -336,13 +323,11 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* 총 금액 */}
             <div className="pt-5 border-t border-[#f0f0f0] flex items-center justify-between">
               <p className="text-[14px] font-bold text-[#aaa]">총 금액</p>
               <p className="text-[24px] font-black text-[#3ea76e] tracking-tight">{totalPrice.toLocaleString()}원</p>
             </div>
 
-            {/* CTA 버튼 */}
             <div className="flex gap-3">
               <button onClick={handleCart} className="flex-1 py-4 border-2 border-[#3ea76e] text-[#3ea76e] font-black text-[15px] rounded-2xl hover:bg-[#f0faf4] transition-all cursor-pointer bg-transparent">
                 장바구니
@@ -356,7 +341,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* ── 정기배송 전용: 번들 수량 선택 ── */}
         {isSubscribable && (
           <div className="mb-10 bg-white rounded-[40px] p-10 border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
             <div className="flex justify-between items-center mb-8 pb-6 border-b border-[#f5f5f5]">
@@ -405,7 +389,6 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {/* ── 일반 상품 전용: 함께 구매하면 좋은 제품 ── */}
         {!isSubscribable && product.relatedProducts?.length > 0 && (
           <div className="mb-10 bg-[#FCFBF9] rounded-[40px] border border-[#eee] overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
             <button onClick={() => setRelatedOpen(v => !v)} className="w-full flex items-center justify-between px-10 py-6 bg-transparent border-none cursor-pointer hover:bg-black/5 transition-colors">
@@ -423,11 +406,11 @@ export default function ProductDetailPage() {
                       <p className="text-[14px] font-black text-[#111] mb-1 tracking-tight">{item.name}</p>
                       {item.discountPrice ? (
                         <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-bold text-[#bbb] line-through">{item.originalPrice.toLocaleString()}원</span>
-                          <span className="text-[15px] font-black text-[#3ea76e]">{item.discountPrice.toLocaleString()}원</span>
+                          <span className="text-[13px] font-bold text-[#bbb] line-through">{item.originalPrice?.toLocaleString()}원</span>
+                          <span className="text-[15px] font-black text-[#3ea76e]">{item.discountPrice?.toLocaleString()}원</span>
                         </div>
                       ) : (
-                        <p className="text-[15px] font-black text-[#111]">{item.originalPrice.toLocaleString()}원</p>
+                        <p className="text-[15px] font-black text-[#111]">{item.originalPrice?.toLocaleString()}원</p>
                       )}
                     </div>
                     {item.options?.length > 0 && (
@@ -450,9 +433,7 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {/* ── 탭 (공통) ── */}
         <TabContent activeTab={activeTab} product={product} setActiveTab={setActiveTab} />
-
       </div>
     </>
   )

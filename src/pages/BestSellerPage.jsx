@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import StoreProductGrid from '../features/product/StoreProductGrid'
 import { STORE_PRODUCTS } from '../mock'
+import Pagination from '../shared/components/Pagination'
 
 const ITEMS_PER_PAGE = 12
 
@@ -20,6 +21,12 @@ export default function BestSellerPage() {
 
   const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE)
   const paginated = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  useEffect(() => {
+    if (currentPage > Math.max(totalPages, 1)) {
+      setCurrentPage(Math.max(totalPages, 1))
+    }
+  }, [currentPage, totalPages])
 
   return (
     <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
@@ -53,17 +60,7 @@ export default function BestSellerPage() {
       <StoreProductGrid products={paginated} />
 
      {totalPages > 1 && (
-        <div className="py-16 flex items-center justify-center gap-2 border-t border-[#eee] mt-12">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
+        <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
       )}
     </main>
   )

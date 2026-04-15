@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import StoreProductGrid from '../features/product/StoreProductGrid'
 import { STORE_PRODUCTS } from '../mock'
+import Pagination from '../shared/components/Pagination'
 
 const ITEMS_PER_PAGE = 12
 
@@ -12,6 +13,12 @@ export default function SubscriptionPage() {
 
   const totalPages = Math.ceil(STORE_PRODUCTS.length / ITEMS_PER_PAGE)
   const paginated = STORE_PRODUCTS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  useEffect(() => {
+    if (currentPage > Math.max(totalPages, 1)) {
+      setCurrentPage(Math.max(totalPages, 1))
+    }
+  }, [currentPage, totalPages])
 
   return (
     <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
@@ -43,21 +50,7 @@ export default function SubscriptionPage() {
       <StoreProductGrid products={paginated} basePath="/subscription/detail" />
 
    {totalPages > 1 && (
-        <div className="py-16 flex items-center justify-center gap-2 border-t border-[#eee] mt-12">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`w-10 h-10 flex items-center justify-center rounded-full text-[14px] !font-medium transition-all cursor-pointer border-none ${
-                currentPage === page 
-                  ? 'bg-[#3ea76e] !text-white shadow-md' 
-                  : 'bg-transparent text-[#999999] hover:bg-[#3ea76e] hover:!text-white'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
+        <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
       )}
     </main>
   )

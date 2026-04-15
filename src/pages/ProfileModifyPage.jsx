@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MOCK_USER } from '../mock'
+import AddressSearch from '@/features/user/AddressSearch'
 
 // 공통 인풋 컴포넌트
 const SwiffyInput = ({ label, readOnly, ...props }) => (
@@ -23,6 +24,13 @@ export default function ProfileModifyPage() {
   const [marketingApp, setMarketingApp] = useState(true)
   const [marketingSms, setMarketingSms] = useState(false)
   const [email, setEmail] = useState(user.email || 'swiffy@example.com')
+  const [address, setAddress] = useState({
+    postcode: '',
+    baseAddress: '',
+    extraAddress: '',
+    addressType: '',
+    detailAddress: '',
+  })
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111]">
@@ -75,17 +83,33 @@ export default function ProfileModifyPage() {
               <p className="w-36 text-[13px] font-black text-[#bbb] shrink-0 mt-3">주소</p>
               <div className="flex-1 space-y-3">
                 <div className="flex gap-2">
-                  <input type="text" placeholder="우편번호" className="w-32 bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none text-[#bbb]" readOnly />
-              
-                  <button 
-                    type="button" 
-                    className="px-6 h-[46px] bg-[#f0f0f0] text-[#666] border border-[#e5e5e5] rounded-xl text-[13px] font-black hover:bg-[#e8e8e8] hover:text-[#111] transition-all shrink-0 cursor-pointer"
-                  >
-                    주소 검색
-                  </button>
+                  <input
+                    type="text"
+                    value={address.postcode}
+                    placeholder="우편번호"
+                    className="w-32 bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none text-[#bbb]"
+                    readOnly
+                  />
+                  <AddressSearch
+                    onSelect={({ postcode, baseAddress, extraAddress, addressType }) =>
+                      setAddress((prev) => ({ ...prev, postcode, baseAddress, extraAddress, addressType }))
+                    }
+                  />
                 </div>
-                <input type="text" placeholder="기본 주소" className="w-full bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none text-[#bbb]" readOnly />
-                <input type="text" placeholder="상세 주소 입력" className="w-full bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none focus:border-[#3ea76e] transition-all" />
+                <input
+                  type="text"
+                  value={`${address.baseAddress} ${address.extraAddress}`.trim()}
+                  placeholder="기본 주소"
+                  className="w-full bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none text-[#bbb]"
+                  readOnly
+                />
+                <input
+                  type="text"
+                  value={address.detailAddress}
+                  onChange={(e) => setAddress((prev) => ({ ...prev, detailAddress: e.target.value }))}
+                  placeholder="상세 주소 입력"
+                  className="w-full bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none focus:border-[#3ea76e] transition-all"
+                />
               </div>
             </div>
           </div>

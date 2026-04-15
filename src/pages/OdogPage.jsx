@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Footer from '../features/components/layout/Footer'
 import { ODOG_PRODUCTS } from '../mock'
+import Pagination from '../shared/components/Pagination'
 
 
 const ITEMS_PER_PAGE = 8
@@ -10,8 +11,14 @@ export default function OdogPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [sortBy, setSortBy] = useState('인기상품')
 
-  const totalPages = Math.ceil(ALL_PRODUCTS.length / ITEMS_PER_PAGE)
-  const paginated = ALL_PRODUCTS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const totalPages = Math.ceil(ODOG_PRODUCTS.length / ITEMS_PER_PAGE)
+  const paginated = ODOG_PRODUCTS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+  useEffect(() => {
+    if (currentPage > Math.max(totalPages, 1)) {
+      setCurrentPage(Math.max(totalPages, 1))
+    }
+  }, [currentPage, totalPages])
 
   return (
     <main className="max-w-[1200px] mx-auto w-full">
@@ -38,7 +45,7 @@ export default function OdogPage() {
 
       <div className="bg-white flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0]">
         <span className="text-[13px] text-[#888]">
-          <strong className="text-[#222]">{ALL_PRODUCTS.length}</strong>개의 제품
+          <strong className="text-[#222]">{ODOG_PRODUCTS.length}</strong>개의 제품
         </span>
         <div className="relative">
           <select
@@ -59,21 +66,7 @@ export default function OdogPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="bg-white py-6 flex items-center justify-center gap-1 border-t border-[#f0f0f0]">
-          <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-7 h-7 flex items-center justify-center text-[#aaa] disabled:opacity-30 text-xs hover:text-[#333] cursor-pointer border-none bg-transparent">«</button>
-          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-7 h-7 flex items-center justify-center text-[#aaa] disabled:opacity-30 text-xs hover:text-[#333] cursor-pointer border-none bg-transparent">‹</button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
-            >
-              {page}
-            </button>
-          ))}
-          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-7 h-7 flex items-center justify-center text-[#aaa] disabled:opacity-30 text-xs hover:text-[#333] cursor-pointer border-none bg-transparent">›</button>
-          <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-7 h-7 flex items-center justify-center text-[#aaa] disabled:opacity-30 text-xs hover:text-[#333] cursor-pointer border-none bg-transparent">»</button>
-        </div>
+        <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
       )}
 
       <Footer />

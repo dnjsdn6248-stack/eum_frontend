@@ -12,7 +12,8 @@
   profileImage: String, // 작성자 프로필 이미지 (선택)
   rating: Number,       // 평점 (1~5, 정수)
   content: String,      // 리뷰 내용
-  images: String[],     // 리뷰 이미지 URL 배열 (최대 5장)
+  images: String[],     // 리뷰 이미지 URL 배열 (최대 10장)
+  video: String | null, // 리뷰 동영상 URL (최대 1개, null이면 미첨부)
   tags: String[],       // 리뷰 키워드 태그 (예: "기호성 좋아요", "배송 빨라요")
   helpfulCount: Number, // '도움돼요' 추천 수
   isHelpful: Boolean,   // 현재 사용자의 '도움돼요' 클릭 여부
@@ -31,6 +32,13 @@
 - **수정/삭제**: 본인 리뷰(`isMyReview: true`)인 경우만 가능
 - **평점 범위**: 1점 ~ 5점 (정수 필수)
 - **내용 길이**: 최소 10자 이상, 최대 1,000자 이하
+- **이미지 첨부**: 최대 10장, 허용 확장자 jpg·jpeg·png·webp, 장당 최대 10MB
+- **동영상 첨부**: 최대 1개, 허용 확장자 mp4·mov·avi·webm, 최대 500MB
+- **키워드 태그 카테고리**:
+    - 기호성: `맛있게 먹어요` / `보통이에요` / `별로예요`
+    - 포장: `포장 완벽해요` / `보통이에요` / `파손 있었어요`
+    - 배송: `빠른 배송` / `보통이에요` / `늦게 왔어요`
+    - 품질: `품질 좋아요` / `보통이에요` / `품질 별로예요`
 - **도움돼요 로직**: 
     - 본인 리뷰에는 '도움돼요' 클릭 불가
     - 클릭 시 `helpfulCount` 1 증가 (Optimistic Update 적용)
@@ -44,7 +52,7 @@
 | `GET` | `/products/:productId/reviews` | 상품별 리뷰 목록 조회 |
 | `GET` | `/products/:productId/reviews/summary` | 상품별 리뷰 통계(평균, 별점 분포) 조회 |
 | `GET` | `/reviews/my` | 내 리뷰 목록 조회 |
-| `POST` | `/reviews` | 리뷰 작성 (Multipart/form-data 권장) |
+| `POST` | `/reviews` | 리뷰 작성 (Multipart/form-data — images[], video 포함) |
 | `PATCH` | `/reviews/:id` | 리뷰 수정 |
 | `DELETE` | `/reviews/:id` | 리뷰 삭제 |
 | `POST` | `/reviews/:id/helpful` | 해당 리뷰 '도움돼요' 토글 |

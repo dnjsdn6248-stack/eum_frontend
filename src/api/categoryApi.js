@@ -1,13 +1,7 @@
-import { createApi } from '@reduxjs/toolkit/query/react'
-import baseQuery from './baseQuery'
+import { apiSlice } from './apiSlice'
 
-export const categoryApi = createApi({
-  reducerPath: 'categoryApi',
-  baseQuery,
-  tagTypes: ['Category'],
+export const categoryApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-
-    // ─── Queries ────────────────────────────────────────────────────────────
 
     /** 전체 카테고리 목록 */
     getCategories: builder.query({

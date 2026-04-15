@@ -2,6 +2,42 @@ import { useNavigate } from 'react-router-dom';
 
 export default function OrderDetailPage() {
   const navigate = useNavigate();
+  const orderItems = [
+    {
+      company: 'CJ대한통운',
+      name: '[판매 2위] 어글어글 육포 50g 5종',
+      option: '[옵션: 제주산 안심 육포 50g/1개입]',
+      price: 13000,
+      qty: 1,
+      trackingNo: '6972-6552-7964',
+      status: '배송완료',
+      reviewState: {
+        productId: 11,
+        productName: '[판매 2위] 어글어글 육포 50g 5종',
+        productImage: 'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png',
+        orderId: '20260401-0000288',
+      },
+    },
+    {
+      company: 'CJ대한통운',
+      name: '냉매제 추가 (아이스팩)',
+      option: '[옵션: 아이스팩(대)]',
+      price: 0,
+      qty: 1,
+      trackingNo: '6972-6552-7964',
+      status: '배송완료',
+      reviewState: {
+        productId: 9,
+        productName: '냉매제 추가 (아이스팩)',
+        productImage: 'https://swiffy.cafe24.com/web/product/medium/202203/c8c8493601aaee3f1b8355a403744344.jpg',
+        orderId: '20260401-0000288',
+      },
+    },
+  ]
+
+  const handleWriteReview = ({ productId, productName, productImage, orderId }) => {
+    navigate('/review/write', { state: { productId, productName, productImage, orderId } })
+  }
 
   return (
     <div className="font-['Pretendard'] pb-28 text-[#111]">
@@ -32,29 +68,24 @@ export default function OrderDetailPage() {
         <section className="bg-white rounded-[32px] p-10 md:p-12 border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
           {/* 타이틀 하단 mb-10으로 갭 확대 */}
           <h2 className="text-[20px] font-black mb-10 tracking-tight flex items-center justify-between">
-            주문 상품 (총 2개)
+            주문 상품 (총 {orderItems.length}개)
             <span className="text-[#aaa] text-[14px] font-bold tracking-tight">전체 무료배송</span>
           </h2>
           
           <div className="divide-y divide-[#f5f5f5]">
-            <ProductItem 
-              company="CJ대한통운"
-              name="[판매 2위] 어글어글 육포 50g 5종"
-              option="[옵션: 제주산 안심 육포 50g/1개입]"
-              price={13000}
-              qty={1}
-              trackingNo="6972-6552-7964"
-              status="배송완료"
-            />
-            <ProductItem 
-              company="CJ대한통운"
-              name="냉매제 추가 (아이스팩)"
-              option="[옵션: 아이스팩(대)]"
-              price={0}
-              qty={1}
-              trackingNo="6972-6552-7964"
-              status="배송완료"
-            />
+            {orderItems.map((item) => (
+              <ProductItem
+                key={`${item.name}-${item.option}`}
+                company={item.company}
+                name={item.name}
+                option={item.option}
+                price={item.price}
+                qty={item.qty}
+                trackingNo={item.trackingNo}
+                status={item.status}
+                onWriteReview={() => handleWriteReview(item.reviewState)}
+              />
+            ))}
           </div>
 
           {/* [개별배송] 상세 계산식 박스 (상단 mt-10으로 갭 확대) */}
@@ -171,7 +202,7 @@ function InfoRow({ label, value, isHighlight }) {
   );
 }
 
-function ProductItem({ company, name, option, price, qty, trackingNo, status }) {
+function ProductItem({ company, name, option, price, qty, trackingNo, status, onWriteReview }) {
   return (
     <div className="flex gap-10 py-10 first:pt-0"> {/* 상품간 내부 갭 확대 */}
       <div className="w-32 h-32 rounded-[28px] overflow-hidden border border-[#eee] shrink-0 bg-[#f9f9f9]">
@@ -195,9 +226,14 @@ function ProductItem({ company, name, option, price, qty, trackingNo, status }) 
           </div>
           <div className="flex flex-col items-end gap-3">
             <span className="text-[12px] text-[#ccc] font-bold">개별배송비 0원</span>
-            <button className="h-10 px-8 rounded-full bg-[#f5f5f5] text-[#555] font-bold text-[13px] hover:bg-[#3ea76e] hover:text-white transition-all border-none cursor-pointer">
-              구매후기
-            </button>
+            {status === '배송완료' && (
+              <button
+                onClick={onWriteReview}
+                className="h-10 px-8 rounded-full bg-[#f5f5f5] text-[#555] font-bold text-[13px] hover:bg-[#3ea76e] hover:text-white transition-all border-none cursor-pointer"
+              >
+                구매후기
+              </button>
+            )}
           </div>
         </div>
       </div>

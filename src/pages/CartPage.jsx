@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MOCK_CART } from '../mock'
 import Pagination from '../shared/components/Pagination'
@@ -27,6 +27,12 @@ export default function CartPage() {
 
   const totalPages = Math.ceil(cartItems.length / PAGE_SIZE)
   const pagedItems = cartItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  useEffect(() => {
+    if (page > Math.max(totalPages, 1)) {
+      setPage(Math.max(totalPages, 1))
+    }
+  }, [page, totalPages])
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen pb-28 px-4 text-[#111]">

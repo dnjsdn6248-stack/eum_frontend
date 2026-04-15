@@ -2,19 +2,18 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { MOCK_USER, MOCK_DELIVERY_STATUS } from '../mock'
 
-const menuItems = [
-  { title: '주문조회', to: '/order/list' },
-  { title: '회원정보', to: '/profile/modify' },
-{ title: '관심상품', count: 3, to: '/wishlist' },
-  { title: '적립금', to: '/point' },
-  { title: '쿠폰', count: 2, to: '/coupon' },
-  { title: '게시물관리', to: '/profile/posts' },
-  { title: '배송 주소록 관리', to: '/address' },
- { title: '정기배송 관리', to: '/user-subscription' },
-];
-
 export default function UserProfilePage() {
   const user = MOCK_USER
+  const menuItems = [
+    { title: '주문조회', to: '/order/list' },
+    { title: '회원정보', to: '/profile/modify' },
+    { title: '관심상품', count: user.wishlistCount, to: '/wishlist' },
+    { title: '적립금', to: '/point' },
+    { title: '쿠폰', count: user.coupons, to: '/coupon' },
+    { title: '게시물관리', to: '/profile/posts' },
+    { title: '배송 주소록 관리', to: '/address' },
+    { title: '정기배송 관리', to: '/user-subscription' },
+  ]
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111]">

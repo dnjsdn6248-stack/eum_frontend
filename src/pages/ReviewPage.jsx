@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Star, Search, ChevronDown, Check } from 'lucide-react';
 import ReviewList from '../features/components/review/ReviewList';
 
-export default function SwiffyReviewSummary() {
+export default function SwiffyReviewSummary({ writeReviewState = null }) {
 
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -163,7 +163,7 @@ export default function SwiffyReviewSummary() {
           </div>
         </section>
 
-        <ReviewList />
+        <ReviewList writeReviewState={writeReviewState} />
       </main>
     </div>
   );

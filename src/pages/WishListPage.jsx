@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown, Check, X, Heart, ShoppingBag } from 'lucide-react'
 import Pagination from '../shared/components/Pagination'
@@ -101,6 +101,12 @@ export default function WishListPage() {
   const totalPrice = items.reduce((acc, item) => acc + (item.price || 0), 0)
   const totalPages = Math.ceil(items.length / PAGE_SIZE)
   const pagedItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  useEffect(() => {
+    if (page > Math.max(totalPages, 1)) {
+      setPage(Math.max(totalPages, 1))
+    }
+  }, [page, totalPages])
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111] pb-20">

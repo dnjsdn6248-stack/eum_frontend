@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown, Info, Ticket, Plus } from "lucide-react";
+import Pagination from '../shared/components/Pagination'
+
+const PAGE_SIZE = 5
 
 export default function UserCouponPage() {
   const [couponCode, setCouponCode] = useState("");
@@ -10,7 +13,14 @@ export default function UserCouponPage() {
     { id: 2, title: "첫 구매 감사 쿠폰", discount: "3,000원", reward: "0원", expiry: "2026.06.30" },
   ];
 
-  const totalPages = 1; 
+  const totalPages = Math.ceil(coupons.length / PAGE_SIZE);
+  const pagedCoupons = coupons.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  useEffect(() => {
+    if (currentPage > Math.max(totalPages, 1)) {
+      setCurrentPage(Math.max(totalPages, 1))
+    }
+  }, [currentPage, totalPages])
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111] pb-28 font-sans">
@@ -66,7 +76,7 @@ export default function UserCouponPage() {
             <div className="flex-1">상세</div>
           </div>
 
-          {coupons.map((coupon) => (
+          {pagedCoupons.map((coupon) => (
             <div key={coupon.id} className="flex border-b border-[#f8f8f8] last:border-none py-8 text-[14px] text-center items-center hover:bg-[#fafafa] transition-colors group">
               <div className="flex-[2.5] text-left px-10">
                 <p className="text-[15px] font-black text-[#111] mb-1.5 group-hover:text-[#3ea76e] transition-colors tracking-tight">{coupon.title}</p>
@@ -83,7 +93,7 @@ export default function UserCouponPage() {
           ))}
         </div>
 
-     
+        <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
 
       </main>
     </div>

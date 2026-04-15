@@ -1,49 +1,23 @@
-import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, User, Phone, X, AtSign, CheckCircle, ChevronRight, AlertCircle } from 'lucide-react'
-import { useGetTermsQuery, useSignupMutation, useSendEmailVerifyMutation, useVerifyEmailMutation } from '@/api/authApi'
-import useAuth from '@/features/auth/useAuth'
+import useSignupForm from './useSignupForm'
+import useEmailVerify from './useEmailVerify'
 
 // ─── 이메일 인증 모달 ──────────────────────────────────────────────────────────
 
 function EmailVerifyModal({ onClose, onVerified }) {
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [codeSent, setCodeSent] = useState(false)
-  const [verified, setVerified] = useState(false)
-  const [sendError, setSendError] = useState('')
-  const [verifyError, setVerifyError] = useState('')
-
-  const [sendEmailVerify, { isLoading: isSending }] = useSendEmailVerifyMutation()
-  const [verifyEmail, { isLoading: isVerifying }] = useVerifyEmailMutation()
-
-  const handleSend = async () => {
-    if (!email) return
-    setSendError('')
-    try {
-      await sendEmailVerify(email).unwrap()
-      setCodeSent(true)
-      setCode('')
-      setVerifyError('')
-    } catch (err) {
-      setSendError(err?.data?.message || '인증 코드 발송에 실패했습니다.')
-    }
-  }
-
-  const handleVerify = async () => {
-    if (!code) return
-    setVerifyError('')
-    try {
-      await verifyEmail({ email, code }).unwrap()
-      setVerified(true)
-      setTimeout(() => {
-        onVerified(email)
-        onClose()
-      }, 800)
-    } catch (err) {
-      setVerifyError(err?.data?.message || '인증번호가 올바르지 않습니다.')
-    }
-  }
+  const {
+    email, setEmail,
+    code, setCode,
+    codeSent,
+    verified,
+    sendError,
+    verifyError,
+    isSending,
+    isVerifying,
+    handleSend,
+    handleVerify,
+  } = useEmailVerify({ onVerified })
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -68,7 +42,7 @@ function EmailVerifyModal({ onClose, onVerified }) {
                   type="email"
                   placeholder="example@email.com"
                   value={email}
-                  onChange={e => { setEmail(e.target.value); setCodeSent(false); setVerified(false) }}
+                  onChange={e => setEmail(e.target.value)}
                   disabled={verified}
                   className={`w-full h-14 pl-11 pr-4 bg-[#f8f8f8] border rounded-2xl text-[14px] font-bold tracking-tight outline-none transition-all placeholder:text-[#ccc] text-[#111] focus:border-[#3ea76e] ${verified ? 'border-[#3ea76e] bg-[#f0faf4]' : 'border-transparent'}`}
                 />
@@ -125,10 +99,10 @@ function EmailVerifyModal({ onClose, onVerified }) {
             <button
               type="button"
               onClick={handleSend}
-              disabled={!email || verified || isSending}
+              disabled={!email || verified || isSending || codeSent}
               className="flex-[2] h-14 rounded-full bg-[#3ea76e] text-white font-black text-[15px] border-none cursor-pointer hover:bg-[#318a57] transition-all disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
             >
-              {isSending ? '발송 중...' : codeSent ? '인증번호 재발송' : '인증번호 발송'}
+              {isSending ? '발송 중...' : '인증번호 발송'}
             </button>
             <button
               type="button"
@@ -183,78 +157,24 @@ function TermsContentModal({ term, onClose }) {
 export default function SignupPage() {
   const navigate = useNavigate()
 
-  const [showPassword, setShowPassword]     = useState(false)
-  const [formData, setFormData]             = useState({ username: '', email: '', password: '', name: '', phoneNumber: '' })
-  const [emailVerified, setEmailVerified]   = useState(false)
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [termsAgreed, setTermsAgreed]       = useState({})
-  const [viewingTerm, setViewingTerm]       = useState(null)
-  const [error, setError]                   = useState('')
-
-  const { isLoggedIn } = useAuth()
-  const { data: termsData, isLoading: termsLoading } = useGetTermsQuery()
-  const [signup, { isLoading: isSigningUp }]          = useSignupMutation()
-
-  // 이미 로그인된 상태면 홈으로 리다이렉트
-  useEffect(() => {
-    if (isLoggedIn) navigate('/', { replace: true })
-  }, [isLoggedIn])
-
-  const terms         = termsData?.terms ?? []
-  const allChecked    = terms.length > 0 && terms.every(t => termsAgreed[t.id])
-  const someChecked   = terms.some(t => termsAgreed[t.id])
-
-  const handleEmailVerified = (email) => {
-    setFormData(prev => ({ ...prev, email }))
-    setEmailVerified(true)
-  }
-
-  const handleAllAgree = (checked) => {
-    const next = {}
-    terms.forEach(t => { next[t.id] = checked })
-    setTermsAgreed(next)
-  }
-
-  const handleTermToggle = (id) => {
-    setTermsAgreed(prev => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  const handleSubmit = async () => {
-    setError('')
-
-    if (!emailVerified) {
-      setError('이메일 인증을 완료해 주세요.')
-      return
-    }
-    if (!formData.username || !formData.name || !formData.password || !formData.phoneNumber) {
-      setError('모든 필수 항목을 입력해 주세요.')
-      return
-    }
-
-    const requiredTerms      = terms.filter(t => t.isRequired)
-    const allRequiredAgreed  = requiredTerms.every(t => termsAgreed[t.id])
-    if (!allRequiredAgreed) {
-      setError('필수 약관에 모두 동의해야 합니다.')
-      return
-    }
-
-    // termsAgreed: 동의하지 않은 항목은 false로 채워서 전송
-    const termsPayload = {}
-    terms.forEach(t => { termsPayload[t.id] = !!termsAgreed[t.id] })
-
-    try {
-      await signup({ ...formData, termsAgreed: termsPayload }).unwrap()
-      navigate('/login', { state: { fromSignup: true } })
-    } catch (err) {
-      const errors = err?.data?.errors
-      if (errors) {
-        const messages = Object.values(errors).join(' ')
-        setError(messages)
-      } else {
-        setError(err?.data?.message || '회원가입 중 오류가 발생했습니다.')
-      }
-    }
-  }
+  const {
+    formData, setFormData,
+    showPassword, setShowPassword,
+    emailVerified,
+    showEmailModal, setShowEmailModal,
+    termsAgreed,
+    viewingTerm, setViewingTerm,
+    error,
+    terms,
+    termsLoading,
+    allChecked,
+    someChecked,
+    isSigningUp,
+    handleEmailVerified,
+    handleAllAgree,
+    handleTermToggle,
+    handleSubmit,
+  } = useSignupForm()
 
   return (
     <div className="min-h-screen flex overflow-hidden bg-white">
@@ -262,7 +182,10 @@ export default function SignupPage() {
       {showEmailModal && (
         <EmailVerifyModal
           onClose={() => setShowEmailModal(false)}
-          onVerified={handleEmailVerified}
+          onVerified={(email) => {
+            handleEmailVerified(email)
+            setShowEmailModal(false)
+          }}
         />
       )}
 
@@ -420,7 +343,6 @@ export default function SignupPage() {
                 <div className="space-y-2.5">
                   {terms.map(term => (
                     <div key={term.id} className="flex items-center gap-3">
-                      {/* 체크박스 */}
                       <div
                         className={`w-5 h-5 rounded-[6px] border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
                           termsAgreed[term.id]
@@ -435,8 +357,6 @@ export default function SignupPage() {
                           </svg>
                         )}
                       </div>
-
-                      {/* 라벨 */}
                       <span
                         className="flex-1 text-[13px] font-bold text-[#555] cursor-pointer"
                         onClick={() => handleTermToggle(term.id)}
@@ -446,8 +366,6 @@ export default function SignupPage() {
                         </span>
                         {term.title}
                       </span>
-
-                      {/* 보기 버튼 */}
                       <button
                         type="button"
                         onClick={() => setViewingTerm(term)}
@@ -470,14 +388,14 @@ export default function SignupPage() {
             )}
 
             {/* 회원가입 버튼 */}
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSigningUp}
-              className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
-            >
-              {isSigningUp ? '가입 중...' : '회원가입'}
-            </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSigningUp}
+                className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
+              >
+                {isSigningUp ? '가입 중...' : '회원가입'}
+              </button>
           </div>
 
           <div className="mt-8 flex justify-center text-[#888] font-bold text-[13px] tracking-tight">
