@@ -8,19 +8,31 @@ const TAG_CATEGORIES = [
     key: 'preference',
     label: '기호도는 어떤가요?',
     emoji: '😋',
-    options: ['잘 먹어요!', '보통이에요', '아쉬워요'],
+    options: [
+      { value: 3, label: '잘 먹어요!' },
+      { value: 2, label: '보통이에요' },
+      { value: 1, label: '아쉬워요' },
+    ],
   },
   {
     key: 'repurchase',
     label: '재구매의사는 어떤가요?',
     emoji: '🛍️',
-    options: ['있어요', '고민 중이에요', '없어요'],
+    options: [
+      { value: 3, label: '있어요' },
+      { value: 2, label: '고민 중이에요' },
+      { value: 1, label: '없어요' },
+    ],
   },
   {
     key: 'freshness',
     label: '신선도는 어떤가요?',
     emoji: '✨',
-    options: ['아주 만족해요', '보통이에요', '아쉬워요'],
+    options: [
+      { value: 3, label: '아주 만족해요' },
+      { value: 2, label: '보통이에요' },
+      { value: 1, label: '아쉬워요' },
+    ],
   },
 ]
 

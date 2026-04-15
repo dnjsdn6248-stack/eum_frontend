@@ -1,8 +1,10 @@
 # Review 도메인
 
+기준일: 2026-04-15
+
 ## 개요
 
-상품 리뷰 CRUD와 "도움돼요" 기능을 담당한다. 정렬·페이지 UI 상태는 `reviewSlice`, 실제 데이터는 `reviewApi` 캐시에서 관리한다.
+상품 리뷰 CRUD·"도움돼요"·메인 포토리뷰 하이라이트를 담당한다. 정렬·페이지 UI 상태는 `reviewSlice`, 실제 데이터는 `reviewApi` RTK Query 캐시에서 관리한다.
 
 ---
 
@@ -13,27 +15,66 @@
 | 텍스트 리뷰 적립금 | 미정 | `src/shared/utils/constants.js` → `REVIEW_POINT_TEXT` |
 | 포토 리뷰 적립금 | 미정 | `src/shared/utils/constants.js` → `REVIEW_POINT_PHOTO` |
 | 기본 페이지 크기 | 10개 | `src/shared/utils/constants.js` → `REVIEW_PAGE_SIZE` |
+| 작성 조건 | 주문 상태 `DELIVERED`인 경우만 | 서버 정책 |
+| 1주문 1리뷰 | 동일 orderId + productId 조합 1회 | 서버 정책 |
+| 내용 길이 | 최소 10자 ~ 최대 1,000자 | 클라이언트 유효성 검사 |
+| 이미지 첨부 | 최대 10장 (jpg·jpeg·png·webp, 장당 최대 10MB) | 클라이언트 유효성 검사 |
+| 동영상 첨부 | 최대 1개 (mp4·mov·avi·webm, 최대 500MB) | 클라이언트 유효성 검사 |
 
 ---
 
 ## 상태 구조
 
 ```js
-review (reviewSlice) — UI 상태만
+// reviewSlice — UI 상태만
+review
 ├── sortBy: 'createdAt'|'rating'|'helpful'
 └── pagination: { page: 1, size: REVIEW_PAGE_SIZE }
 ```
 
 ---
 
-## API 엔드포인트 (`reviewsApi`)
+## Review 데이터 구조
 
-`src/features/reviews/reviewsApi.js` — `apiSlice.injectEndpoints()`로 정의.
+```js
+{
+  id: number,
+  productId: number,
+  orderId: number,
+  userId: number,
+  userName: string,       // 마스킹 처리 (홍*동)
+  profileImage: string,
+  rating: number,         // 1~5 정수
+  content: string,
+  images: string[],       // 최대 10장
+  video: string | null,
+  tags: string[],         // 키워드 태그
+  helpfulCount: number,
+  isHelpful: boolean,     // 현재 사용자의 도움돼요 여부
+  isMyReview: boolean,
+  createdAt: string,      // ISO 8601
+  updatedAt: string,
+}
+```
+
+---
+
+## API 엔드포인트 (`src/api/reviewApi.js`)
+
+`apiSlice.injectEndpoints()`로 정의.
+
+### Queries
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
 | `useGetProductReviewsQuery({ productId, params })` | GET | `/products/:productId/reviews` | 상품별 리뷰 목록 |
 | `useGetMyReviewsQuery(params)` | GET | `/reviews/mine` | 내 리뷰 목록 |
+| `useGetReviewHighlightsQuery()` | GET | `/main/review-highlights` | 홈 포토리뷰 하이라이트 (메인 전용) |
+
+### Mutations
+
+| 훅 | 메서드 | 경로 | 설명 |
+|---|---|---|---|
 | `useCreateReviewMutation` | POST | `/products/:productId/reviews` | 리뷰 작성 |
 | `useUpdateReviewMutation` | PUT | `/reviews/:reviewId` | 리뷰 수정 |
 | `useDeleteReviewMutation` | DELETE | `/reviews/:reviewId` | 리뷰 삭제 |
@@ -68,73 +109,47 @@ const { data } = useGetProductReviewsQuery({
 
 ---
 
-## 리뷰 요약 UI
+## 리뷰 통계
 
-- 평점 분포 (최고·좋음·보통·별로·나쁨 %)
-- 만족도 지표 (기호도·재구매의사·신선도)
-- 필터: 리뷰 종류(동영상·사진·텍스트), 별점, 정렬
-
----
-
-## 진입 경로
-
-1. 상품 상세 (`/products/:id`) → '사용후기' 탭
-2. 마이페이지 → `/my/reviews` (내 리뷰 목록)
+서버 응답에 포함되는 집계 데이터:
+- `averageRating` — 평균 평점 (소수점 첫째 자리)
+- `totalCount` — 전체 리뷰 수
+- `ratingDistribution` — 1~5점별 개수 객체
 
 ---
 
-## 액션 & 셀렉터
+## 키워드 태그 카테고리
 
-```js
-// Actions
-setReviewSort('createdAt'|'rating'|'helpful')
-setReviewPage(page)
+각 카테고리는 숫자 값(score)으로 서버에 전송한다. UI에는 라벨 텍스트를 표시하고, `formData`에는 숫자 값을 담는다. 백엔드가 점수 기반 분석 로직에 활용한다.
 
-// Selectors
-selectReviewSortBy(state)
-selectReviewPagination(state)
-```
-
----
-
-## Mock 데이터
-
-| 파일 | 내용 | 가변 여부 |
+| 카테고리 key | 라벨 | 선택지 (표시 텍스트 → 전송 값) |
 |---|---|---|
-| `src/mocks/reviews.js` | 리뷰 목록 | 가변 (`let reviews = [...]`) |
+| `preference` | 기호도는 어떤가요? | 잘 먹어요! → `3` / 보통이에요 → `2` / 아쉬워요 → `1` |
+| `repurchase` | 재구매의사는 어떤가요? | 있어요 → `3` / 고민 중이에요 → `2` / 없어요 → `1` |
+| `freshness` | 신선도는 어떤가요? | 아주 만족해요 → `3` / 보통이에요 → `2` / 아쉬워요 → `1` |
+
+**서버 전송 형식:** `tags[preference]=3`, `tags[repurchase]=2` ... (FormData 개별 필드)
+
+**selectedTags 상태 타입:** `{ [categoryKey]: number }` (예: `{ preference: 3, repurchase: 1 }`)
 
 ---
 
-## 리뷰 댓글 (Reply)
+## 도움돼요 규칙
 
-리뷰 아이템 펼침(isOpen) 시 댓글 목록과 입력창이 노출된다.
-
-### 댓글 데이터 구조
-
-```js
-{
-  id: number,
-  name: string,       // 작성자 닉네임 (마스킹)
-  date: string,       // 'YY. MM. DD.' 형식
-  text: string,       // 댓글 내용
-}
-```
-
-### 댓글 UX 흐름
-
-1. 리뷰 클릭 → 펼침
-2. 펼침 영역 하단에 기존 댓글 목록 표시
-3. 텍스트 입력창 + "등록" 버튼으로 댓글 추가
-4. 댓글은 해당 리뷰 state(`comments` 배열)에 추가됨 (현재 Mock)
+- 본인 리뷰(`isMyReview: true`)에는 도움돼요 클릭 불가
+- 클릭 시 `helpfulCount` 1 증가
 
 ---
 
-## 현재 구현 vs. 목표
+## UI 유효성 검사
 
-| 항목 | 현재 코드 | 목표 |
+| 필드 | 규칙 | 에러 메시지 |
 |---|---|---|
-| 리뷰 통계 | 하드코딩 | `reviewsApi` 응답값 |
-| API 구조 | 독립 `createApi` (`reviewApi.js`) | `apiSlice.injectEndpoints()` |
-| 리뷰 작성 UI | 미구현 (주문목록 "구매후기" 버튼만 존재) | 구현 필요 |
-| 내 리뷰 페이지 | 미구현 | `/my/reviews` 구현 필요 |
-| 리뷰 댓글 | Mock(로컬 state) | `reviewCommentsApi` 연동 필요 |
+| 별점(`rating`) | 필수 선택 | "평점을 선택해 주세요." |
+| 내용(`content`) | 10자 이상 | "최소 10자 이상 입력해 주세요." |
+
+---
+
+## 삭제 정책
+
+`window.confirm("리뷰를 정말 삭제하시겠습니까? 삭제 후 복구가 불가능합니다.")` 실행 필수.

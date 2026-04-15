@@ -1,8 +1,10 @@
 # Order 도메인
 
+기준일: 2026-04-15
+
 ## 개요
 
-주문 생성·조회·취소·환불을 담당한다. 주문 완료 직후 주문확인 페이지 표시용 임시 데이터만 `orderSlice`가 보관하고, 나머지 서버 데이터는 RTK Query 캐시에만 존재한다.
+주문 생성·조회·취소·환불을 담당한다. 주문 완료 직후 주문확인 페이지 표시용 임시 데이터만 `orderSlice`가 보관하고, 나머지 서버 데이터는 RTK Query `api` 캐시에만 존재한다.
 
 ---
 
@@ -19,7 +21,7 @@
 
 ## 주문 상태값
 
-```
+```js
 ORDER_STATUS = {
   PENDING:    '입금전',
   PREPARING:  '배송준비중',
@@ -48,28 +50,47 @@ ORDER_STATUS = {
 ## 상태 구조
 
 ```js
-order (orderSlice) — UI 상태만
+// orderSlice — UI 상태만
+order
 ├── lastCreatedOrder: Order | null   // 주문 완료 직후 임시 보관 (주문완료 페이지용)
 └── pagination: { page: 1, size: ORDER_PAGE_SIZE }
-```
 
-`serializableCheck.ignoredPaths: ['order.lastCreatedOrder.createdAt']` — store.js에 설정 필요 (Date 직렬화 예외).
+// store.js serializableCheck 예외 등록됨
+ignoredPaths: ['order.lastCreatedOrder.createdAt']
+```
 
 ---
 
-## API 엔드포인트 (`ordersApi`)
+## Order 데이터 구조 (normalizeOrder 적용 후)
 
-`src/features/orders/ordersApi.js` — `apiSlice.injectEndpoints()`로 정의.
+```js
+{
+  id: number,
+  date: string,           // createdAt 날짜 부분 (YYYY-MM-DD)
+  status: string,         // orderStatus
+  items: [{
+    productId, name, option, qty, price, img
+  }],
+  productPrice: number,   // productAmount
+  shippingPrice: number,  // shippingFee
+  discountPrice: number,  // discountAmount
+  total: number,          // totalAmount
+}
+```
+
+---
+
+## API 엔드포인트 (`src/api/orderApi.js`)
+
+`apiSlice.injectEndpoints()`로 정의.
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetOrdersQuery(params)` | GET | `/orders` | 목록 — `pagination + status + period` |
+| `useGetOrdersQuery(params)` | GET | `/orders` | 목록 — `{ pagination, status, period }` 파라미터. 응답: `{ content, totalPages, totalElements }` |
 | `useGetOrderByIdQuery(orderId)` | GET | `/orders/:orderId` | 상세 |
 | `useCreateOrderMutation` | POST | `/orders` | 주문 생성 → `setLastCreatedOrder` dispatch |
-| `useCancelOrderMutation` | PUT | `/orders/:orderId/cancel` | 취소 — `{ reason }` |
-| `useRefundOrderMutation` | PUT | `/orders/:orderId/refund` | 환불 요청 |
-
-`getOrders` 응답 형태: `{ content: Order[], totalPages, totalElements, ... }`
+| `useCancelOrderMutation` | PUT | `/orders/:orderId/cancel` | 취소 — `{ orderId, reason }` |
+| `useRefundOrderMutation` | PUT | `/orders/:orderId/refund` | 환불 요청 — `{ orderId, body }` |
 
 ---
 
@@ -79,7 +100,7 @@ order (orderSlice) — UI 상태만
 CheckoutPage
   1. 배송지 입력 (받는사람 / 주소검색 / 휴대폰 / 배송메시지)
   2. 할인/부가결제 (할인코드 / 쿠폰 / 적립금)
-  3. 결제수단 선택 (계좌이체·카드·N Pay·카카오페이·Toss·무통장입금)
+  3. 결제수단 선택
   4. 이용약관 동의 (필수) → 동의 전까지 "결제하기" 버튼 비활성
   5. useCreateOrderMutation 호출
   6. 성공 → setLastCreatedOrder dispatch → 주문완료 페이지
@@ -110,23 +131,3 @@ setOrderPage(page)
 selectLastCreatedOrder(state)
 selectOrderPagination(state)
 ```
-
----
-
-## Mock 데이터
-
-| 파일 | 내용 | 가변 여부 |
-|---|---|---|
-| `src/mocks/orders.js` | 주문 목록 | 가변 (`let orders = [...]`) |
-
----
-
-## 현재 구현 vs. 목표
-
-| 항목 | 현재 코드 | 목표 |
-|---|---|---|
-| 주문 데이터 | `MOCK_ORDERS` + 로컬 필터링 | `useGetOrdersQuery` (서버 필터링) |
-| API 구조 | 독립 `createApi` (`orderApi.js`) | `apiSlice.injectEndpoints()` |
-| 비즈니스 상수 | UI 하드코딩 | `constants.js` |
-| 주문 상세 페이지 | 미구현 (목록에서 `#` 링크) | `/my/orders/:id` 구현 필요 |
-| 결제 연동 | UI 완성, `useCreateOrderMutation` 미연결 | 결제 API 연결 필요 |

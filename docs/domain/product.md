@@ -1,8 +1,10 @@
 # Product 도메인
 
+기준일: 2026-04-15
+
 ## 개요
 
-상품 목록 조회, 상세 조회, 검색, 베스트/신상품 조회를 담당한다. 카테고리(Category)는 상품 필터링과 긴밀하게 연결되어 이 문서에서 함께 다룬다.
+상품 목록 조회, 상세 조회, 검색, 베스트/신상품 조회와 메인 페이지용 섹션 데이터를 담당한다. 카테고리(Category)는 상품 필터링과 긴밀하게 연결되어 이 문서에서 함께 다룬다.
 
 ---
 
@@ -34,51 +36,80 @@ product
     ├── sortBy:      'createdAt'|'price'|'rating'|'sales'
     └── sortDir:     'asc'|'desc'
 
-category (categorySlice) — 선택된 카테고리 ID만
+// category (categorySlice) — 선택된 카테고리 ID만
+category
 └── selectedCategoryId: number | null
 ```
 
-서버에서 내려온 상품 데이터는 RTK Query 캐시에만 존재한다.
+서버에서 내려온 상품 데이터는 RTK Query `api` 캐시에만 존재한다.
 
 ---
 
-## API 엔드포인트 (`productsApi`)
+## normalizeProduct 변환 함수
 
-`src/features/products/productsApi.js` — `apiSlice.injectEndpoints()`로 정의.
+서버 응답 필드명이 다를 수 있어 `productApi.js`에서 정규화:
+
+```js
+{
+  id:          p.productId ?? p.id,
+  name:        p.title ?? p.name,
+  img:         p.imageUrl ?? p.thumbnailUrl ?? p.img,
+  price:       p.price,
+  category:    p.categoryName ?? p.category,
+  description: p.description ?? p.desc,
+}
+```
+
+---
+
+## API 엔드포인트 (`src/api/productApi.js`)
+
+`apiSlice.injectEndpoints()`로 정의.
+
+### 상품 Queries
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetProductsQuery(params)` | GET | `/products` | 목록 — `filters + pagination` 파라미터 |
+| `useGetProductsQuery(params)` | GET | `/products` | 목록 — `filters + pagination` 파라미터. 응답: `{ content, totalPages, totalElements }` |
 | `useGetProductByIdQuery(id)` | GET | `/products/:id` | 상세 |
-| `useGetBestProductsQuery(limit?)` | GET | `/products/best` | 베스트 (기본 8개) |
-| `useGetNewProductsQuery(limit?)` | GET | `/products/new` | 신상품 (기본 8개) |
+| `useGetBestProductsQuery(params?)` | GET | `/products/best` | 베스트 상품 목록 |
+| `useGetNewProductsQuery(limit?)` | GET | `/products/new` | 신상품 목록 (기본 8개) |
 | `useSearchProductsQuery(params)` | GET | `/products/search` | 검색 |
 | `useLazySearchProductsQuery` | GET | `/products/search` | 검색창 입력 지연 트리거용 |
 
-`getProducts` 응답 형태: `{ content: Product[], totalPages, totalElements, ... }`
-
----
-
-## 카테고리 API
-
-`src/features/products/categoryApi.js` (또는 `productsApi.js` 내 통합)
+### 메인 페이지 전용 Queries
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetCategoriesQuery()` | GET | `/categories` | 전체 목록 — 앱 init 시 호출 |
+| `useGetBannerSlidesQuery()` | GET | `/main/banners` | 홈 배너 슬라이더 |
+| `useGetMainBestSellersQuery()` | GET | `/main/best-sellers` | 홈 베스트셀러 섹션 |
+| `useGetTagProductsQuery()` | GET | `/main/tag-products` | 홈 해시태그 상품 탭 |
 
 ---
 
-## 필터 → RTK Query 연동 패턴
+## 카테고리 API (`src/api/categoryApi.js`)
+
+| 훅 | 메서드 | 경로 | 설명 |
+|---|---|---|---|
+| `useGetCategoriesQuery()` | GET | `/categories` | 전체 목록 — `AuthInitializer`에서 앱 init 시 프리패치 |
+
+---
+
+## 상품 상세 데이터 구조
 
 ```js
-const filters = useAppSelector(selectProductFilters)
-const { page, size } = useAppSelector(selectProductPagination)
-
-const { data } = useGetProductsQuery({ ...filters, page, size })
+{
+  id, name, brand, desc, price,
+  img,         // 대표 이미지
+  images,      // 이미지 배열
+  options: [{ label, extra }],
+  detailImgs,
+  isSubscribable: boolean,
+  subscriptionDiscount: number,
+  bundleOptions: [],
+  relatedProducts: [{ id, name, originalPrice, discountPrice, img, options }],
+}
 ```
-
-`setFilters` 호출 시 `pagination.page`가 자동으로 1로 리셋된다.
 
 ---
 
@@ -86,13 +117,6 @@ const { data } = useGetProductsQuery({ ...filters, page, size })
 
 - 경로: `/product/detail/:id` (일반) / `/subscription/detail/:id` (정기배송) — **동일 컴포넌트 사용**
 - `product.isSubscribable` 필드로 UI 전체 분기:
-
-| 필드 | 타입 | 설명 |
-|---|---|---|
-| `isSubscribable` | `boolean` | `true` → 정기배송 UI, `false` → 일반 구매 UI |
-| `subscriptionDiscount` | `number` | 정기배송 선택 시 할인 금액 (isSubscribable=true 전용) |
-| `bundleOptions` | `{ qty, price, save }[]` | 수량별 패키지 가격 (isSubscribable=true 전용) |
-| `relatedProducts` | 상품 배열 | 함께 구매하면 좋은 제품 (isSubscribable=false 전용) |
 
 ### isSubscribable = false (일반 상품)
 - 옵션 선택 → 수량 스텝퍼(+/-) → 총 금액 = `(price + optionExtra) × qty`
@@ -108,22 +132,13 @@ const { data } = useGetProductsQuery({ ...filters, page, size })
 
 ---
 
-## Mock 데이터
+## 필터 → RTK Query 연동 패턴
 
-| 파일 | 내용 | 가변 여부 |
-|---|---|---|
-| `src/mocks/products.js` | 상품 목록 | 불변 |
-| `src/mocks/categories.js` | 카테고리 목록 | 불변 |
+```js
+const filters = useAppSelector(selectProductFilters)
+const { page, size } = useAppSelector(selectProductPagination)
 
-컴포넌트에서 `src/mocks/` 직접 import 금지 — `mockBaseQuery.js`가 RTK Query 훅 인터페이스를 통해 제공.
+const { data } = useGetProductsQuery({ ...filters, page, size })
+```
 
----
-
-## 현재 구현 vs. 목표
-
-| 항목 | 현재 코드 | 목표 |
-|---|---|---|
-| 상품 데이터 | 컴포넌트에서 `src/mock/index.js` 직접 import | `mockBaseQuery.js` 경유 RTK Query 훅 |
-| API 구조 | 독립 `createApi` (`productApi.js`) | `apiSlice.injectEndpoints()` |
-| 비즈니스 상수 | 컴포넌트 내 하드코딩 | `constants.js` |
-| 라우트 | `/product/detail/:id` | `/products/:id` |
+`setFilters` 호출 시 `pagination.page`가 자동으로 1로 리셋된다.
