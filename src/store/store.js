@@ -16,6 +16,7 @@ import { apiSlice } from '@/api/apiSlice'
 
 // ─── 도메인 API 등록 (injectEndpoints 사이드이펙트) ───────────────────────────
 import '@/api/authApi'
+import '@/api/userApi'
 import '@/api/categoryApi'
 import '@/api/productApi'
 import '@/api/cartApi'

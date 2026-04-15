@@ -1,19 +1,37 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { MOCK_USER, MOCK_DELIVERY_STATUS } from '../mock'
+import { useGetProfileQuery } from '@/api/userApi'
+import { useLogoutMutation } from '@/api/authApi'
+import Spinner from '@/shared/components/Spinner'
+
+const DELIVERY_STATUS_LABELS = ['입금전', '배송준비중', '배송중', '배송완료']
 
 export default function UserProfilePage() {
-  const user = MOCK_USER
+  const { data: profile, isLoading, isError } = useGetProfileQuery()
+  const [logoutMutation] = useLogoutMutation()
+
   const menuItems = [
     { title: '주문조회', to: '/order/list' },
     { title: '회원정보', to: '/profile/modify' },
-    { title: '관심상품', count: user.wishlistCount, to: '/wishlist' },
+    { title: '관심상품', count: profile?.wishlistCount, to: '/wishlist' },
     { title: '적립금', to: '/point' },
-    { title: '쿠폰', count: user.coupons, to: '/coupon' },
+    { title: '쿠폰', count: profile?.couponCount, to: '/coupon' },
     { title: '게시물관리', to: '/profile/posts' },
     { title: '배송 주소록 관리', to: '/address' },
-    { title: '정기배송 관리', to: '/user-subscription' },
+    { title: '정기배송 관리', to: '/subscription' },
   ]
+
+  if (isLoading) return <Spinner fullscreen />
+
+  if (isError) {
+    return (
+      <div className="bg-[#FCFBF9] min-h-screen flex items-center justify-center">
+        <p className="text-[#bbb] font-bold">프로필 정보를 불러오지 못했습니다.</p>
+      </div>
+    )
+  }
+
+  const deliveryStatus = profile?.deliveryStatus ?? DELIVERY_STATUS_LABELS.map(label => ({ label, count: 0 }))
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111]">
@@ -24,18 +42,20 @@ export default function UserProfilePage() {
         </div>
 
         <section className="bg-white rounded-[40px] border border-[#eee] p-10 mb-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
-          <span className="inline-block px-3 py-1 rounded-full text-[11px] font-black bg-[#f0faf4] text-[#3ea76e] mb-4 tracking-widest">
-            {user.rank} 
-          </span>
+          {profile?.rank && (
+            <span className="inline-block px-3 py-1 rounded-full text-[11px] font-black bg-[#f0faf4] text-[#3ea76e] mb-4 tracking-widest">
+              {profile.rank}
+            </span>
+          )}
           <h2 className="text-[26px] font-black tracking-tight text-[#111] mb-10">
-            {user.name}님, 안녕하세요!
+            {profile?.name ?? '회원'}님, 안녕하세요!
           </h2>
 
           <div className="flex justify-between items-center px-4">
             {[
-              { label: '적립금', value: `${user.points}원` },
-              { label: '쿠폰', value: `${user.coupons}개` },
-              { label: '주문내역', value: `${user.orderCount}건` },
+              { label: '적립금', value: profile?.points != null ? `${profile.points}원` : '-' },
+              { label: '쿠폰', value: profile?.couponCount != null ? `${profile.couponCount}개` : '-' },
+              { label: '주문내역', value: profile?.orderCount != null ? `${profile.orderCount}건` : '-' },
             ].map((item, i) => (
               <div key={item.label} className="flex items-center flex-1">
                 <div className="text-center flex-1">
@@ -60,7 +80,7 @@ export default function UserProfilePage() {
           </div>
 
           <div className="grid grid-cols-4 relative mb-10">
-            {MOCK_DELIVERY_STATUS.map((status, idx) => (
+            {deliveryStatus.map((status, idx) => (
               <div key={idx} className="text-center relative">
                 <p className="text-[13px] font-bold text-[#bbb] mb-4">{status.label}</p>
                 <p className={`text-[28px] font-black ${status.count > 0 ? 'text-[#3ea76e]' : 'text-[#eee]'}`}>
@@ -73,9 +93,9 @@ export default function UserProfilePage() {
 
           <div className="flex justify-around py-5 bg-[#f9f9f9] rounded-2xl border border-[#eee] mb-8">
             {[
-              { label: '취소', count: 2 },
-              { label: '교환', count: 0 },
-              { label: '반품', count: 0 },
+              { label: '취소', count: profile?.cancelCount ?? 0 },
+              { label: '교환', count: profile?.exchangeCount ?? 0 },
+              { label: '반품', count: profile?.returnCount ?? 0 },
             ].map((item, i) => (
               <div key={item.label} className="flex items-center gap-3 text-[13px] font-bold">
                 <span className="text-[#aaa]">{item.label}</span>
@@ -84,7 +104,6 @@ export default function UserProfilePage() {
               </div>
             ))}
           </div>
-
         </section>
 
         <section className="bg-white rounded-[40px] border border-[#eee] overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
@@ -101,7 +120,7 @@ export default function UserProfilePage() {
                 <span className="text-[15px] font-black text-[#111] group-hover:text-[#3ea76e] transition-colors">
                   {item.title}
                 </span>
-                {item.count !== undefined && (
+                {item.count != null && (
                   <span className="text-[12px] font-black text-[#3ea76e] bg-[#f0faf4] px-2 py-0.5 rounded-full">
                     {item.count}
                   </span>
@@ -113,7 +132,10 @@ export default function UserProfilePage() {
         </section>
 
         <div className="mt-8 text-center">
-          <button className="text-[13px] font-bold text-[#bbb] hover:text-red-400 transition-colors bg-transparent border-none cursor-pointer">
+          <button
+            onClick={() => logoutMutation()}
+            className="text-[13px] font-bold text-[#bbb] hover:text-red-400 transition-colors bg-transparent border-none cursor-pointer"
+          >
             로그아웃
           </button>
         </div>

@@ -137,7 +137,10 @@ function TermsContentModal({ term, onClose }) {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-10 py-8">
-          <p className="text-[13px] text-[#555] leading-relaxed whitespace-pre-line">{term.content}</p>
+          <div
+            className="text-[13px] text-[#555] leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: term.content }}
+          />
         </div>
         <div className="px-10 pb-10 pt-6 border-t border-[#f5f5f5]">
           <button

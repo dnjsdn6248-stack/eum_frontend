@@ -25,6 +25,7 @@ import WriteReviewPage from './pages/WriteReviewPage'
 import ReviewPage from './pages/ReviewPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
+import SubscriptionPage from './pages/SubscriptionPage'
 
 export default function Router() {
   return (
@@ -35,6 +36,7 @@ export default function Router() {
             {/* 공개 라우트 */}
             <Route path="/" element={<HomePage />} />
             <Route path="/product/list" element={<StorePage />} />
+            <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="/product/list/odog" element={<OdogPage />} />
             <Route path="/product/detail/:id" element={<ProductDetailPage />} />
             <Route path="/subscription/detail/:id" element={<ProductDetailPage />} />

@@ -1,9 +1,11 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { MOCK_USER } from '../mock'
-import AddressSearch from '@/features/user/AddressSearch'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { AlertCircle, CheckCircle, X } from 'lucide-react'
+import { useGetMeQuery, useGetSocialAccountsQuery, useLazyStartSocialLinkQuery, useUnlinkSocialMutation, useLogoutMutation } from '@/api/authApi'
+import { useUpdateProfileMutation, useDeleteAccountMutation } from '@/api/userApi'
+import Spinner from '@/shared/components/Spinner'
+import { PROVIDER_LABELS } from '@/shared/utils/oauth2'
 
-// 공통 인풋 컴포넌트
 const SwiffyInput = ({ label, readOnly, ...props }) => (
   <div className="flex items-center border-b border-[#ececec] py-6 last:border-none">
     <p className="w-36 text-[13px] font-black text-[#bbb] shrink-0">{label}</p>
@@ -11,138 +13,316 @@ const SwiffyInput = ({ label, readOnly, ...props }) => (
       {...props}
       readOnly={readOnly}
       className={`flex-1 bg-transparent outline-none text-[15px] font-bold tracking-tight transition-all placeholder:text-[#ccc] ${
-        readOnly 
-          ? 'text-[#ccc] cursor-default' 
+        readOnly
+          ? 'text-[#ccc] cursor-default'
           : 'text-[#111] focus:text-[#3ea76e]'
       }`}
     />
   </div>
 )
 
+const ALL_PROVIDERS = ['google', 'kakao', 'naver']
+
+function SocialAccountsSection() {
+  const { data: socialAccounts = [], isLoading } = useGetSocialAccountsQuery()
+  const [triggerLink] = useLazyStartSocialLinkQuery()
+  const [unlinkSocial] = useUnlinkSocialMutation()
+  const [unlinkError, setUnlinkError] = useState('')
+
+  const connectedSet = new Set(socialAccounts.map(a => a.provider))
+
+  const handleLink = async (provider) => {
+    try {
+      const { data } = await triggerLink(provider)
+      if (data?.authUrl) {
+        window.location.href = data.authUrl
+      }
+    } catch {}
+  }
+
+  const handleUnlink = async (provider) => {
+    setUnlinkError('')
+    try {
+      await unlinkSocial(provider).unwrap()
+    } catch (err) {
+      setUnlinkError(err?.data?.message || '연동 해제에 실패했습니다.')
+    }
+  }
+
+  if (isLoading) return (
+    <div className="flex justify-center py-6">
+      <div className="w-5 h-5 border-2 border-[#3ea76e] border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  return (
+    <section className="bg-white rounded-[40px] border border-[#eee] px-10 pb-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] mb-8">
+      <div className="py-12">
+        <h3 className="text-[18px] font-black text-[#111] tracking-tight text-center">소셜 계정 연동</h3>
+      </div>
+
+      {unlinkError && (
+        <div className="flex items-center gap-2 px-5 py-3 bg-red-50 border border-red-100 rounded-2xl mb-5">
+          <AlertCircle size={15} className="text-red-400 shrink-0" />
+          <p className="text-[13px] font-bold text-red-500">{unlinkError}</p>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {ALL_PROVIDERS.map((provider) => {
+          const connected = connectedSet.has(provider)
+          const account   = socialAccounts.find(a => a.provider === provider)
+          const label     = PROVIDER_LABELS[provider] ?? provider
+
+          return (
+            <div key={provider} className="flex items-center justify-between px-6 py-4 bg-[#f7f7f7] border border-[#efefef] rounded-2xl">
+              <div>
+                <p className="text-[14px] font-black text-[#333]">{label}</p>
+                {connected && account?.connectedAt && (
+                  <p className="text-[12px] font-medium text-[#aaa] mt-0.5">
+                    {new Date(account.connectedAt).toLocaleDateString('ko-KR')} 연동됨
+                  </p>
+                )}
+              </div>
+              {connected ? (
+                <button
+                  type="button"
+                  onClick={() => handleUnlink(provider)}
+                  className="h-9 px-4 bg-white border border-[#eee] text-[#aaa] rounded-full text-[12px] font-bold hover:border-red-300 hover:text-red-400 transition-all cursor-pointer"
+                >
+                  연동 해제
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleLink(provider)}
+                  className="h-9 px-4 bg-[#3ea76e] text-white rounded-full text-[12px] font-bold border-none hover:bg-[#318a57] transition-all cursor-pointer"
+                >
+                  연동하기
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 export default function ProfileModifyPage() {
-  const user = MOCK_USER
-  const [marketingApp, setMarketingApp] = useState(true)
-  const [marketingSms, setMarketingSms] = useState(false)
-  const [email, setEmail] = useState(user.email || 'swiffy@example.com')
-  const [address, setAddress] = useState({
-    postcode: '',
-    baseAddress: '',
-    extraAddress: '',
-    addressType: '',
-    detailAddress: '',
+  const navigate = useNavigate()
+  const { data: me, isLoading } = useGetMeQuery()
+  const [updateProfile,  { isLoading: isSaving }]   = useUpdateProfileMutation()
+  const [deleteAccount,  { isLoading: isDeleting }]  = useDeleteAccountMutation()
+  const [logoutMutation]                             = useLogoutMutation()
+
+  const [form, setForm] = useState({
+    name: '',
+    phoneNumber: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    smsAllowed: false,
+    emailAllowed: false,
   })
+  const [error, setError]     = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword]   = useState('')
+  const [deleteError, setDeleteError]         = useState('')
+
+  const handleDelete = async () => {
+    setDeleteError('')
+    if (!deletePassword) {
+      setDeleteError('비밀번호를 입력해 주세요.')
+      return
+    }
+    try {
+      await deleteAccount({ password: deletePassword }).unwrap()
+      await logoutMutation()
+      navigate('/')
+    } catch (err) {
+      setDeleteError(err?.data?.message || '탈퇴 처리 중 오류가 발생했습니다.')
+    }
+  }
+
+  // me 데이터가 로드되면 폼 초기화
+  useEffect(() => {
+    if (me) {
+      setForm(prev => ({
+        ...prev,
+        name:        me.name        ?? '',
+        phoneNumber: me.phoneNumber ?? '',
+        smsAllowed:  me.smsAllowed  ?? false,
+        emailAllowed: me.emailAllowed ?? false,
+      }))
+    }
+  }, [me])
+
+  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }))
+
+  const handleSubmit = async () => {
+    setError('')
+    setSuccess(false)
+
+    if (form.newPassword && form.newPassword !== form.confirmPassword) {
+      setError('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.')
+      return
+    }
+    if (form.newPassword && !form.currentPassword) {
+      setError('현재 비밀번호를 입력해 주세요.')
+      return
+    }
+
+    const body = {
+      name:        form.name,
+      phoneNumber: form.phoneNumber,
+      email:       me?.email ?? '',
+      marketingConsent: {
+        smsAllowed:   form.smsAllowed,
+        emailAllowed: form.emailAllowed,
+      },
+    }
+
+    if (form.currentPassword) {
+      body.currentPassword = form.currentPassword
+      body.newPassword     = form.newPassword
+      body.confirmPassword = form.confirmPassword
+    }
+
+    try {
+      await updateProfile(body).unwrap()
+      setSuccess(true)
+      setForm(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }))
+    } catch (err) {
+      const errors = err?.data?.errors
+      if (errors) {
+        setError(Object.values(errors).join(' '))
+      } else {
+        setError(err?.data?.message || '저장 중 오류가 발생했습니다.')
+      }
+    }
+  }
+
+  if (isLoading) return <Spinner fullscreen />
 
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111]">
       <main className="max-w-[860px] mx-auto px-6 pb-28">
 
-    
         <div className="text-center py-24">
           <h1 className="text-[36px] font-black tracking-[-0.05em] text-[#111]">회원 정보 수정</h1>
         </div>
 
-     
+        {/* 로그인 보안 */}
         <section className="bg-white rounded-[40px] border border-[#eee] px-10 pb-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] mb-8">
           <div className="py-12">
             <h3 className="text-[18px] font-black text-[#111] tracking-tight text-center">로그인 보안</h3>
           </div>
-        
+
           <div className="bg-[#f7f7f7] px-8 rounded-[24px] border border-[#efefef]">
-            <SwiffyInput 
-              label="아이디" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              placeholder="이메일을 입력해주세요"
+            <SwiffyInput
+              label="이메일"
+              value={me?.email ?? ''}
+              readOnly
+              placeholder="이메일"
             />
-            <SwiffyInput label="새 비밀번호" type="password" placeholder="8~16자 영문, 숫자 조합" />
-            <SwiffyInput label="비밀번호 확인" type="password" placeholder="비밀번호 재입력" />
+            <SwiffyInput
+              label="현재 비밀번호"
+              type="password"
+              placeholder="현재 비밀번호 입력"
+              value={form.currentPassword}
+              onChange={e => set('currentPassword', e.target.value)}
+            />
+            <SwiffyInput
+              label="새 비밀번호"
+              type="password"
+              placeholder="8~20자, 대소문자+숫자+특수문자"
+              value={form.newPassword}
+              onChange={e => set('newPassword', e.target.value)}
+            />
+            <SwiffyInput
+              label="비밀번호 확인"
+              type="password"
+              placeholder="새 비밀번호 재입력"
+              value={form.confirmPassword}
+              onChange={e => set('confirmPassword', e.target.value)}
+            />
           </div>
         </section>
 
-  
+        {/* 사용자 정보 */}
         <section className="bg-white rounded-[40px] border border-[#eee] px-10 pb-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] mb-8">
           <div className="py-12">
             <h3 className="text-[18px] font-black text-[#111] tracking-tight text-center">사용자 정보</h3>
           </div>
           <div className="bg-[#f7f7f7] px-8 rounded-[24px] border border-[#efefef]">
-            <SwiffyInput label="이름" type="text" defaultValue={user.name} />
-
-           
-            <div className="flex items-center border-b border-[#ececec] py-6">
-              <p className="w-36 text-[13px] font-black text-[#bbb] shrink-0">휴대폰 번호</p>
-              <div className="flex items-center gap-2 flex-1">
-                <input type="text" defaultValue="010" className="w-16 text-center bg-white border border-[#eee] py-2.5 rounded-xl text-[14px] font-bold outline-none focus:border-[#3ea76e] transition-all" />
-                <span className="text-[#ddd] font-bold">-</span>
-                <input type="text" defaultValue="1234" className="flex-1 text-center bg-white border border-[#eee] py-2.5 rounded-xl text-[14px] font-bold outline-none focus:border-[#3ea76e] transition-all" />
-                <span className="text-[#ddd] font-bold">-</span>
-                <input type="text" defaultValue="5678" className="flex-1 text-center bg-white border border-[#eee] py-2.5 rounded-xl text-[14px] font-bold outline-none focus:border-[#3ea76e] transition-all" />
-              </div>
-            </div>
-
-            <div className="flex items-start py-8">
-              <p className="w-36 text-[13px] font-black text-[#bbb] shrink-0 mt-3">주소</p>
-              <div className="flex-1 space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={address.postcode}
-                    placeholder="우편번호"
-                    className="w-32 bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none text-[#bbb]"
-                    readOnly
-                  />
-                  <AddressSearch
-                    onSelect={({ postcode, baseAddress, extraAddress, addressType }) =>
-                      setAddress((prev) => ({ ...prev, postcode, baseAddress, extraAddress, addressType }))
-                    }
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={`${address.baseAddress} ${address.extraAddress}`.trim()}
-                  placeholder="기본 주소"
-                  className="w-full bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none text-[#bbb]"
-                  readOnly
-                />
-                <input
-                  type="text"
-                  value={address.detailAddress}
-                  onChange={(e) => setAddress((prev) => ({ ...prev, detailAddress: e.target.value }))}
-                  placeholder="상세 주소 입력"
-                  className="w-full bg-[#fff] border border-[#eee] px-4 py-3 rounded-xl text-[13px] font-bold outline-none focus:border-[#3ea76e] transition-all"
-                />
-              </div>
-            </div>
+            <SwiffyInput
+              label="이름"
+              type="text"
+              value={form.name}
+              onChange={e => set('name', e.target.value)}
+              placeholder="이름을 입력해주세요"
+            />
+            <SwiffyInput
+              label="휴대폰 번호"
+              type="tel"
+              value={form.phoneNumber}
+              onChange={e => set('phoneNumber', e.target.value)}
+              placeholder="010-0000-0000"
+            />
           </div>
         </section>
 
-        
+        {/* 마케팅 동의 */}
         <section className="bg-white rounded-[40px] border border-[#eee] px-10 pb-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] mb-12">
           <div className="py-12">
             <h3 className="text-[18px] font-black text-[#111] tracking-tight text-center">마케팅 정보 수신 동의</h3>
           </div>
           <div className="flex gap-4">
             {[
-              { label: '앱 푸시 알림', state: marketingApp, setState: setMarketingApp },
-              { label: 'SMS 문자 수신', state: marketingSms, setState: setMarketingSms },
+              { label: 'SMS 문자 수신', key: 'smsAllowed' },
+              { label: '이메일 수신', key: 'emailAllowed' },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between gap-4 bg-[#f7f7f7] border border-[#efefef] px-6 py-5 rounded-2xl flex-1 transition-all">
+              <div key={item.key} className="flex items-center justify-between gap-4 bg-[#f7f7f7] border border-[#efefef] px-6 py-5 rounded-2xl flex-1 transition-all">
                 <span className="text-[14px] font-black text-[#444]">{item.label}</span>
                 <button
                   type="button"
-                  onClick={() => item.setState(!item.state)}
-                  className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer border-none flex items-center ${item.state ? 'bg-[#3ea76e]' : 'bg-[#ccc]'}`}
+                  onClick={() => set(item.key, !form[item.key])}
+                  className={`w-11 h-6 rounded-full p-1 transition-colors cursor-pointer border-none flex items-center ${form[item.key] ? 'bg-[#3ea76e]' : 'bg-[#ccc]'}`}
                 >
-                  <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${item.state ? 'translate-x-5' : 'translate-x-0'}`} />
+                  <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${form[item.key] ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
               </div>
             ))}
           </div>
         </section>
 
-        
+        {/* 소셜 계정 연동 */}
+        <SocialAccountsSection />
+
+        {/* 에러 / 성공 메시지 */}
+        {error && (
+          <div className="flex items-center gap-2 px-5 py-4 bg-red-50 border border-red-100 rounded-2xl mb-6">
+            <AlertCircle size={16} className="text-red-400 shrink-0" />
+            <p className="text-[13px] font-bold text-red-500">{error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="flex items-center gap-2 px-5 py-4 bg-[#f0faf4] border border-[#b6e8cc] rounded-2xl mb-6">
+            <CheckCircle size={16} className="text-[#3ea76e] shrink-0" />
+            <p className="text-[13px] font-bold text-[#1B4332]">변경 내용이 저장되었습니다.</p>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3 max-w-[420px] mx-auto">
-          <button className="w-full h-16 bg-[#3ea76e] text-white rounded-full text-[17px] font-black hover:bg-[#318a57] border-none cursor-pointer shadow-lg shadow-[#3ea76e]/10 transition-all active:scale-[0.97]">
-            변경 내용 저장하기
+          <button
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="w-full h-16 bg-[#3ea76e] text-white rounded-full text-[17px] font-black hover:bg-[#318a57] border-none cursor-pointer shadow-lg shadow-[#3ea76e]/10 transition-all active:scale-[0.97] disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
+          >
+            {isSaving ? '저장 중...' : '변경 내용 저장하기'}
           </button>
           <Link to="/mypage" className="w-full h-16 flex items-center justify-center bg-[#f7f7f7] border border-[#eee] text-[#aaa] rounded-full text-[15px] font-bold hover:bg-[#efefef] hover:text-[#888] transition-all">
             취소

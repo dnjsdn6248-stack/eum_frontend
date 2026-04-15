@@ -12,17 +12,21 @@ export default function useEmailVerify({ onVerified }) {
   const [sendEmailVerify, { isLoading: isSending }] = useSendEmailVerifyMutation()
   const [verifyEmailMutation, { isLoading: isVerifying }] = useVerifyEmailMutation()
 
+  // 이메일 변경 시 이전 에러·상태 모두 초기화
   const setEmail = (val) => {
     setEmailState(val)
     setCodeSent(false)
     setVerified(false)
+    setSendError('')
+    setVerifyError('')
   }
 
   const handleSend = async () => {
-    if (!email) return
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) return
     setSendError('')
     try {
-      await sendEmailVerify(email).unwrap()
+      await sendEmailVerify(trimmedEmail).unwrap()
       setCodeSent(true)
       setCode('')
       setVerifyError('')
@@ -35,17 +39,14 @@ export default function useEmailVerify({ onVerified }) {
     if (!code) return
     setVerifyError('')
     try {
-      const cleanCode = code.trim().replace(/[^0-9]/g, '')
-      await verifyEmailMutation({
-        email: email.trim(),
-        code: cleanCode,
-      }).unwrap()
+      const cleanCode    = code.trim().replace(/[^0-9]/g, '')
+      const trimmedEmail = email.trim()
+      await verifyEmailMutation({ email: trimmedEmail, code: cleanCode }).unwrap()
       setVerified(true)
       setTimeout(() => {
-        onVerified(email)
+        onVerified(trimmedEmail)
       }, 800)
     } catch (err) {
-      console.error("❌ 검증 에러 상세:", err)
       setVerifyError(err?.data?.message || '인증번호가 올바르지 않습니다.')
     }
   }

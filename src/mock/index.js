@@ -663,7 +663,7 @@ export const MOCK_CART = [
 // ─── NAV_ITEMS ────────────────────────────────────────
 export const NAV_ITEMS = [
   { label: 'STORE', to: '/product/list' },
-  { label: '정기배송', to: '/user-subscription' },
+  { label: '정기배송', to: '/subscription' },
   { label: '베스트셀러', to: '/best' },
   { label: '브랜드 스토리', to: '/brand-story' },
 ]

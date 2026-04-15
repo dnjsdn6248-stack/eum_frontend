@@ -16,7 +16,7 @@ export const authApi = apiSlice.injectEndpoints({
     /**
      * POST /auth/login
      * accessToken · refreshToken 모두 HttpOnly 쿠키로 자동 저장
-     * 로그인 성공 후 /auth/me를 강제 재호출하여 캐시 갱신
+     * 로그인 성공 후 /users/me를 강제 재호출하여 캐시 갱신
      */
     login: builder.mutation({
       query: (credentials) => ({
@@ -53,19 +53,9 @@ export const authApi = apiSlice.injectEndpoints({
       },
     }),
 
-    /** PUT /users/profile — 프로필 수정 */
-    updateProfile: builder.mutation({
-      query: (body) => ({ url: '/users/profile', method: 'PUT', body }),
-    }),
-
-    /** PUT /auth/password — 비밀번호 변경 */
-    changePassword: builder.mutation({
-      query: (body) => ({ url: '/auth/password', method: 'PUT', body }),
-    }),
-
     // ─── 이메일 인증 Mutations ──────────────────────────────────────────────────
 
-    /** POST /auth/email/send — 인증 코드 발송 */
+    /** POST /auth/email/send?email= — 인증 코드 발송 */
     sendEmailVerify: builder.mutation({
       query: (email) => ({
         url: '/auth/email/send',
@@ -74,7 +64,7 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    /** POST /auth/email/verify — 인증 코드 확인 */
+    /** POST /auth/email/verify?email=&code= — 인증 코드 확인 */
     verifyEmail: builder.mutation({
       query: ({ email, code }) => ({
         url: '/auth/email/verify',
@@ -83,15 +73,46 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    // ─── 소셜 계정 연동 ─────────────────────────────────────────────────────────
+
+    /** GET /auth/social/accounts — 연동된 소셜 계정 목록 조회 */
+    getSocialAccounts: builder.query({
+      query: () => ({ url: '/auth/social/accounts' }),
+      providesTags: ['Auth'],
+    }),
+
+    /**
+     * GET /auth/social/link/start?provider= — 소셜 계정 연동 시작
+     * 응답의 authUrl로 브라우저를 이동시켜야 한다
+     */
+    startSocialLink: builder.query({
+      query: (provider) => ({
+        url: '/auth/social/link/start',
+        params: { provider },
+      }),
+    }),
+
+    /** DELETE /auth/social/unlink?provider= — 소셜 계정 연동 해제 */
+    unlinkSocial: builder.mutation({
+      query: (provider) => ({
+        url: '/auth/social/unlink',
+        method: 'DELETE',
+        params: { provider },
+      }),
+      invalidatesTags: ['Auth'],
+    }),
+
     // ─── 인증 Queries ───────────────────────────────────────────────────────────
 
     /**
-     * GET /auth/me — 로그인 사용자 정보 조회
+     * GET /users/me — 로그인 사용자 기본 정보 조회 (구 /auth/me 대체)
      * RTK Query 캐시가 단일 출처 → useAuth()가 직접 구독
-     * 새로고침 → 401 → withReauth → /auth/refresh → 재시도
+     * 새로고침 → 401 → Gateway가 refreshToken으로 자동 갱신 시도 → 실패 시 logout
+     * 응답: { status, data: { userId, name, email, phoneNumber, smsAllowed, emailAllowed, updatedAt } }
      */
     getMe: builder.query({
-      query: () => ({ url: '/auth/me' }),
+      query: () => ({ url: '/users/me' }),
+      transformResponse: (res) => res.data,
       providesTags: ['Auth'],
     }),
 
@@ -108,10 +129,11 @@ export const {
   useLoginMutation,
   useSignupMutation,
   useLogoutMutation,
-  useUpdateProfileMutation,
-  useChangePasswordMutation,
   useSendEmailVerifyMutation,
   useVerifyEmailMutation,
+  useGetSocialAccountsQuery,
+  useLazyStartSocialLinkQuery,
+  useUnlinkSocialMutation,
   useGetMeQuery,
   useLazyGetMeQuery,
   useGetTermsQuery,

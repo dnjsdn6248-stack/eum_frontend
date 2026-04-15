@@ -1,14 +1,17 @@
 import { useGetCsrfQuery } from '@/api/authApi'
 import { useGetCategoriesQuery } from '@/api/categoryApi'
-import Spinner from '@/shared/components/Spinner'
 import useAuth from './useAuth'
 
+/**
+ * 앱 전역 초기화 훅만 실행. 렌더를 블로킹하지 않는다.
+ * - CSRF 쿠키 발급 (GET /api/v1/csrf)
+ * - 카테고리 프리패치
+ * - getMe 백그라운드 호출 시작 (isInitialized는 ProtectedRoute가 사용)
+ */
 export default function AuthInitializer({ children }) {
-  useGetCsrfQuery()       // 앱 시작 시 XSRF-TOKEN 쿠키 발급
+  useGetCsrfQuery()
   useGetCategoriesQuery()
+  useAuth()   // getMe 캐시 워밍 — 결과는 ProtectedRoute에서 소비
 
-  const { isInitialized } = useAuth()  // 내부적으로 useGetMeQuery() 호출
-
-  if (!isInitialized) return <Spinner fullscreen />
   return children
 }

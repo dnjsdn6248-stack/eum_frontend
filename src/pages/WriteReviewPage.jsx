@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ChevronLeft, Star, Camera, Video, X, Play, ImagePlus } from 'lucide-react'
-import { useCreateReviewMutation } from '@/api/reviewApi'
+import { ChevronLeft, Star, Camera, Video, X } from 'lucide-react'
 
 /* ─── 키워드 태그 카테고리 ──────────────────────────────────── */
 const TAG_CATEGORIES = [
@@ -26,13 +25,13 @@ const TAG_CATEGORIES = [
 ]
 
 /* ─── 파일 유효성 상수 ─────────────────────────────────────── */
-const IMAGE_MAX_COUNT = 10
+const TOTAL_MEDIA_MAX_COUNT = 5
 const IMAGE_MAX_SIZE_MB = 10
 const IMAGE_ACCEPT = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
 const VIDEO_MAX_SIZE_MB = 500
 const VIDEO_ACCEPT = ['video/mp4', 'video/quicktime', 'video/avi', 'video/webm']
 
-export default function WriteReviewPage() {
+export default function WriteReviewPage({ previewOnly = false, embedded = false, previewState = null }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -42,7 +41,7 @@ export default function WriteReviewPage() {
     orderId,
     productName = '상품명',
     productImage = null,
-  } = location.state ?? {}
+  } = previewState ?? location.state ?? {}
 
   /* ─── 폼 상태 ──────────────────────────────────────────────── */
   const [rating, setRating] = useState(0)
@@ -53,12 +52,11 @@ export default function WriteReviewPage() {
   const [video, setVideo] = useState(null)   // { file, previewUrl } | null
   const [errors, setErrors] = useState({})
 
-  /* ─── RTK Query ────────────────────────────────────────────── */
-  const [createReview, { isLoading }] = useCreateReviewMutation()
-
   /* ─── ref ──────────────────────────────────────────────────── */
   const imageInputRef = useRef(null)
   const videoInputRef = useRef(null)
+  const totalMediaCount = images.length + (video ? 1 : 0)
+  const isLoading = false
 
   /* ─── 태그 토글 (카테고리당 1개 선택) ─────────────────────── */
   const toggleTag = (categoryKey, option) => {
@@ -71,7 +69,7 @@ export default function WriteReviewPage() {
   /* ─── 이미지 추가 ──────────────────────────────────────────── */
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files)
-    const remaining = IMAGE_MAX_COUNT - images.length
+    const remaining = TOTAL_MEDIA_MAX_COUNT - totalMediaCount
     if (remaining <= 0) return
 
     const added = []
@@ -81,6 +79,7 @@ export default function WriteReviewPage() {
       added.push({ file, previewUrl: URL.createObjectURL(file) })
     }
     setImages((prev) => [...prev, ...added])
+    setErrors((prev) => ({ ...prev, media: undefined }))
     e.target.value = ''
   }
 
@@ -96,6 +95,11 @@ export default function WriteReviewPage() {
   const handleVideoChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
+    if (!video && totalMediaCount >= TOTAL_MEDIA_MAX_COUNT) {
+      setErrors((prev) => ({ ...prev, media: `사진과 동영상은 합쳐서 최대 ${TOTAL_MEDIA_MAX_COUNT}개까지 첨부할 수 있습니다.` }))
+      e.target.value = ''
+      return
+    }
     if (!VIDEO_ACCEPT.includes(file.type)) {
       setErrors((prev) => ({ ...prev, video: '지원하지 않는 파일 형식입니다. (mp4, mov, avi, webm)' }))
       e.target.value = ''
@@ -108,7 +112,7 @@ export default function WriteReviewPage() {
     }
     if (video) URL.revokeObjectURL(video.previewUrl)
     setVideo({ file, previewUrl: URL.createObjectURL(file) })
-    setErrors((prev) => ({ ...prev, video: undefined }))
+    setErrors((prev) => ({ ...prev, video: undefined, media: undefined }))
     e.target.value = ''
   }
 
@@ -131,6 +135,11 @@ export default function WriteReviewPage() {
   const handleSubmit = async () => {
     if (!validate()) return
 
+    if (previewOnly) {
+      setErrors((prev) => ({ ...prev, submit: 'UI 확인용 화면입니다. 현재는 API 없이 동작합니다.' }))
+      return
+    }
+
     const formData = new FormData()
     formData.append('orderId', orderId)
     formData.append('rating', rating)
@@ -141,12 +150,7 @@ export default function WriteReviewPage() {
     images.forEach(({ file }) => formData.append('images[]', file))
     if (video) formData.append('video', video.file)
 
-    try {
-      await createReview({ productId, reviewData: formData }).unwrap()
-      navigate(-1)
-    } catch {
-      setErrors((prev) => ({ ...prev, submit: '리뷰 등록 중 오류가 발생했습니다.' }))
-    }
+    setErrors((prev) => ({ ...prev, submit: '리뷰 등록 API가 연결되지 않았습니다.' }))
   }
 
   /* ─── 렌더 ─────────────────────────────────────────────────── */
@@ -154,10 +158,10 @@ export default function WriteReviewPage() {
     <div className="w-full bg-[#FCFBF9] min-h-screen pb-32 text-[#111]">
 
       {/* 헤더 */}
-      <header className="sticky top-0 bg-white border-b border-[#eee] z-50 px-6 py-5">
+      <header className={`${embedded ? 'rounded-t-[28px]' : 'sticky top-0'} bg-white border-b border-[#eee] z-50 px-6 py-5`}>
         <div className="max-w-[640px] mx-auto grid grid-cols-3 items-center">
           <ChevronLeft
-            onClick={() => navigate(-1)}
+            onClick={() => !previewOnly && navigate(-1)}
             className="w-6 h-6 cursor-pointer text-[#111]"
             strokeWidth={2.5}
           />
@@ -283,12 +287,12 @@ export default function WriteReviewPage() {
         <section className="bg-white rounded-[24px] p-6 border border-[#eee]">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[14px] font-bold text-[#333]">사진 첨부</p>
-            <p className="text-[12px] text-[#bbb]">{images.length} / {IMAGE_MAX_COUNT}</p>
+            <p className="text-[12px] text-[#bbb]">전체 {totalMediaCount} / {TOTAL_MEDIA_MAX_COUNT}</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             {/* 추가 버튼 */}
-            {images.length < IMAGE_MAX_COUNT && (
+            {totalMediaCount < TOTAL_MEDIA_MAX_COUNT && (
               <button
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
@@ -315,8 +319,11 @@ export default function WriteReviewPage() {
           </div>
 
           <p className="text-[12px] text-[#bbb] mt-3">
-            JPG · PNG · WEBP 형식, 장당 최대 10MB
+            JPG · PNG · WEBP 형식, 장당 최대 10MB, 사진/동영상 합산 최대 5개
           </p>
+          {errors.media && (
+            <p className="text-[12px] text-red-500 mt-2">{errors.media}</p>
+          )}
 
           <input
             ref={imageInputRef}
@@ -332,13 +339,14 @@ export default function WriteReviewPage() {
         <section className="bg-white rounded-[24px] p-6 border border-[#eee]">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[14px] font-bold text-[#333]">동영상 첨부</p>
-            <p className="text-[12px] text-[#bbb]">{video ? '1 / 1' : '0 / 1'}</p>
+            <p className="text-[12px] text-[#bbb]">{video ? `1 / 1 · 전체 ${totalMediaCount} / ${TOTAL_MEDIA_MAX_COUNT}` : `0 / 1 · 전체 ${totalMediaCount} / ${TOTAL_MEDIA_MAX_COUNT}`}</p>
           </div>
 
           {!video ? (
             <button
               type="button"
               onClick={() => videoInputRef.current?.click()}
+              disabled={totalMediaCount >= TOTAL_MEDIA_MAX_COUNT}
               className="w-full h-28 rounded-[16px] border-2 border-dashed border-[#ddd] flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#FCFBF9] hover:border-[#3ea76e] hover:bg-[#f0faf5] transition-colors"
             >
               <Video className="w-7 h-7 text-[#bbb]" strokeWidth={1.5} />
@@ -390,11 +398,11 @@ export default function WriteReviewPage() {
       </main>
 
       {/* ── 하단 고정 버튼 ─────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#eee] px-4 py-4 z-50">
+      <div className={`${embedded ? 'mt-6' : 'fixed bottom-0 left-0 right-0'} bg-white border-t border-[#eee] px-4 py-4 z-50`}>
         <div className="max-w-[640px] mx-auto flex gap-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => !previewOnly && navigate(-1)}
             className="btn-ghost flex-1 py-4 text-[15px]"
           >
             취소
