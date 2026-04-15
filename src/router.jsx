@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AuthInitializer from '@/features/auth/AuthInitializer'
 import ProtectedRoute from '@/features/auth/ProtectedRoute'
 import Layout from './features/components/layout/Layout'
-import HomePage from './pages/HomePage'
+import LandingPage from './pages/LandingPage'
 import StorePage from './pages/StorePage'
 import OdogPage from './pages/OdogPage'
 import ProductDetailPage from './pages/ProductDetailPage'
@@ -34,7 +34,7 @@ export default function Router() {
         <Routes>
           <Route element={<Layout />}>
             {/* 공개 라우트 */}
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/product/list" element={<StorePage />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="/product/list/odog" element={<OdogPage />} />
@@ -60,7 +60,7 @@ export default function Router() {
             <Route path="/address" element={<ProtectedRoute><UserAddressPage /></ProtectedRoute>} />
             <Route path="/review/write" element={<WriteReviewPage />} />
 
-            <Route path="*" element={<HomePage />} />
+            <Route path="*" element={<LandingPage />} />
           </Route>
 
           {/* 인증 라우트 (Layout 밖) */}

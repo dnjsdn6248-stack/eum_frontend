@@ -1,50 +1,79 @@
-import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { logout } from '@/features/auth/authSlice'
+import { apiSlice } from './apiSlice'
+import { initCheckedItems } from '@/features/cart/cartSlice'
 
-/** JS 접근 가능한 XSRF-TOKEN 쿠키를 읽는 헬퍼 */
-const getCsrfToken = () => {
-  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
+export const cartApi = apiSlice.injectEndpoints({
+  endpoints: (builder) => ({
 
-// ─── 1. 기본 fetchBaseQuery ────────────────────────────────────────────────────
+    /** GET /cart — 장바구니 조회 */
+    getCart: builder.query({
+      query: () => ({ url: '/cart' }),
+      transformResponse: (res) => {
+        const items = res.data?.items ?? res.data ?? []
+        return items.map((item) => ({
+          id: item.cartItemId ?? item.id,
+          cartItemId: item.cartItemId ?? item.id,
+          name: item.productName ?? item.name,
+          img: item.imageUrl ?? item.img,
+          price: item.price,
+          qty: item.quantity ?? item.qty ?? 1,
+          option: item.selectedOption ?? item.option ?? '',
+          options: item.options ?? [],
+          delivery: item.deliveryType ?? '',
+        }))
+      },
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: 'Cart', id })),
+              { type: 'Cart', id: 'LIST' },
+            ]
+          : [{ type: 'Cart', id: 'LIST' }],
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          dispatch(initCheckedItems(data.map((item) => item.id)))
+        } catch {}
+      },
+    }),
 
-const rawBaseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:8072',
-  credentials: 'include', // accessToken · refreshToken HttpOnly 쿠키 자동 전송
-  prepareHeaders: (headers) => {
-    // CSRF Token → X-XSRF-TOKEN (POST/PUT/DELETE 필수, JS readable 쿠키)
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      headers.set('X-XSRF-TOKEN', csrfToken)
-    }
-    return headers
-  },
+    /** POST /cart/items — 상품 추가 */
+    addCartItem: builder.mutation({
+      query: (body) => ({ url: '/cart/items', method: 'POST', body }),
+      invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
+    }),
+
+    /** PUT /cart/items/:cartItemId — 수량·옵션 변경 */
+    updateCartItem: builder.mutation({
+      query: ({ cartItemId, ...body }) => ({
+        url: `/cart/items/${cartItemId}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
+    }),
+
+    /** DELETE /cart/items/:cartItemId — 단일 삭제 */
+    removeCartItem: builder.mutation({
+      query: (cartItemId) => ({
+        url: `/cart/items/${cartItemId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
+    }),
+
+    /** DELETE /cart — 전체 비우기 */
+    clearCart: builder.mutation({
+      query: () => ({ url: '/cart', method: 'DELETE' }),
+      invalidatesTags: [{ type: 'Cart', id: 'LIST' }],
+    }),
+
+  }),
 })
 
-// ─── 2. withReauth 래퍼 ───────────────────────────────────────────────────────
-
-const baseQuery = async (args, api, extraOptions) => {
-  let result = await rawBaseQuery(args, api, extraOptions)
-
-  if (result.error?.status === 401) {
-    // accessToken 만료 → refreshToken 쿠키로 갱신 시도
-    const refreshResult = await rawBaseQuery(
-      { url: '/auth/refresh', method: 'POST' },
-      api,
-      extraOptions
-    )
-
-    if (!refreshResult.error) {
-      // 갱신 성공 → 백엔드가 Set-Cookie로 새 쿠키 자동 저장 → 원본 요청 재시도
-      result = await rawBaseQuery(args, api, extraOptions)
-    } else {
-      // 갱신 실패(refreshToken 만료) → 즉시 로그아웃 (무한루프 방지)
-      api.dispatch(logout())
-    }
-  }
-
-  return result
-}
-
-export default baseQuery
+export const {
+  useGetCartQuery,
+  useAddCartItemMutation,
+  useUpdateCartItemMutation,
+  useRemoveCartItemMutation,
+  useClearCartMutation,
+} = cartApi

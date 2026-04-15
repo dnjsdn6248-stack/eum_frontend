@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { DETAIL_PRODUCTS, PRODUCT_TEST_IMAGES, MOCK_CART } from '../mock'
+import { useGetProductByIdQuery } from '../api/productApi'
+import { useAddCartItemMutation } from '../api/cartApi'
+import { useAddWishlistItemMutation } from '../api/wishlistApi'
 import SwiffyReviewSummary from './ReviewPage'
 import Toast from '../features/components/ui/Toast'
+import Spinner from '../shared/components/Spinner'
 
 // ─── 상품 상세 리뷰 미리보기 ────────────────────────────────────────────────────
 const PREVIEW_COUNT = 2
 
-function ProductReviewSection({ product, onMore }) {
+function ProductReviewSection({ product }) {
   const previewReviews = product.reviews?.slice(0, PREVIEW_COUNT) || []
   return (
     <div className="bg-white rounded-[32px] border border-[#eee] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
@@ -86,7 +89,7 @@ function TabContent({ activeTab, product, setActiveTab }) {
       <div className="flex mb-10 border-b border-[#eee] sticky top-0 bg-white z-10">
         {[
           { key: 'detail', label: '상세정보' },
-          { key: 'review', label: `사용후기 (${product.reviews?.length || 0})` },
+          { key: 'review', label: `사용후기` },
           { key: 'qna', label: '제품문의' },
           { key: 'info', label: '배송/교환/반품' },
         ].map(tab => (
@@ -144,9 +147,10 @@ function TabContent({ activeTab, product, setActiveTab }) {
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const product = DETAIL_PRODUCTS.find(p => p.id === Number(id)) || DETAIL_PRODUCTS[0]
-  const productImages = product.images || PRODUCT_TEST_IMAGES
-  const isSubscribable = product.isSubscribable ?? false
+
+  const { data: product, isLoading, isError } = useGetProductByIdQuery(id)
+  const [addCartItem] = useAddCartItemMutation()
+  const [addWishlistItem] = useAddWishlistItemMutation()
 
   const [selectedOption, setSelectedOption] = useState('')
   const [optionError, setOptionError] = useState(false)
@@ -175,6 +179,14 @@ export default function ProductDetailPage() {
     setActiveTab('detail')
   }, [id])
 
+  if (isLoading) return <Spinner fullscreen />
+  if (isError || !product) {
+    return <div className="text-center py-24 text-[#bbb] font-bold text-[16px]">상품을 찾을 수 없습니다.</div>
+  }
+
+  const isSubscribable = product.isSubscribable ?? false
+  const productImages = product.images?.length ? product.images : (product.img ? [product.img] : [])
+
   const optionExtra = selectedOption
     ? product.options?.find(o => o.label === selectedOption)?.extra ?? 0
     : 0
@@ -194,7 +206,6 @@ export default function ProductDetailPage() {
     if (!selectedOption && product.options?.length > 0) {
       if (isSubscribable) setOptionError(true)
       else setAlertMsg('상품 옵션을 선택해주세요.')
-      // ok = 
       ok = false
     }
     if (isSubscribable && purchaseType === 'regular' && !deliveryCycle) {
@@ -204,19 +215,34 @@ export default function ProductDetailPage() {
     return ok
   }
 
-  const handleCart = () => {
+  const handleCart = async () => {
     if (!validate()) return
-    const alreadyInCart = MOCK_CART.some(item => item.name === product.name)
-    if (alreadyInCart) {
-      setAlertMsg('이미 장바구니에 담긴 상품입니다.')
-      setAlertNav('/cart')
-    } else {
+    try {
+      await addCartItem({
+        productId: product.id,
+        optionName: selectedOption || undefined,
+        quantity: qty,
+      }).unwrap()
       setAlertMsg('장바구니에 담겼습니다.')
       setAlertNav('/cart')
+    } catch {
+      setAlertMsg('장바구니 담기에 실패했습니다.')
+      setAlertNav('')
     }
   }
-  const handleWish = () => { setAlertMsg('찜 목록에 추가됐습니다.'); setAlertNav('/wishlist') }
-  const handleBuy  = () => { if (validate()) navigate('/checkout') }
+
+  const handleWish = async () => {
+    try {
+      await addWishlistItem(product.id).unwrap()
+      setAlertMsg('찜 목록에 추가됐습니다.')
+      setAlertNav('/wishlist')
+    } catch {
+      setAlertMsg('관심상품 추가에 실패했습니다.')
+      setAlertNav('')
+    }
+  }
+
+  const handleBuy = () => { if (validate()) navigate('/checkout') }
 
   return (
     <>

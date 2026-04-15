@@ -2,21 +2,15 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown, Check, X, Heart, ShoppingBag } from 'lucide-react'
 import Pagination from '../shared/components/Pagination'
+import Spinner from '../shared/components/Spinner'
+import { useGetWishlistQuery, useRemoveWishlistItemMutation } from '../api/wishlistApi'
 
 const PAGE_SIZE = 4
 
-const MOCK_WISHLIST = [
-  { id: 1, name: '[판매 2위] 어글어글 육포 50g 5종', price: 7500, img: 'https://swiffy.cafe24.com/web/product/medium/202303/8b961050a6dfe4e80ec2fd11f1fa2765.png', currentOption: '제주 닭 안심 육포 50g', options: ['제주 닭 안심 육포 50g', '강원도 황태채 40g', '우유껌 50g'] },
-  { id: 2, name: '어글어글 우유껌 50g 7종', price: 6500, img: 'https://swiffy.cafe24.com/web/product/medium/202412/c574e23c42600c960242e5ec86ab1d7a.png', currentOption: '산양유 우유껌', options: ['제주 베리클리 우유껌', '산양유 우유껌', '오트밀 우유껌'] },
-  { id: 3, name: '[판매 1위] 오독오독 바삭 10종 골라담기', price: 15900, img: 'https://swiffy.cafe24.com/web/product/medium/202603/ea7408135b9b2fccd849dd507338272e.jpg', currentOption: '바삭 고구마 120g', options: ['바삭 고구마 120g', '바삭 당근 120g', '바삭 시금치 120g', '바삭 연어껍질 120g'] },
-  { id: 4, name: '스위피 꽈배기츄 40g', price: 12900, img: 'https://swiffy.cafe24.com/web/product/medium/202509/176fcea2e13d45fbe314503f5eeece33.png', currentOption: '기본', options: [] },
-  { id: 5, name: '소고기 테린 100g', price: 6200, img: 'https://swiffy.cafe24.com/web/product/medium/202204/b7dfd74171a920aa986c690b1faaa079.jpg', currentOption: '기본', options: [] },
-  { id: 6, name: '스팀 고구마 큐브 100g', price: 5500, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg', currentOption: '기본', options: [] },
-  { id: 7, name: '어글어글 스팀 100g 8종', price: 8000, img: 'https://swiffy.cafe24.com/web/product/medium/202412/1d253806f8e748eef43522d92c4ce9e7.jpg', currentOption: '닭가슴살 스팀 100g', options: ['닭가슴살 스팀 100g', '연어 스팀 100g', '오리 스팀 100g'] },
-]
-
 function OptionDropdown({ currentOption, options = [], onSelect }) {
   const [isOpen, setIsOpen] = useState(false)
+
+  if (!options.length) return null
 
   return (
     <div className="relative w-fit">
@@ -25,7 +19,7 @@ function OptionDropdown({ currentOption, options = [], onSelect }) {
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f8f8f8] border border-[#eee] hover:border-[#3ea76e] transition-all cursor-pointer"
       >
         <span className="text-[12px] font-bold text-[#bbb]">
-          옵션: <span className="text-[#666] ml-1">{currentOption}</span>
+          옵션: <span className="text-[#666] ml-1">{currentOption || '선택'}</span>
         </span>
         <ChevronDown size={14} className={`text-[#bbb] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -51,31 +45,25 @@ function OptionDropdown({ currentOption, options = [], onSelect }) {
 }
 
 function WishItem({ item, onRemove }) {
-  
-  if (!item) return null;
-
-  const [selectedOption, setSelectedOption] = useState(item.currentOption || '옵션 선택')
+  const [selectedOption, setSelectedOption] = useState(item.currentOption || '')
 
   return (
     <div className="bg-white rounded-[30px] border border-[#eee] p-6 shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-center gap-6">
-      
         <input type="checkbox" className="w-5 h-5 rounded border-[#eee] accent-[#3ea76e] cursor-pointer" />
-        
-     
+
         <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#f9f9f9] border border-[#f5f5f5] shrink-0">
           <img src={item.img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" />
         </div>
 
         <div className="flex-1 min-w-0">
           <h4 className="text-[15px] font-bold text-[#111] mb-2 truncate">{item.name}</h4>
-          <OptionDropdown 
-            currentOption={selectedOption} 
-            options={item.options} 
-            onSelect={setSelectedOption} 
+          <OptionDropdown
+            currentOption={selectedOption}
+            options={item.options}
+            onSelect={setSelectedOption}
           />
         </div>
-
 
         <div className="text-right flex flex-col items-end gap-3 shrink-0">
           <button onClick={() => onRemove(item.id)} className="text-[#eee] group-hover:text-[#bbb] transition-colors cursor-pointer">
@@ -91,13 +79,13 @@ function WishItem({ item, onRemove }) {
   )
 }
 
-
 export default function WishListPage() {
   const navigate = useNavigate()
-  const [items, setItems] = useState(MOCK_WISHLIST)
   const [page, setPage] = useState(1)
 
-  const handleRemove = (id) => { setItems(prev => prev.filter(item => item.id !== id)); setPage(1) }
+  const { data: items = [], isLoading } = useGetWishlistQuery()
+  const [removeWishlistItem] = useRemoveWishlistItemMutation()
+
   const totalPrice = items.reduce((acc, item) => acc + (item.price || 0), 0)
   const totalPages = Math.ceil(items.length / PAGE_SIZE)
   const pagedItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -108,10 +96,17 @@ export default function WishListPage() {
     }
   }, [page, totalPages])
 
+  const handleRemove = (productId) => {
+    removeWishlistItem(productId)
+    setPage(1)
+  }
+
+  if (isLoading) return <Spinner fullscreen />
+
   return (
     <div className="bg-[#FCFBF9] min-h-screen text-[#111] pb-20">
       <main className="max-w-[800px] mx-auto px-6">
-        
+
         <div className="py-20 text-center">
           <h1 className="text-[28px] font-bold tracking-tight">관심상품</h1>
         </div>
@@ -128,7 +123,7 @@ export default function WishListPage() {
               <span className="text-[20px] font-bold text-[#3ea76e]">{totalPrice.toLocaleString()}원</span>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => navigate('/checkout')}
             className="bg-[#3ea76e] text-white px-8 py-3.5 rounded-full text-[14px] font-bold hover:bg-[#318a57] transition-all flex items-center gap-2 shadow-lg shadow-green-100 cursor-pointer border-none"
           >
@@ -136,14 +131,15 @@ export default function WishListPage() {
           </button>
         </section>
 
-    
         <div className="flex justify-end pr-2 mb-4">
-          <button onClick={() => setItems([])} className="text-[11px] font-bold text-[#bbb] hover:text-red-400 transition-colors bg-transparent border-none cursor-pointer">
+          <button
+            onClick={() => items.forEach(i => removeWishlistItem(i.id))}
+            className="text-[11px] font-bold text-[#bbb] hover:text-red-400 transition-colors bg-transparent border-none cursor-pointer"
+          >
             전체삭제
           </button>
         </div>
 
-     
         {items.length === 0 ? (
           <div className="bg-white rounded-[30px] border border-[#eee] py-32 text-center shadow-sm">
             <Heart size={40} className="text-[#f5f5f5] mx-auto mb-4" />

@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
-import { BEST_SELLERS } from '../../../mock'
+import { useGetMainBestSellersQuery } from '@/api/productApi'
+import Spinner from '@/shared/components/Spinner'
 
 export default function BestSellers() {
+  const { data: products = [], isLoading } = useGetMainBestSellersQuery()
+
   return (
     <div className="bg-white w-full max-w-[1200px] mx-auto mb-20 px-6">
       <div className="flex items-center justify-start pt-16 pb-8">
@@ -10,30 +13,31 @@ export default function BestSellers() {
         </h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-10">
-        {BEST_SELLERS.map((product, idx) => (
-          <Link key={idx} to={`/product/detail/${product.id}`} className="flex flex-col group">
-            <div className="relative aspect-square overflow-hidden rounded-[24px] mb-5">
-              <img
-                src={product.img}
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-            </div>
-            <div className="flex flex-col items-start space-y-1.5 px-1">
-              <h3 className="text-[15px] font-bold text-[#111111] leading-tight line-clamp-1 tracking-tighter">
-                {product.name}
-              </h3>
-              <p className="text-[13px] text-[#999999] line-clamp-1 font-medium tracking-tighter">
-                {product.desc}
-              </p>
-              <p className="text-[18px] font-black text-[#111111] mt-1 tracking-tighter">
-                {product.price}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
+      {isLoading ? (
+        <Spinner />
+      ) : (
+        <div className="grid grid-cols-3 gap-10">
+          {products.map((product, idx) => (
+            <Link key={product.id ?? idx} to={`/product/detail/${product.id}`} className="flex flex-col group">
+              <div className="relative aspect-square overflow-hidden rounded-[24px] mb-5">
+                <img
+                  src={product.img}
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
+              <div className="flex flex-col items-start space-y-1.5 px-1">
+                <h3 className="text-[15px] font-bold text-[#111111] leading-tight line-clamp-1 tracking-tighter">
+                  {product.name}
+                </h3>
+                <p className="text-[18px] font-black text-[#111111] mt-1 tracking-tighter">
+                  {product.price?.toLocaleString()}원
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -2,8 +2,14 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { User, ShoppingBag, ReceiptText } from 'lucide-react'
 import SearchBar from './SearchBar'
-import { NAV_ITEMS } from '../../../mock'
 import useAuth from '@/features/auth/useAuth'
+
+const NAV_ITEMS = [
+  { label: 'STORE', to: '/product/list' },
+  { label: '정기배송', to: '/subscription' },
+  { label: '베스트셀러', to: '/best' },
+  { label: '브랜드 스토리', to: '/brand-story' },
+]
 import { useLogoutMutation } from '@/api/authApi'
 import { PROVIDER_LABELS } from '@/shared/utils/oauth2'
 import Toast from '../ui/Toast'

@@ -24,7 +24,9 @@ export default function StoreProductGrid({ products, basePath = '/product/detail
               {product.name}
             </h3>
             <p className="text-[15px] font-bold text-[#111111] tracking-tight">
-              {product.price}
+              {typeof product.price === 'number'
+                ? `${product.price.toLocaleString()}원`
+                : product.price}
             </p>
           </div>
         </Link>

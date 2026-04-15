@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react'
 import StoreProductGrid from '../features/product/StoreProductGrid'
-import { STORE_PRODUCTS } from '../mock'
 import Pagination from '../shared/components/Pagination'
+import Spinner from '../shared/components/Spinner'
+import { useGetProductsQuery } from '../api/productApi'
 
 const ITEMS_PER_PAGE = 12
+
+const SORT_MAP = {
+  '인기상품순': { sortBy: 'sales',     sortDir: 'desc' },
+  '신상품순':   { sortBy: 'createdAt', sortDir: 'desc' },
+  '낮은가격순': { sortBy: 'price',     sortDir: 'asc'  },
+  '높은가격순': { sortBy: 'price',     sortDir: 'desc' },
+}
 
 export default function SubscriptionPage() {
   const [currentPage, setCurrentPage] = useState(1)
@@ -11,14 +19,24 @@ export default function SubscriptionPage() {
 
   useEffect(() => { window.scrollTo(0, 0) }, [currentPage])
 
-  const totalPages = Math.ceil(STORE_PRODUCTS.length / ITEMS_PER_PAGE)
-  const paginated = STORE_PRODUCTS.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const { sortBy: apiSortBy, sortDir } = SORT_MAP[sortBy] ?? SORT_MAP['인기상품순']
 
-  useEffect(() => {
-    if (currentPage > Math.max(totalPages, 1)) {
-      setCurrentPage(Math.max(totalPages, 1))
-    }
-  }, [currentPage, totalPages])
+  const { data, isLoading } = useGetProductsQuery({
+    subscribable: true,
+    page: currentPage,
+    size: ITEMS_PER_PAGE,
+    sortBy: apiSortBy,
+    sortDir,
+  })
+
+  const products = data?.content ?? []
+  const totalPages = data?.totalPages ?? 1
+  const totalCount = data?.totalElements ?? 0
+
+  const handleSortChange = (value) => {
+    setSortBy(value)
+    setCurrentPage(1)
+  }
 
   return (
     <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
@@ -27,11 +45,13 @@ export default function SubscriptionPage() {
       </div>
 
       <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-12 px-2">
-        <span className="text-[14px] font-medium text-[#bbb]">{STORE_PRODUCTS.length}개의 제품</span>
+        <span className="text-[14px] font-medium text-[#bbb]">
+          총 <span className="text-[#3ea76e] font-bold">{totalCount}</span>개의 제품
+        </span>
         <div className="relative">
-        <select
+          <select
             value={sortBy}
-            onChange={e => { setSortBy(e.target.value); setCurrentPage(1) }}
+            onChange={e => handleSortChange(e.target.value)}
             className="appearance-none border border-[#eee] rounded-full px-6 py-2 pr-10 text-[14px] font-bold text-[#888] bg-white outline-none cursor-pointer focus:border-[#3ea76e] transition-all tracking-tighter"
           >
             <option value="인기상품순">인기상품순</option>
@@ -47,9 +67,15 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-      <StoreProductGrid products={paginated} basePath="/subscription/detail" />
+      {isLoading ? (
+        <Spinner />
+      ) : products.length === 0 ? (
+        <div className="text-center py-24 text-[#bbb] font-bold text-[16px]">상품이 없습니다.</div>
+      ) : (
+        <StoreProductGrid products={products} basePath="/subscription/detail" />
+      )}
 
-   {totalPages > 1 && (
+      {totalPages > 1 && (
         <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
       )}
     </main>

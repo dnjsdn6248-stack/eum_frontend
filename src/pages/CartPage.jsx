@@ -1,27 +1,37 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MOCK_CART } from '../mock'
+import {
+  useGetCartQuery,
+  useUpdateCartItemMutation,
+  useRemoveCartItemMutation,
+  useClearCartMutation,
+} from '../api/cartApi'
+import {
+  selectCheckedItemIds,
+  toggleCheckItem,
+  checkAllItems,
+  uncheckAllItems,
+} from '../features/cart/cartSlice'
+import useAppSelector from '../hooks/useAppSelector'
+import useAppDispatch from '../hooks/useAppDispatch'
 import Pagination from '../shared/components/Pagination'
+import Spinner from '../shared/components/Spinner'
+import { useState, useEffect } from 'react'
 
 const PAGE_SIZE = 3
 
 export default function CartPage() {
   const navigate = useNavigate()
-  const [cartItems, setCartItems] = useState(
-    MOCK_CART.map((item) => ({ ...item, checked: true, qty: item.qty ?? 1 }))
-  )
+  const dispatch = useAppDispatch()
   const [page, setPage] = useState(1)
 
-  const removeItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id))
-    setPage(1)
-  }
-  const toggleCheck = (id) => setCartItems(prev => prev.map(item => item.id === id ? { ...item, checked: !item.checked } : item))
-  const toggleAll = (e) => setCartItems(prev => prev.map(item => ({ ...item, checked: e.target.checked })))
-  const updateQty = (id, delta) => setCartItems(prev => prev.map(item => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item))
-  const changeOption = (id, newOption) => setCartItems(prev => prev.map(item => item.id === id ? { ...item, option: newOption } : item))
+  const { data: cartItems = [], isLoading } = useGetCartQuery()
+  const [updateCartItem] = useUpdateCartItemMutation()
+  const [removeCartItem] = useRemoveCartItemMutation()
+  const [clearCart] = useClearCartMutation()
 
-  const checkedItems = cartItems.filter(item => item.checked)
+  const checkedIds = useAppSelector(selectCheckedItemIds)
+
+  const checkedItems = cartItems.filter(item => checkedIds.includes(item.id))
   const subTotal = checkedItems.reduce((acc, item) => acc + (item.price * item.qty), 0)
   const rewardPoints = Math.floor(subTotal * 0.01)
 
@@ -34,6 +44,35 @@ export default function CartPage() {
     }
   }, [page, totalPages])
 
+  const handleToggleAll = (e) => {
+    if (e.target.checked) {
+      dispatch(checkAllItems(cartItems.map(i => i.id)))
+    } else {
+      dispatch(uncheckAllItems())
+    }
+  }
+
+  const handleRemove = (cartItemId) => {
+    removeCartItem(cartItemId)
+    setPage(1)
+  }
+
+  const handleClearAll = () => {
+    clearCart()
+    setPage(1)
+  }
+
+  const handleUpdateQty = (item, delta) => {
+    const newQty = Math.max(1, item.qty + delta)
+    updateCartItem({ cartItemId: item.cartItemId, quantity: newQty })
+  }
+
+  const handleChangeOption = (item, newOption) => {
+    updateCartItem({ cartItemId: item.cartItemId, option: newOption })
+  }
+
+  if (isLoading) return <Spinner fullscreen />
+
   return (
     <div className="bg-[#FCFBF9] min-h-screen pb-28 px-4 text-[#111]">
       <div className="max-w-[1200px] mx-auto text-center py-24">
@@ -45,10 +84,15 @@ export default function CartPage() {
         <div className="flex-[2.2] w-full space-y-6">
           <div className="flex justify-between items-center pb-5 sticky top-0 bg-[#FCFBF9] z-10 px-2 border-b border-[#eee]">
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked onChange={toggleAll} className="w-5 h-5 accent-[#3ea76e] cursor-pointer" />
-              <span className="text-[15px] font-extrabold text-[#111]">전체선택 ({checkedItems.length}/{cartItems.length})</span>
+              <input
+                type="checkbox"
+                checked={cartItems.length > 0 && checkedIds.length === cartItems.length}
+                onChange={handleToggleAll}
+                className="w-5 h-5 accent-[#3ea76e] cursor-pointer"
+              />
+              <span className="text-[15px] font-extrabold text-[#111]">전체선택 ({checkedIds.length}/{cartItems.length})</span>
             </label>
-            <button onClick={() => { setCartItems([]); setPage(1) }} className="text-[14px] font-bold text-[#aaa] hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer">선택삭제</button>
+            <button onClick={handleClearAll} className="text-[14px] font-bold text-[#aaa] hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer">선택삭제</button>
           </div>
 
           {cartItems.length === 0 && (
@@ -58,7 +102,12 @@ export default function CartPage() {
           {pagedItems.map((item) => (
             <div key={item.id} className="bg-white p-10 relative rounded-[40px] border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.02)]">
               <div className="absolute top-10 left-8">
-                <input type="checkbox" checked={item.checked} onChange={() => toggleCheck(item.id)} className="w-5 h-5 accent-[#3ea76e] cursor-pointer" />
+                <input
+                  type="checkbox"
+                  checked={checkedIds.includes(item.id)}
+                  onChange={() => dispatch(toggleCheckItem(item.id))}
+                  className="w-5 h-5 accent-[#3ea76e] cursor-pointer"
+                />
               </div>
 
               <div className="flex gap-8 items-start mb-8 pl-10">
@@ -68,7 +117,7 @@ export default function CartPage() {
                 <div className="flex-1 space-y-2">
                   <div className="flex justify-between items-start">
                     <h3 className="text-[18px] font-black tracking-tight text-[#111]">{item.name}</h3>
-                    <button onClick={() => removeItem(item.id)} className="text-[#ccc] hover:text-red-400 bg-transparent border-none cursor-pointer transition-colors">
+                    <button onClick={() => handleRemove(item.cartItemId)} className="text-[#ccc] hover:text-red-400 bg-transparent border-none cursor-pointer transition-colors">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
                     </button>
                   </div>
@@ -77,7 +126,7 @@ export default function CartPage() {
                       <span className="text-[12px] font-bold text-[#aaa] shrink-0">옵션</span>
                       <select
                         value={item.option}
-                        onChange={(e) => changeOption(item.id, e.target.value)}
+                        onChange={(e) => handleChangeOption(item, e.target.value)}
                         className="flex-1 text-[13px] font-bold text-[#444] bg-[#f8f8f8] border border-[#e8e8e8] rounded-full px-3 py-1.5 focus:outline-none focus:border-[#3ea76e] cursor-pointer"
                       >
                         {item.option === '' && <option value="">- 옵션을 선택해 주세요 -</option>}
@@ -87,20 +136,24 @@ export default function CartPage() {
                       </select>
                     </div>
                   )}
-                  <p className="text-[13px] font-bold text-[#bbb]">배송 : {item.delivery}</p>
-                  <span className="text-[22px] font-black block tracking-tighter text-[#111] pt-2">{(item.price * item.qty).toLocaleString()}원</span>
+                  {item.delivery && (
+                    <p className="text-[13px] font-bold text-[#bbb]">배송 : {item.delivery}</p>
+                  )}
+                  <span className="text-[22px] font-black block tracking-tighter text-[#111] pt-2">
+                    {(item.price * item.qty).toLocaleString()}원
+                  </span>
                   <div className="flex items-center gap-3 pt-3">
                     <div className="flex items-center bg-[#f8f8f8] rounded-full border border-[#eee] px-2">
-                      <button onClick={() => updateQty(item.id, -1)} className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer">－</button>
+                      <button onClick={() => handleUpdateQty(item, -1)} className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer">－</button>
                       <span className="w-8 text-center font-bold text-[14px]">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer">＋</button>
+                      <button onClick={() => handleUpdateQty(item, 1)} className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer">＋</button>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t border-[#f5f5f5]">
-                <button onClick={() => removeItem(item.id)} className="h-10 px-6 rounded-full bg-[#f5f5f5] text-[#666] font-bold text-[13px] border border-[#eee] hover:bg-[#efefef] transition-all cursor-pointer border-none">삭제</button>
+                <button onClick={() => handleRemove(item.cartItemId)} className="h-10 px-6 rounded-full bg-[#f5f5f5] text-[#666] font-bold text-[13px] border border-[#eee] hover:bg-[#efefef] transition-all cursor-pointer border-none">삭제</button>
                 <button onClick={() => navigate('/wishlist')} className="h-10 px-6 rounded-full bg-[#f5f5f5] text-[#666] font-bold text-[13px] border border-[#eee] hover:bg-[#efefef] transition-all cursor-pointer border-none">관심상품</button>
                 <button onClick={() => navigate('/checkout')} className="h-10 px-6 rounded-full bg-[#3ea76e] text-white font-bold text-[13px] border-none hover:bg-[#318a57] transition-all cursor-pointer">주문하기</button>
               </div>
@@ -124,14 +177,16 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between text-[15px] font-bold">
                 <span className="text-[#aaa]">배송비</span>
-                <span className="text-[#111] font-black">0원</span>
+                <span className="text-[#111] font-black">{subTotal >= 50000 ? '무료' : '5,000원'}</span>
               </div>
             </div>
 
             <div className="pt-8 mb-8 border-t border-dashed border-[#eee]">
               <div className="flex justify-between items-center mb-5">
                 <span className="text-[15px] font-bold text-[#111]">최종 결제 금액</span>
-                <span className="text-[26px] font-black tracking-tighter text-[#111]">{subTotal.toLocaleString()}원</span>
+                <span className="text-[26px] font-black tracking-tighter text-[#111]">
+                  {(subTotal >= 50000 ? subTotal : subTotal + 5000).toLocaleString()}원
+                </span>
               </div>
               <div className="flex justify-between items-center bg-[#f9f9f9] rounded-2xl p-4 border border-[#f0f0f0]">
                 <span className="text-[13px] font-bold text-[#666]">적립 예정 금액</span>

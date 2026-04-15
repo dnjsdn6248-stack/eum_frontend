@@ -1,32 +1,41 @@
 import { useState, useEffect } from 'react'
 import StoreProductGrid from '../features/product/StoreProductGrid'
-import { STORE_PRODUCTS } from '../mock'
 import Pagination from '../shared/components/Pagination'
+import Spinner from '../shared/components/Spinner'
+import { useGetProductsQuery } from '../api/productApi'
 
 const ITEMS_PER_PAGE = 12
 
+const SORT_MAP = {
+  '최신순':   { sortBy: 'createdAt', sortDir: 'desc' },
+  '판매량순': { sortBy: 'sales',     sortDir: 'desc' },
+  '낮은가격순': { sortBy: 'price',  sortDir: 'asc'  },
+  '높은가격순': { sortBy: 'price',  sortDir: 'desc' },
+}
+
 export default function BestSellerPage() {
   const [currentPage, setCurrentPage] = useState(1)
-  const [sortBy, setSortBy] = useState('인기상품순')
+  const [sortBy, setSortBy] = useState('판매량순')
 
   useEffect(() => { window.scrollTo(0, 0) }, [currentPage])
 
-  const sorted = [...STORE_PRODUCTS].sort((a, b) => {
-    const priceA = parseInt(a.price.replace(/[^0-9]/g, ''))
-    const priceB = parseInt(b.price.replace(/[^0-9]/g, ''))
-    if (sortBy === '낮은가격순') return priceA - priceB
-    if (sortBy === '높은가격순') return priceB - priceA
-    return 0
+  const { sortBy: apiSortBy, sortDir } = SORT_MAP[sortBy] ?? SORT_MAP['판매량순']
+
+  const { data, isLoading } = useGetProductsQuery({
+    page: currentPage,
+    size: ITEMS_PER_PAGE,
+    sortBy: apiSortBy,
+    sortDir,
   })
 
-  const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE)
-  const paginated = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+  const products = data?.content ?? []
+  const totalPages = data?.totalPages ?? 1
+  const totalCount = data?.totalElements ?? 0
 
-  useEffect(() => {
-    if (currentPage > Math.max(totalPages, 1)) {
-      setCurrentPage(Math.max(totalPages, 1))
-    }
-  }, [currentPage, totalPages])
+  const handleSortChange = (value) => {
+    setSortBy(value)
+    setCurrentPage(1)
+  }
 
   return (
     <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
@@ -36,15 +45,15 @@ export default function BestSellerPage() {
 
       <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-12 px-2">
         <span className="text-[14px] font-medium text-[#bbb] tracking-tighter">
-          총 <span className="text-[#3ea76e] font-bold">{sorted.length}</span>개의 제품
+          총 <span className="text-[#3ea76e] font-bold">{totalCount}</span>개의 제품
         </span>
         <div className="relative">
           <select
             value={sortBy}
-            onChange={e => { setSortBy(e.target.value); setCurrentPage(1) }}
+            onChange={e => handleSortChange(e.target.value)}
             className="appearance-none border border-[#eee] rounded-full px-6 py-2 pr-10 text-[14px] font-bold text-[#888] bg-white outline-none cursor-pointer focus:border-[#3ea76e] transition-all tracking-tighter"
           >
-           <option value="최신순">최신순</option>
+            <option value="최신순">최신순</option>
             <option value="판매량순">판매량순</option>
             <option value="낮은가격순">낮은가격순</option>
             <option value="높은가격순">높은가격순</option>
@@ -57,9 +66,15 @@ export default function BestSellerPage() {
         </div>
       </div>
 
-      <StoreProductGrid products={paginated} />
+      {isLoading ? (
+        <Spinner />
+      ) : products.length === 0 ? (
+        <div className="text-center py-24 text-[#bbb] font-bold text-[16px]">상품이 없습니다.</div>
+      ) : (
+        <StoreProductGrid products={products} />
+      )}
 
-     {totalPages > 1 && (
+      {totalPages > 1 && (
         <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
       )}
     </main>

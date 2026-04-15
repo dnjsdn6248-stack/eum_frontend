@@ -1,16 +1,42 @@
 import { apiSlice } from './apiSlice'
 import { setLastCreatedOrder } from '@/features/order/orderSlice'
 
+const normalizeOrder = (o) => ({
+  id: o.orderId ?? o.id,
+  date: typeof o.createdAt === 'string' ? o.createdAt.split('T')[0] : (o.date ?? ''),
+  status: o.orderStatus ?? o.status,
+  items: (o.orderItems ?? o.items ?? []).map((item) => ({
+    productId: item.productId,
+    name: item.productName ?? item.name,
+    option: item.optionName ?? item.option ?? '기본',
+    qty: item.quantity ?? item.qty ?? 1,
+    price: item.price,
+    img: item.imageUrl ?? item.img,
+  })),
+  productPrice: o.productAmount ?? o.productPrice ?? 0,
+  shippingPrice: o.shippingFee ?? o.shippingPrice ?? 0,
+  discountPrice: o.discountAmount ?? o.discountPrice ?? 0,
+  total: o.totalAmount ?? o.total ?? 0,
+})
+
 export const orderApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
 
     /** 주문 목록 */
     getOrders: builder.query({
       query: (params) => ({ url: '/orders', params }),
+      transformResponse: (res) => {
+        const raw = res.content ?? res.data?.content ?? []
+        return {
+          content: raw.map(normalizeOrder),
+          totalPages: res.totalPages ?? res.data?.totalPages ?? 1,
+          totalElements: res.totalElements ?? res.data?.totalElements ?? raw.length,
+        }
+      },
       providesTags: (result) =>
         result
           ? [
-              ...result.content.map(({ orderId }) => ({ type: 'Order', id: orderId })),
+              ...result.content.map(({ id }) => ({ type: 'Order', id })),
               { type: 'Order', id: 'LIST' },
             ]
           : [{ type: 'Order', id: 'LIST' }],
@@ -19,6 +45,7 @@ export const orderApi = apiSlice.injectEndpoints({
     /** 주문 상세 */
     getOrderById: builder.query({
       query: (orderId) => ({ url: `/orders/${orderId}` }),
+      transformResponse: (res) => normalizeOrder(res.data ?? res),
       providesTags: (result, error, orderId) => [{ type: 'Order', id: orderId }],
     }),
 

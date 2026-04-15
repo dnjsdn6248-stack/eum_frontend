@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { STORE_PRODUCTS } from '@/mock'
+import { useGetProductsQuery } from '@/api/productApi'
+import { useGetCategoriesQuery } from '@/api/categoryApi'
 import useAppDispatch from '@/hooks/useAppDispatch'
 import useAppSelector from '@/hooks/useAppSelector'
 import {
@@ -21,37 +22,44 @@ const SUB_CATEGORIES = {
 
 const SORT_OPTIONS = ['최신순', '판매량순', '낮은가격순', '높은가격순']
 
-const parsePrice = (price) => Number(String(price).replace(/[^0-9]/g, '')) || 0
+const SORT_MAP = {
+  '최신순':   { sortBy: 'createdAt', sortDir: 'desc' },
+  '판매량순': { sortBy: 'sales',     sortDir: 'desc' },
+  '낮은가격순': { sortBy: 'price',  sortDir: 'asc'  },
+  '높은가격순': { sortBy: 'price',  sortDir: 'desc' },
+}
 
 export default function useStorePageController() {
   const dispatch = useAppDispatch()
   const { page: currentPage, size } = useAppSelector(selectProductPagination)
   const { activeTab, activeSubCategory, sortLabel } = useAppSelector(selectStoreView)
 
+  const { data: categories = [] } = useGetCategoriesQuery()
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [currentPage, activeTab])
 
-  const tabFilteredProducts = activeTab === 'ALL'
-    ? STORE_PRODUCTS
-    : STORE_PRODUCTS.filter((product) => product.category === activeTab)
+  const categoryId = activeTab === 'ALL'
+    ? undefined
+    : (categories.find((c) => c.name === activeTab)?.id ?? undefined)
 
-  const sortedProducts = [...tabFilteredProducts].sort((a, b) => {
-    if (sortLabel === '낮은가격순') return parsePrice(a.price) - parsePrice(b.price)
-    if (sortLabel === '높은가격순') return parsePrice(b.price) - parsePrice(a.price)
-    return 0
+  const { sortBy, sortDir } = SORT_MAP[sortLabel] ?? SORT_MAP['최신순']
+
+  const { data, isFetching } = useGetProductsQuery({
+    categoryId,
+    page: currentPage,
+    size,
+    sortBy,
+    sortDir,
   })
 
-  const totalPages = Math.ceil(sortedProducts.length / size)
-  const paginatedProducts = sortedProducts.slice((currentPage - 1) * size, currentPage * size)
+  const products = data?.content ?? []
+  const totalPages = data?.totalPages ?? 1
+  const totalCount = data?.totalElements ?? 0
+
   const subCategories = SUB_CATEGORIES[activeTab] || []
   const showSubTabs = activeTab !== 'ALL' && subCategories.length > 0
-
-  useEffect(() => {
-    if (currentPage > Math.max(totalPages, 1)) {
-      dispatch(setPage(Math.max(totalPages, 1)))
-    }
-  }, [currentPage, dispatch, totalPages])
 
   return {
     tabs: TABS,
@@ -61,10 +69,11 @@ export default function useStorePageController() {
     sortLabel,
     currentPage,
     totalPages,
-    totalCount: sortedProducts.length,
-    products: paginatedProducts,
+    totalCount,
+    products,
     subCategories,
     showSubTabs,
+    isFetching,
     setCurrentPage: (page) => dispatch(setPage(page)),
     handleTabChange: (tab) => dispatch(setStoreActiveTab(tab)),
     handleSubCategoryToggle: (subCategory) => dispatch(toggleStoreSubCategory(subCategory)),

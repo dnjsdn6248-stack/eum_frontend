@@ -1,11 +1,29 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MOCK_ORDERS } from '../mock'
+import { useGetOrdersQuery } from '../api/orderApi'
 import Pagination from '../shared/components/Pagination'
+import Spinner from '../shared/components/Spinner'
 
 const STATUS_OPTIONS = ['전체 주문처리상태', '입금전', '배송준비중', '배송중', '배송완료', '취소', '교환', '반품']
 const PERIOD_OPTIONS = ['오늘', '1개월', '3개월', '6개월', '기간설정']
 const PAGE_SIZE = 3
+
+const STATUS_API_MAP = {
+  '입금전': 'PENDING',
+  '배송준비중': 'PREPARING',
+  '배송중': 'SHIPPING',
+  '배송완료': 'DELIVERED',
+  '취소': 'CANCELLED',
+  '교환': 'EXCHANGED',
+  '반품': 'REFUNDED',
+}
+
+const PERIOD_API_MAP = {
+  '오늘': '1d',
+  '1개월': '1m',
+  '3개월': '3m',
+  '6개월': '6m',
+}
 
 export default function OrderPage() {
   const navigate = useNavigate()
@@ -14,9 +32,19 @@ export default function OrderPage() {
   const [period, setPeriod] = useState('3개월')
   const [page, setPage] = useState(1)
 
-  const filtered = status === '전체 주문처리상태' ? MOCK_ORDERS : MOCK_ORDERS.filter(o => o.status === status)
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const pagedOrders = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const apiStatus = status === '전체 주문처리상태' ? undefined : STATUS_API_MAP[status]
+  const apiPeriod = PERIOD_API_MAP[period]
+
+  const { data, isLoading } = useGetOrdersQuery({
+    status: apiStatus,
+    period: apiPeriod,
+    page,
+    size: PAGE_SIZE,
+  })
+
+  const orders = data?.content ?? []
+  const totalPages = data?.totalPages ?? 1
+  const totalElements = data?.totalElements ?? 0
 
   useEffect(() => {
     if (page > Math.max(totalPages, 1)) {
@@ -47,8 +75,8 @@ export default function OrderPage() {
       <div className="max-w-[1200px] mx-auto">
         <div className="flex justify-center gap-16 md:gap-24 mb-16 border-b border-[#eee]">
           {[
-            { key: '주문내역', label: `주문내역 조회 (${MOCK_ORDERS.length}건)` },
-            { key: '취소교환반품', label: '취소/교환/반품 내역 (1건)' },
+            { key: '주문내역', label: `주문내역 조회 (${totalElements}건)` },
+            { key: '취소교환반품', label: '취소/교환/반품 내역' },
           ].map(tab => (
             <button
               key={tab.key}
@@ -102,73 +130,79 @@ export default function OrderPage() {
           </div>
         </div>
 
-        <div className="space-y-10">
-          {filtered.length === 0 && (
-            <div className="text-center py-24 text-[#bbb] font-bold text-[16px]">해당 조건의 주문 내역이 없습니다.</div>
-          )}
-          {pagedOrders.map(order => (
-            <div key={order.id} className="bg-white border border-[#eee] rounded-[40px] overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.04)] transition-all">
-              <div className="flex items-center justify-between px-10 py-8 bg-[#fcfcfc] border-b border-[#f5f5f5]">
-                <div className="flex items-center gap-8">
-                  <span className="text-[20px] font-black text-[#111] tracking-tighter">{order.date}</span>
-                  <span className="text-[13px] font-bold text-[#ccc] tracking-widest">{order.id}</span>
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          <div className="space-y-10">
+            {orders.length === 0 && (
+              <div className="text-center py-24 text-[#bbb] font-bold text-[16px]">해당 조건의 주문 내역이 없습니다.</div>
+            )}
+            {orders.map(order => (
+              <div key={order.id} className="bg-white border border-[#eee] rounded-[40px] overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.04)] transition-all">
+                <div className="flex items-center justify-between px-10 py-8 bg-[#fcfcfc] border-b border-[#f5f5f5]">
+                  <div className="flex items-center gap-8">
+                    <span className="text-[20px] font-black text-[#111] tracking-tighter">{order.date}</span>
+                    <span className="text-[13px] font-bold text-[#ccc] tracking-widest">{order.id}</span>
+                  </div>
+                  <Link to={`/order/detail/${order.id}`} className="text-[14px] font-bold text-[#aaa] hover:text-[#3ea76e] transition-colors">상세보기 &gt;</Link>
                 </div>
-                <Link to={`/order/detail/${order.id}`} className="text-[14px] font-bold text-[#aaa] hover:text-[#3ea76e] transition-colors">상세보기 &gt;</Link>
-              </div>
 
-              <div className="divide-y divide-[#f9f9f9]">
-                {order.items.map((item, i) => (
-                  <div key={i} className="p-10 md:p-14">
-                    <div className="flex gap-10 items-center">
-                      <div className="w-32 h-32 bg-[#f8f8f8] rounded-[24px] overflow-hidden shrink-0 border border-[#eee]">
-                        <img src={item.img} className="w-full h-full object-cover" alt={item.name} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-5">
-                          <div>
-                            <p className="text-[18px] font-black text-[#111] mb-1.5 tracking-tight">{item.name}</p>
-                            <p className="text-[14px] font-bold text-[#bbb]">[옵션: {item.option}]</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[20px] font-black text-[#111] tracking-tighter">{item.price.toLocaleString()}원</p>
-                            <p className="text-[14px] font-bold text-[#ccc] mt-1">{item.qty}개</p>
-                          </div>
+                <div className="divide-y divide-[#f9f9f9]">
+                  {order.items.map((item, i) => (
+                    <div key={i} className="p-10 md:p-14">
+                      <div className="flex gap-10 items-center">
+                        <div className="w-32 h-32 bg-[#f8f8f8] rounded-[24px] overflow-hidden shrink-0 border border-[#eee]">
+                          <img src={item.img} className="w-full h-full object-cover" alt={item.name} />
                         </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-5">
+                            <div>
+                              <p className="text-[18px] font-black text-[#111] mb-1.5 tracking-tight">{item.name}</p>
+                              <p className="text-[14px] font-bold text-[#bbb]">[옵션: {item.option}]</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[20px] font-black text-[#111] tracking-tighter">
+                                {typeof item.price === 'number' ? item.price.toLocaleString() : item.price}원
+                              </p>
+                              <p className="text-[14px] font-bold text-[#ccc] mt-1">{item.qty}개</p>
+                            </div>
+                          </div>
 
-                        <div className="mt-6 pt-6 border-t border-[#f5f5f5] flex items-center justify-between">
-                          <span className="text-[16px] font-black text-[#3ea76e]">{order.status}</span>
-                          <div className="flex gap-3">
-                            <button className="h-11 px-8 text-[13px] font-bold bg-[#f5f5f5] text-[#555] border-none transition-all active:scale-[0.95] hover:bg-[#ebebeb] cursor-pointer rounded-full">
-                              배송조회
-                            </button>
-                            {order.status === '배송완료' && (
-                              <button
-                                onClick={() => handleWriteReview(order, item)}
-                                className="h-11 px-8 text-[13px] font-bold bg-[#3ea76e] text-white border-none transition-all active:scale-[0.95] hover:bg-[#318a57] cursor-pointer rounded-full"
-                              >
-                                구매후기
+                          <div className="mt-6 pt-6 border-t border-[#f5f5f5] flex items-center justify-between">
+                            <span className="text-[16px] font-black text-[#3ea76e]">{order.status}</span>
+                            <div className="flex gap-3">
+                              <button className="h-11 px-8 text-[13px] font-bold bg-[#f5f5f5] text-[#555] border-none transition-all active:scale-[0.95] hover:bg-[#ebebeb] cursor-pointer rounded-full">
+                                배송조회
                               </button>
-                            )}
+                              {order.status === '배송완료' && (
+                                <button
+                                  onClick={() => handleWriteReview(order, item)}
+                                  className="h-11 px-8 text-[13px] font-bold bg-[#3ea76e] text-white border-none transition-all active:scale-[0.95] hover:bg-[#318a57] cursor-pointer rounded-full"
+                                >
+                                  구매후기
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <div className="px-10 md:px-14 py-8 bg-[#fcfcfc] border-t border-[#f5f5f5] flex flex-col md:flex-row items-center justify-between gap-4">
-                <p className="text-[13px] font-bold text-[#bbb] tracking-tight">
-                  상품금액 {order.productPrice.toLocaleString()} + 배송비 {order.shippingPrice.toLocaleString()} - 할인 {order.discountPrice.toLocaleString()}
-                </p>
-                <div className="flex items-center gap-5">
-                  <span className="text-[15px] font-bold text-[#888]">최종 결제금액</span>
-                  <span className="text-[28px] font-black text-[#111] tracking-tighter">{order.total.toLocaleString()}원</span>
+                <div className="px-10 md:px-14 py-8 bg-[#fcfcfc] border-t border-[#f5f5f5] flex flex-col md:flex-row items-center justify-between gap-4">
+                  <p className="text-[13px] font-bold text-[#bbb] tracking-tight">
+                    상품금액 {order.productPrice?.toLocaleString()} + 배송비 {order.shippingPrice?.toLocaleString()} - 할인 {order.discountPrice?.toLocaleString()}
+                  </p>
+                  <div className="flex items-center gap-5">
+                    <span className="text-[15px] font-bold text-[#888]">최종 결제금액</span>
+                    <span className="text-[28px] font-black text-[#111] tracking-tighter">{order.total?.toLocaleString()}원</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <Pagination page={page} totalPages={totalPages} onChange={(p) => { setPage(p); window.scrollTo(0, 0) }} />
       </div>

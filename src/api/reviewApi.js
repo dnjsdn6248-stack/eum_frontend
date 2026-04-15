@@ -69,6 +69,22 @@ export const reviewApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    /** 홈 포토리뷰 하이라이트 (메인페이지 전용) */
+    getReviewHighlights: builder.query({
+      query: () => ({ url: '/main/review-highlights' }),
+      transformResponse: (res) => {
+        const items = res.data ?? res ?? []
+        return items.map((item) => ({
+          id: item.id,
+          img: item.reviewImageUrl ?? item.img,
+          title: item.title ?? item.productName ?? '',
+          rating: `★ ${item.starAverage ?? item.star ?? 0}(${item.totalReviewAmount ?? 0})`,
+          href: item.reviewUrl ?? '/review',
+        }))
+      },
+      providesTags: [{ type: 'Review', id: 'HIGHLIGHTS' }],
+    }),
+
   }),
 })
 
@@ -79,4 +95,5 @@ export const {
   useUpdateReviewMutation,
   useDeleteReviewMutation,
   useMarkReviewHelpfulMutation,
+  useGetReviewHighlightsQuery,
 } = reviewApi
