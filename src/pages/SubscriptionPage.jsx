@@ -2,41 +2,21 @@ import { useState, useEffect } from 'react'
 import StoreProductGrid from '../features/product/StoreProductGrid'
 import Pagination from '../shared/components/Pagination'
 import Spinner from '../shared/components/Spinner'
-import { useGetProductsQuery } from '../api/productApi'
-
-const ITEMS_PER_PAGE = 12
-
-const SORT_MAP = {
-  '인기상품순': { sortBy: 'sales',     sortDir: 'desc' },
-  '신상품순':   { sortBy: 'createdAt', sortDir: 'desc' },
-  '낮은가격순': { sortBy: 'price',     sortDir: 'asc'  },
-  '높은가격순': { sortBy: 'price',     sortDir: 'desc' },
-}
+import { useGetSubscriptionProductsQuery } from '../api/searchApi'
 
 export default function SubscriptionPage() {
   const [currentPage, setCurrentPage] = useState(1)
-  const [sortBy, setSortBy] = useState('인기상품순')
 
   useEffect(() => { window.scrollTo(0, 0) }, [currentPage])
 
-  const { sortBy: apiSortBy, sortDir } = SORT_MAP[sortBy] ?? SORT_MAP['인기상품순']
-
-  const { data, isLoading } = useGetProductsQuery({
-    subscribable: true,
-    page: currentPage,
-    size: ITEMS_PER_PAGE,
-    sortBy: apiSortBy,
-    sortDir,
+  // 정기배송 전용 엔드포인트 — sort 파라미터 없음
+  const { data, isLoading } = useGetSubscriptionProductsQuery({
+    page: currentPage - 1,  // Search Server: 0-based
   })
 
-  const products = data?.content ?? []
-  const totalPages = data?.totalPages ?? 1
+  const products   = data?.content       ?? []
+  const totalPages = data?.totalPages    ?? 1
   const totalCount = data?.totalElements ?? 0
-
-  const handleSortChange = (value) => {
-    setSortBy(value)
-    setCurrentPage(1)
-  }
 
   return (
     <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
@@ -44,27 +24,10 @@ export default function SubscriptionPage() {
         <h1 className="text-[32px] font-black tracking-tight text-[#111]">정기배송 할인</h1>
       </div>
 
-      <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-12 px-2">
+      <div className="flex items-center pb-4 border-b border-gray-100 mb-12 px-2">
         <span className="text-[14px] font-medium text-[#bbb]">
           총 <span className="text-[#3ea76e] font-bold">{totalCount}</span>개의 제품
         </span>
-        <div className="relative">
-          <select
-            value={sortBy}
-            onChange={e => handleSortChange(e.target.value)}
-            className="appearance-none border border-[#eee] rounded-full px-6 py-2 pr-10 text-[14px] font-bold text-[#888] bg-white outline-none cursor-pointer focus:border-[#3ea76e] transition-all tracking-tighter"
-          >
-            <option value="인기상품순">인기상품순</option>
-            <option value="신상품순">신상품순</option>
-            <option value="낮은가격순">낮은가격순</option>
-            <option value="높은가격순">높은가격순</option>
-          </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2.5">
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-        </div>
       </div>
 
       {isLoading ? (

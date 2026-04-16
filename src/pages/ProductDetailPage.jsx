@@ -7,41 +7,8 @@ import SwiffyReviewSummary from './ReviewPage'
 import Toast from '../features/components/ui/Toast'
 import Spinner from '../shared/components/Spinner'
 
-// ─── 상품 상세 리뷰 미리보기 ────────────────────────────────────────────────────
-const PREVIEW_COUNT = 2
-
-function ProductReviewSection({ product }) {
-  const previewReviews = product.reviews?.slice(0, PREVIEW_COUNT) || []
-  return (
-    <div className="bg-white rounded-[32px] border border-[#eee] p-8 shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#f5f5f5]">
-        <h3 className="text-[17px] font-black text-[#111]">
-          사용후기 <span className="text-[#3ea76e]">{product.reviews?.length || 0}</span>
-        </h3>
-      </div>
-      <div className="space-y-5">
-        {previewReviews.map((r, i) => (
-          <div key={i} className="py-4 border-b border-[#f5f5f5] last:border-none">
-            <div className="flex gap-0.5 mb-2">
-              {Array.from({ length: 5 }).map((_, si) => (
-                <span key={si} className={`text-[16px] ${si < r.rating ? 'text-[#f5a623]' : 'text-[#eee]'}`}>★</span>
-              ))}
-            </div>
-            <p className="text-[14px] font-bold text-[#111] leading-relaxed mb-2 line-clamp-2">{r.text}</p>
-            <div className="flex items-center gap-2 text-[12px] font-bold text-[#bbb]">
-              <span>{r.name}</span>
-              <span className="text-[#eee]">·</span>
-              <span>{r.date}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ─── 이미지 슬라이더 ─────────────────────────────────────────────────────────────
-function ImageSlider({ images }) {
+function ImageSlider({ images, isSoldOut }) {
   const [currentIdx, setCurrentIdx] = useState(0)
 
   const next = () => setCurrentIdx(prev => prev === images.length - 1 ? 0 : prev + 1)
@@ -50,6 +17,11 @@ function ImageSlider({ images }) {
   return (
     <div className="w-full md:w-[500px] shrink-0">
       <div className="relative aspect-square rounded-[32px] overflow-hidden bg-[#f8f8f8] border border-[#eee] group">
+        {isSoldOut && (
+          <div className="absolute inset-0 bg-black/40 z-20 flex items-center justify-center rounded-[32px]">
+            <span className="text-white font-black text-[22px] tracking-widest bg-black/60 px-6 py-2 rounded-full">품절</span>
+          </div>
+        )}
         <div className="flex h-full transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${currentIdx * 100}%)` }}>
           {images.map((img, i) => (
             <img key={i} src={img} className="w-full h-full object-contain shrink-0" alt="" />
@@ -185,7 +157,8 @@ export default function ProductDetailPage() {
   }
 
   const isSubscribable = product.isSubscribable ?? false
-  const productImages = product.images?.length ? product.images : (product.img ? [product.img] : [])
+  const isSoldOut      = product.stockStatus === 'OUT_OF_STOCK' || product.stockQuantity === 0
+  const productImages  = product.images?.length ? product.images : (product.img ? [product.img] : [])
 
   const optionExtra = selectedOption
     ? product.options?.find(o => o.label === selectedOption)?.extra ?? 0
@@ -257,7 +230,7 @@ export default function ProductDetailPage() {
 
       <div className="max-w-[1200px] mx-auto px-6 py-10 text-[#111]">
         <div className="flex flex-col md:flex-row gap-12 mb-10">
-          <ImageSlider images={productImages} />
+          <ImageSlider images={productImages} isSoldOut={isSoldOut} />
 
           <div className="flex-1 flex flex-col gap-5 py-2">
             <div>
@@ -355,11 +328,19 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={handleCart} className="flex-1 py-4 border-2 border-[#3ea76e] text-[#3ea76e] font-black text-[15px] rounded-2xl hover:bg-[#f0faf4] transition-all cursor-pointer bg-transparent">
-                장바구니
+              <button
+                onClick={isSoldOut ? undefined : handleCart}
+                disabled={isSoldOut}
+                className={`flex-1 py-4 border-2 font-black text-[15px] rounded-2xl transition-all ${isSoldOut ? 'border-[#ddd] text-[#bbb] cursor-not-allowed bg-transparent' : 'border-[#3ea76e] text-[#3ea76e] hover:bg-[#f0faf4] cursor-pointer bg-transparent'}`}
+              >
+                {isSoldOut ? '품절' : '장바구니'}
               </button>
-              <button onClick={handleBuy} className="flex-1 py-4 bg-[#3ea76e] text-white font-black text-[15px] rounded-2xl hover:bg-[#318a57] transition-all cursor-pointer border-none">
-                {isSubscribable
+              <button
+                onClick={isSoldOut ? undefined : handleBuy}
+                disabled={isSoldOut}
+                className={`flex-1 py-4 font-black text-[15px] rounded-2xl transition-all border-none ${isSoldOut ? 'bg-[#ddd] text-[#bbb] cursor-not-allowed' : 'bg-[#3ea76e] text-white hover:bg-[#318a57] cursor-pointer'}`}
+              >
+                {isSoldOut ? '품절' : isSubscribable
                   ? (purchaseType === 'regular' ? '정기배송 신청하기' : '지금 바로 구매하기')
                   : '구매하기'}
               </button>
@@ -404,11 +385,19 @@ export default function ProductDetailPage() {
                 </p>
               </div>
               <div className="flex gap-3 w-full md:w-auto">
-                <button onClick={handleCart} className="flex-1 md:w-[180px] py-5 border-2 border-[#3ea76e] text-[#3ea76e] font-black text-[15px] rounded-2xl hover:bg-[#f0faf4] transition-all cursor-pointer bg-transparent">
-                  장바구니
+                <button
+                  onClick={isSoldOut ? undefined : handleCart}
+                  disabled={isSoldOut}
+                  className={`flex-1 md:w-[180px] py-5 border-2 font-black text-[15px] rounded-2xl transition-all ${isSoldOut ? 'border-[#ddd] text-[#bbb] cursor-not-allowed bg-transparent' : 'border-[#3ea76e] text-[#3ea76e] hover:bg-[#f0faf4] cursor-pointer bg-transparent'}`}
+                >
+                  {isSoldOut ? '품절' : '장바구니'}
                 </button>
-                <button onClick={handleBuy} className="flex-1 md:w-[260px] py-5 bg-[#3ea76e] text-white font-black text-[16px] rounded-2xl hover:bg-[#318a57] transition-all cursor-pointer border-none">
-                  {purchaseType === 'regular' ? '정기배송 신청하기' : '지금 바로 구매하기'}
+                <button
+                  onClick={isSoldOut ? undefined : handleBuy}
+                  disabled={isSoldOut}
+                  className={`flex-1 md:w-[260px] py-5 font-black text-[16px] rounded-2xl transition-all border-none ${isSoldOut ? 'bg-[#ddd] text-[#bbb] cursor-not-allowed' : 'bg-[#3ea76e] text-white hover:bg-[#318a57] cursor-pointer'}`}
+                >
+                  {isSoldOut ? '품절' : (purchaseType === 'regular' ? '정기배송 신청하기' : '지금 바로 구매하기')}
                 </button>
               </div>
             </div>

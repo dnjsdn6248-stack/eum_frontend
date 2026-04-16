@@ -159,7 +159,9 @@ category
     "brandName": "스위피테린",
     "brandId": 10,
     "content": "",
-    "detaiimagelUrl": "",
+    "detaiimagelUrl": [
+      "https://bucket.s3.ap-northeast-2.amazonaws.com/..."
+    ],
     "price": 15000,
     "status": "판매중",
     "tags": "[판매1위]",
@@ -191,7 +193,7 @@ category
 | `productName` | `name` | |
 | `brandName` | `brand` | |
 | `content` | `desc` | 타이틀 아래 설명 |
-| `detaiimagelUrl` | `detailImgs[0]` | 상세 이미지 URL (오타 포함, 서버 원본 그대로) |
+| `detaiimagelUrl` | `detailImgs` | **배열** (중첩 배열 포함, `.flat()` 처리). 오타 포함 서버 원본 그대로 |
 | `price` | `price` | |
 | `imageUrls` | `images` | 배열 |
 | `imageUrls[0]` | `img` | 대표 이미지 |

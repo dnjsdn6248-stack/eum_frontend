@@ -1,31 +1,27 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Footer from '../features/components/layout/Footer'
 import Pagination from '../shared/components/Pagination'
 import Spinner from '../shared/components/Spinner'
-import { useGetProductsQuery } from '../api/productApi'
+import { useSearchProductsQuery } from '../api/searchApi'
 
-const ITEMS_PER_PAGE = 8
 const SORT_OPTIONS = ['인기상품', '신상품', '낮은가격', '높은가격']
 
-const SORT_MAP = {
-  '인기상품': { sortBy: 'sales',     sortDir: 'desc' },
-  '신상품':   { sortBy: 'createdAt', sortDir: 'desc' },
-  '낮은가격': { sortBy: 'price',     sortDir: 'asc'  },
-  '높은가격': { sortBy: 'price',     sortDir: 'desc' },
+const SORT_TYPE_MAP = {
+  '인기상품': '판매량순',
+  '신상품':   '최신순',
+  '낮은가격': '가격 낮은순',
+  '높은가격': '가격 높은순',
 }
 
 export default function OdogPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [sortBy, setSortBy] = useState('인기상품')
 
-  const { sortBy: apiSortBy, sortDir } = SORT_MAP[sortBy] ?? SORT_MAP['인기상품']
-
-  const { data, isLoading } = useGetProductsQuery({
-    brand: '오독오독',
-    page: currentPage,
-    size: ITEMS_PER_PAGE,
-    sortBy: apiSortBy,
-    sortDir,
+  const { data, isLoading } = useSearchProductsQuery({
+    keyword:  '오독오독',
+    sortType: SORT_TYPE_MAP[sortBy],
+    page:     currentPage - 1,  // Search Server: 0-based
   })
 
   const products = data?.content ?? []
@@ -91,7 +87,7 @@ export default function OdogPage() {
 
 function OdogProductCard({ product }) {
   return (
-    <a href={`/product/detail/${product.id}`} className="group block bg-white p-3 hover:bg-[#fafafa] transition-colors">
+    <Link to={`/product/detail/${product.id}`} className="group block bg-white p-3 hover:bg-[#fafafa] transition-colors">
       <div className="relative aspect-square overflow-hidden rounded-lg bg-[#f8f8f8] mb-2.5">
         <img src={product.img} alt={product.name} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.04]" />
         {product.discountPrice && (
@@ -116,6 +112,6 @@ function OdogProductCard({ product }) {
           {typeof product.price === 'number' ? `${product.price.toLocaleString()}원` : product.price}
         </p>
       )}
-    </a>
+    </Link>
   )
 }

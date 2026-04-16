@@ -10,7 +10,7 @@ const getCsrfToken = () => {
 // ─── 1. 기본 fetchBaseQuery ────────────────────────────────────────────────────
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:8072',
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:8072/api/v1',
   credentials: 'include', // accessToken · refreshToken HttpOnly 쿠키 자동 전송
   prepareHeaders: (headers) => {
     // CSRF Token → X-XSRF-TOKEN (POST/PUT/DELETE 필수, JS readable 쿠키)

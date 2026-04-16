@@ -1,14 +1,27 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useGetTagProductsQuery } from '@/api/productApi'
+import { useGetCategoriesQuery } from '@/api/categoryApi'
+import { useSearchProductsQuery } from '@/api/searchApi'
 import Spinner from '@/shared/components/Spinner'
 
-export default function ProductTabs() {
-  const { data: tagGroups = [], isLoading } = useGetTagProductsQuery()
-  const [activeTag, setActiveTag] = useState(null)
+const PRODUCTS_PER_TAB = 8
 
-  const currentTag = activeTag ?? tagGroups[0]?.tagName
-  const products = tagGroups.find((g) => g.tagName === currentTag)?.products ?? []
+export default function ProductTabs() {
+  const { data: categories = [], isLoading: catsLoading } = useGetCategoriesQuery()
+  const [activeCategory, setActiveCategory] = useState(null)
+
+  // activeCategory는 cat.id (코드값: "ALL", "SNACK_JERKY", ...)
+  const currentCategory = activeCategory ?? categories[0]?.id ?? 'ALL'
+
+  const { data, isFetching } = useSearchProductsQuery(
+    {
+      category: currentCategory === 'ALL' ? undefined : currentCategory,
+      page: 0,
+    },
+    { skip: catsLoading }
+  )
+
+  const products = data?.content?.slice(0, PRODUCTS_PER_TAB) ?? []
 
   return (
     <div className="bg-white pb-16 w-full max-w-[1200px] mx-auto px-6">
@@ -18,55 +31,66 @@ export default function ProductTabs() {
         </h2>
       </div>
 
-      {isLoading ? (
+      {catsLoading ? (
         <Spinner />
       ) : (
         <>
           <div className="flex flex-wrap gap-2.5 pb-10">
-            {tagGroups.map((group) => (
+            {categories.map((cat) => (
               <button
-                key={group.tagName}
-                onClick={() => setActiveTag(group.tagName)}
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
                 className={`hover-primary px-6 py-2.5 text-[14px] !font-medium tracking-tighter transition-all cursor-pointer ${
-                  currentTag === group.tagName ? 'active shadow-sm' : ''
+                  currentCategory === cat.id ? 'active shadow-sm' : ''
                 }`}
               >
-                {group.tagName}
+                {cat.name}
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
-            {products.map((product) => (
-              <Link
-                key={product.id}
-                to={`/product/detail/${product.id}`}
-                className="flex flex-col group"
-              >
-                <div className="relative aspect-square overflow-hidden rounded-[15px] mb-4 bg-[#f9f9f9]">
-                  <img
-                    src={product.img}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
+          {isFetching ? (
+            <Spinner />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
+              {products.map((product) => (
+                <Link
+                  key={product.id}
+                  to={`/product/detail/${product.id}`}
+                  className="flex flex-col group"
+                >
+                  <div className="relative aspect-square overflow-hidden rounded-[15px] mb-4 bg-[#f9f9f9]">
+                    <img
+                      src={product.img}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
 
-                <div className="flex flex-col px-0.5">
-                  <h3 className="text-[14px] !font-normal text-[#333333] leading-snug line-clamp-1 tracking-tight mb-1">
-                    {product.name}
-                  </h3>
-                  {product.description && (
-                    <p className="text-[12px] text-[#999999] line-clamp-1 font-normal tracking-tight mb-1.5 opacity-80">
-                      {product.description}
-                    </p>
-                  )}
-                  <p className="text-[15px] font-bold text-[#111111] tracking-tight">
-                    {product.price?.toLocaleString()}원
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  <div className="flex flex-col px-0.5">
+                    <h3 className="text-[14px] !font-normal text-[#333333] leading-snug line-clamp-1 tracking-tight mb-1">
+                      {product.name}
+                    </h3>
+                    {product.discountTag && (
+                      <span className="text-[11px] text-[#3ea76e] font-bold mb-1">
+                        {product.discountTag}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-2">
+                      {product.originalPrice && product.originalPrice !== product.price && (
+                        <span className="text-[12px] text-[#bbb] line-through">
+                          {product.originalPrice.toLocaleString()}원
+                        </span>
+                      )}
+                      <p className="text-[15px] font-bold text-[#111111] tracking-tight">
+                        {product.price?.toLocaleString()}원
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

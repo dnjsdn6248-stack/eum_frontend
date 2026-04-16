@@ -13,8 +13,10 @@ RTK Query 엔드포인트는 `src/api/searchApi.js`(`injectEndpoints`)에 정의
 
 | 환경 | URL |
 |---|---|
-| Gateway 경유 | `{VITE_API_BASE_URL}/v1/search/` |
-| 예시 (로컬) | `http://localhost:8080/api/v1/search/` |
+| Gateway 경유 | `{VITE_API_BASE_URL}/search/` |
+| 예시 (로컬) | `http://localhost:8072/api/v1/search/` |
+
+> `VITE_API_BASE_URL`은 이미 `/api/v1`을 포함하므로 경로에 `/v1/` 중복 불필요.
 
 ---
 
@@ -42,16 +44,17 @@ RTK Query 엔드포인트는 `src/api/searchApi.js`(`injectEndpoints`)에 정의
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useSearchProductsQuery` | GET | `/v1/search/products` | 상품 검색 (필터·페이지) |
-| `useGetSubscriptionProductsQuery` | GET | `/v1/search/products/subscription` | 정기배송 상품 목록 |
-| `useGetBestsellerProductsQuery` | GET | `/v1/search/products/bestseller` | 베스트셀러 (랭킹) |
-| `useGetHomeBestsellerQuery` | GET | `/v1/search/products/home-bestseller` | 홈 베스트셀러 섹션 (기본 3개) |
-| `useGetSimilarProductsQuery` | GET | `/v1/search/products/{productId}/similar` | 유사 상품 추천 |
-| `useGetAutocompleteQuery` | GET | `/v1/search/products/autocomplete` | 검색어 자동완성 |
-| `useGetTrendingKeywordsQuery` | GET | `/v1/search/products/trending` | 인기 검색어 |
-| `useSearchReviewsQuery` | GET | `/v1/search/reviews` | 리뷰 검색 |
-| `useSearchNoticesQuery` | GET | `/v1/search/notices` | 공지 검색 |
-| `useGetMainBannersQuery` | GET | `/v1/search/products/main-banners` | 메인 히어로 배너 (3개) |
+| `useSearchProductsQuery` | GET | `/search/products` | 상품 검색 (필터·페이지) |
+| `useGetSubscriptionProductsQuery` | GET | `/search/products/subscription` | 정기배송 상품 목록 |
+| `useGetBestsellerProductsQuery` | GET | `/search/products/bestseller` | 베스트셀러 (랭킹) |
+| `useGetHomeBestsellerQuery` | GET | `/search/products/home-bestseller` | 홈 베스트셀러 섹션 (기본 3개) |
+| `useGetSimilarProductsQuery` | GET | `/search/products/{productId}/similar` | 유사 상품 추천 |
+| `useGetAutocompleteQuery` | GET | `/search/products/autocomplete` | 검색어 자동완성 |
+| `useGetTrendingKeywordsQuery` | GET | `/search/products/trending` | 인기 검색어 |
+| `useSearchReviewsQuery` | GET | `/search/reviews` | 리뷰 검색 |
+| `useSearchNoticesQuery` | GET | `/search/notices` | 공지 검색 |
+| `useGetMainBannersQuery` | GET | `/search/products/main-banners` | 메인 히어로 배너 (3개) |
+| `useGetCategoriesQuery` | GET | `/search/categories` | 카테고리·서브카테고리 목록 |
 
 ---
 
@@ -180,6 +183,28 @@ RTK Query 엔드포인트는 `src/api/searchApi.js`(`injectEndpoints`)에 정의
 
 ### Query 파라미터
 `searchRange` (전체/일주일/한달/세달), `searchType`, `keyword`, `page`, `size`
+
+---
+
+## 카테고리 목록 (`/search/categories`)
+
+Vault 설정(`dseum.search.categories`) 기준 카테고리/서브카테고리 목록 반환. 하드코딩 없이 탭·필터 구성에 사용.
+
+### 응답 `data[]` 필드
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | string | 카테고리 코드 (`"ALL"`, `"SNACK_JERKY"`, ...) — search `category` 파라미터로 전달 |
+| `label` | string | 표시용 이름 (`"ALL"`, `"Snack & Jerky"`, ...) |
+| `subCategories` | array | `{ id, code, label }` 배열 |
+
+### 정규화 (`categoryApi.js` → `useGetCategoriesQuery`)
+```js
+{ id: cat.id, name: cat.label, subCategories/children: [{id, code, name: sub.label}] }
+```
+
+> **주의**: `GET /search/products`의 `category` 파라미터에는 `id` 코드값을 전달해야 한다 (`"SNACK_JERKY"`).  
+> label(`"Snack & Jerky"`)을 그대로 전달하면 필터가 동작하지 않는다.
 
 ---
 

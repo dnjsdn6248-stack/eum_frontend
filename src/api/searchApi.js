@@ -32,22 +32,22 @@ export const searchApi = apiSlice.injectEndpoints({
 
     // ── 1. 상품 검색 ────────────────────────────────────────────────────────
     /**
-     * GET /v1/search/products
+     * GET /search/products
      * @param {{ title?, keyword?, category?, subCategory?, sortType?, page? }} params
      */
     searchProducts: builder.query({
-      query: (params = {}) => ({ url: '/v1/search/products', params }),
+      query: (params = {}) => ({ url: '/search/products', params }),
       transformResponse: (res) => normalizePage(res, normalizeSearchProduct),
       providesTags: [{ type: 'Search', id: 'PRODUCTS' }],
     }),
 
     // ── 2. 정기배송 상품 ─────────────────────────────────────────────────────
     /**
-     * GET /v1/search/products/subscription
+     * GET /search/products/subscription
      * @param {{ page? }} params
      */
     getSubscriptionProducts: builder.query({
-      query: (params = {}) => ({ url: '/v1/search/products/subscription', params }),
+      query: (params = {}) => ({ url: '/search/products/subscription', params }),
       transformResponse: (res) => normalizePage(res, (item) => ({
         id:         item.id,
         name:       item.productTitle,
@@ -60,11 +60,11 @@ export const searchApi = apiSlice.injectEndpoints({
 
     // ── 3. 베스트셀러 (랭킹) ─────────────────────────────────────────────────
     /**
-     * GET /v1/search/products/bestseller
+     * GET /search/products/bestseller
      * 현재 구현: 검색 랭킹 기반 (실판매량 집계 아님)
      */
     getBestsellerProducts: builder.query({
-      query: (params = {}) => ({ url: '/v1/search/products/bestseller', params }),
+      query: (params = {}) => ({ url: '/search/products/bestseller', params }),
       transformResponse: (res) => normalizePage(res, (item) => ({
         id:         item.id,
         name:       item.productTitle,
@@ -79,11 +79,11 @@ export const searchApi = apiSlice.injectEndpoints({
 
     // ── 4. 홈 베스트셀러 (메인 페이지 전용) ──────────────────────────────────
     /**
-     * GET /v1/search/products/home-bestseller
+     * GET /search/products/home-bestseller
      * @param {{ size?: number }} params  기본 3개
      */
     getHomeBestseller: builder.query({
-      query: (params = {}) => ({ url: '/v1/search/products/home-bestseller', params }),
+      query: (params = {}) => ({ url: '/search/products/home-bestseller', params }),
       transformResponse: (res) => (res.data ?? []).map((item) => ({
         id:         item.id,
         rank:       item.rank,
@@ -99,12 +99,12 @@ export const searchApi = apiSlice.injectEndpoints({
 
     // ── 5. 유사 상품 추천 (상세 페이지용) ────────────────────────────────────
     /**
-     * GET /v1/search/products/{productId}/similar
+     * GET /search/products/{productId}/similar
      * @param {{ productId: number, size?: number }} params  기본 size=3
      */
     getSimilarProducts: builder.query({
       query: ({ productId, size = 3 }) => ({
-        url: `/v1/search/products/${productId}/similar`,
+        url: `/search/products/${productId}/similar`,
         params: { size },
       }),
       transformResponse: (res) => (res.data ?? []).map((item) => ({
@@ -122,55 +122,55 @@ export const searchApi = apiSlice.injectEndpoints({
 
     // ── 6. 자동완성 ──────────────────────────────────────────────────────────
     /**
-     * GET /v1/search/products/autocomplete
+     * GET /search/products/autocomplete
      * @param {string} name  검색 입력 문자열
      */
     getAutocomplete: builder.query({
-      query: (name) => ({ url: '/v1/search/products/autocomplete', params: { name } }),
+      query: (name) => ({ url: '/search/products/autocomplete', params: { name } }),
       transformResponse: (res) => res.data ?? res ?? [],
       providesTags: [{ type: 'Search', id: 'AUTOCOMPLETE' }],
     }),
 
     // ── 7. 인기 검색어 ────────────────────────────────────────────────────────
     /**
-     * GET /v1/search/products/trending
+     * GET /search/products/trending
      * 응답: [{ rank, keyword, score }]
      */
     getTrendingKeywords: builder.query({
-      query: () => ({ url: '/v1/search/products/trending' }),
+      query: () => ({ url: '/search/products/trending' }),
       transformResponse: (res) => res.data ?? res ?? [],
       providesTags: [{ type: 'Search', id: 'TRENDING' }],
     }),
 
     // ── 8. 리뷰 검색 ─────────────────────────────────────────────────────────
     /**
-     * GET /v1/search/reviews
+     * GET /search/reviews
      * @param {{ productId?, keyword?, sortType?, reviewType?, page?, size? }} params
      */
     searchReviews: builder.query({
-      query: (params = {}) => ({ url: '/v1/search/reviews', params }),
+      query: (params = {}) => ({ url: '/search/reviews', params }),
       transformResponse: (res) => normalizePage(res, (r) => r),
       providesTags: [{ type: 'Search', id: 'REVIEWS' }],
     }),
 
     // ── 9. 공지 검색 ─────────────────────────────────────────────────────────
     /**
-     * GET /v1/search/notices
+     * GET /search/notices
      * @param {{ searchRange?, searchType?, keyword?, page?, size? }} params
      */
     searchNotices: builder.query({
-      query: (params = {}) => ({ url: '/v1/search/notices', params }),
+      query: (params = {}) => ({ url: '/search/notices', params }),
       transformResponse: (res) => normalizePage(res, (n) => n),
       providesTags: [{ type: 'Search', id: 'NOTICES' }],
     }),
 
     // ── 10. 메인 히어로 배너 ──────────────────────────────────────────────────
     /**
-     * GET /v1/search/products/main-banners
+     * GET /search/products/main-banners
      * 최신 상품 이미지 기준 3개. isHero는 항상 true.
      */
     getMainBanners: builder.query({
-      query: () => ({ url: '/v1/search/products/main-banners' }),
+      query: () => ({ url: '/search/products/main-banners' }),
       transformResponse: (res) => (res.data ?? []).map((item) => ({
         id:           item.productId,
         img:          item.imageUrl,
@@ -179,6 +179,34 @@ export const searchApi = apiSlice.injectEndpoints({
         displayOrder: item.displayOrder,
       })),
       providesTags: [{ type: 'Search', id: 'MAIN_BANNERS' }],
+    }),
+
+    // ── 11. 카테고리 목록 ─────────────────────────────────────────────────────
+    /**
+     * GET /search/categories
+     * Vault 설정 기준 카테고리/서브카테고리 목록.
+     * id = search category 파라미터 코드 ("SNACK_JERKY")
+     * name = 표시용 label ("Snack & Jerky")
+     */
+    getSearchCategories: builder.query({
+      query: () => ({ url: '/search/categories' }),
+      transformResponse: (res) => {
+        const items = res.data ?? []
+        return items.map((cat) => {
+          const subs = (cat.subCategories ?? []).map((sub) => ({
+            id:   sub.id,
+            code: sub.code ?? null,
+            name: sub.label,
+          }))
+          return {
+            id:            cat.id,
+            name:          cat.label,
+            subCategories: subs,
+            children:      subs,
+          }
+        })
+      },
+      providesTags: [{ type: 'Search', id: 'CATEGORIES' }],
     }),
 
   }),
@@ -197,4 +225,5 @@ export const {
   useSearchReviewsQuery,
   useSearchNoticesQuery,
   useGetMainBannersQuery,
+  useGetSearchCategoriesQuery,
 } = searchApi

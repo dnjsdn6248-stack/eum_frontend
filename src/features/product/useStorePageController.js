@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useGetProductsQuery } from '@/api/productApi'
+import { useSearchProductsQuery } from '@/api/searchApi'
 import { useGetCategoriesQuery } from '@/api/categoryApi'
 import useAppDispatch from '@/hooks/useAppDispatch'
 import useAppSelector from '@/hooks/useAppSelector'
@@ -22,44 +22,39 @@ const SUB_CATEGORIES = {
 
 const SORT_OPTIONS = ['최신순', '판매량순', '낮은가격순', '높은가격순']
 
-const SORT_MAP = {
-  '최신순':   { sortBy: 'createdAt', sortDir: 'desc' },
-  '판매량순': { sortBy: 'sales',     sortDir: 'desc' },
-  '낮은가격순': { sortBy: 'price',  sortDir: 'asc'  },
-  '높은가격순': { sortBy: 'price',  sortDir: 'desc' },
+// productSlice sortLabel → Search Server sortType
+const SORT_TYPE_MAP = {
+  '최신순':    '최신순',
+  '판매량순':  '판매량순',
+  '낮은가격순': '가격 낮은순',
+  '높은가격순': '가격 높은순',
 }
 
 export default function useStorePageController() {
   const dispatch = useAppDispatch()
-  const { page: currentPage, size } = useAppSelector(selectProductPagination)
+  const { page: currentPage } = useAppSelector(selectProductPagination)
   const { activeTab, activeSubCategory, sortLabel } = useAppSelector(selectStoreView)
 
-  const { data: categories = [] } = useGetCategoriesQuery()
+  // 카테고리 목록 (탭 렌더링용)
+  useGetCategoriesQuery()
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [currentPage, activeTab])
 
-  const categoryId = activeTab === 'ALL'
-    ? undefined
-    : (categories.find((c) => c.name === activeTab)?.id ?? undefined)
-
-  const { sortBy, sortDir } = SORT_MAP[sortLabel] ?? SORT_MAP['최신순']
-
-  const { data, isFetching } = useGetProductsQuery({
-    categoryId,
-    page: currentPage,
-    size,
-    sortBy,
-    sortDir,
+  const { data, isFetching } = useSearchProductsQuery({
+    category:    activeTab === 'ALL' ? undefined : activeTab,
+    subCategory: activeSubCategory ?? undefined,
+    sortType:    SORT_TYPE_MAP[sortLabel],
+    page:        currentPage - 1,   // Search Server: 0-based
   })
 
-  const products = data?.content ?? []
-  const totalPages = data?.totalPages ?? 1
-  const totalCount = data?.totalElements ?? 0
+  const products    = data?.content       ?? []
+  const totalPages  = data?.totalPages    ?? 1
+  const totalCount  = data?.totalElements ?? 0
 
   const subCategories = SUB_CATEGORIES[activeTab] || []
-  const showSubTabs = activeTab !== 'ALL' && subCategories.length > 0
+  const showSubTabs   = activeTab !== 'ALL' && subCategories.length > 0
 
   return {
     tabs: TABS,
@@ -74,9 +69,9 @@ export default function useStorePageController() {
     subCategories,
     showSubTabs,
     isFetching,
-    setCurrentPage: (page) => dispatch(setPage(page)),
-    handleTabChange: (tab) => dispatch(setStoreActiveTab(tab)),
-    handleSubCategoryToggle: (subCategory) => dispatch(toggleStoreSubCategory(subCategory)),
-    handleSortChange: (nextSortLabel) => dispatch(setStoreSortLabel(nextSortLabel)),
+    setCurrentPage:          (page) => dispatch(setPage(page)),
+    handleTabChange:         (tab)  => dispatch(setStoreActiveTab(tab)),
+    handleSubCategoryToggle: (sub)  => dispatch(toggleStoreSubCategory(sub)),
+    handleSortChange:        (lbl)  => dispatch(setStoreSortLabel(lbl)),
   }
 }
