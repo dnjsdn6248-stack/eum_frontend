@@ -11,9 +11,9 @@ export default function ProductTabs() {
   const products = tagGroups.find((g) => g.tagName === currentTag)?.products ?? []
 
   return (
-    <div className="bg-white pb-32 w-full max-w-[1200px] mx-auto px-6">
+    <div className="bg-white pb-16 w-full max-w-[1200px] mx-auto px-6">
       <div className="flex items-center gap-2 pt-16 pb-10">
-        <h2 className="text-[24px] font-bold text-[#111111] tracking-tighter">
+        <h2 className="text-[24px] font-black text-[#111111] tracking-tighter">
           우리 아이 취향 저격 제품
         </h2>
       </div>

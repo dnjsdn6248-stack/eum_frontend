@@ -6,7 +6,7 @@ export default function BestSellers() {
   const { data: products = [], isLoading } = useGetMainBestSellersQuery()
 
   return (
-    <div className="bg-white w-full max-w-[1200px] mx-auto mb-20 px-6">
+    <div className="bg-white w-full max-w-[1200px] mx-auto mb-4 px-6">
       <div className="flex items-center justify-start pt-16 pb-8">
         <h2 className="text-[24px] font-black text-[#111111] tracking-tighter">
           베스트셀러

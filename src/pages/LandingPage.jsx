@@ -41,13 +41,11 @@ export default function LandingPage() {
       <section className="w-full mb-12 md:mb-16">
         <HeroSlider />
       </section>
-      <main className="max-w-[1200px] mx-auto w-full px-6 md:px-8 pb-20">
-        <div className="space-y-24">
-          <BestSellers />
-          <ProductTabs />
-          <BrandStory />
-          <PhotoReviews />
-        </div>
+      <main className="w-full pb-24">
+        <BestSellers />
+        <ProductTabs />
+        <BrandStory />
+        <PhotoReviews />
       </main>
     </div>
   )
