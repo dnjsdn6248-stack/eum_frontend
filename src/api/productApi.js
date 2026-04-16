@@ -66,21 +66,6 @@ export const productApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: 'Product', id }],
     }),
 
-    /** 베스트 상품 */
-    getBestProducts: builder.query({
-      query: (params = {}) => ({ url: '/products/best', params }),
-      transformResponse: (res) => {
-        const raw = res.data ?? res.content ?? res ?? []
-        const items = Array.isArray(raw) ? raw : []
-        return {
-          content: items.map(normalizeProduct),
-          totalPages: res.totalPages ?? 1,
-          totalElements: res.totalElements ?? items.length,
-        }
-      },
-      providesTags: [{ type: 'Product', id: 'BEST' }],
-    }),
-
     /** 신상품 */
     getNewProducts: builder.query({
       query: (limit = 8) => ({ url: '/products/new', params: { limit } }),
@@ -89,51 +74,6 @@ export const productApi = apiSlice.injectEndpoints({
         return Array.isArray(raw) ? raw.map(normalizeProduct) : []
       },
       providesTags: [{ type: 'Product', id: 'NEW' }],
-    }),
-
-    /** 상품 검색 */
-    searchProducts: builder.query({
-      query: (params) => ({ url: '/products/search', params }),
-      transformResponse: (res) => {
-        const raw = res.content ?? res.data?.content ?? []
-        return {
-          content: raw.map(normalizeProduct),
-          totalPages: res.totalPages ?? 1,
-          totalElements: res.totalElements ?? raw.length,
-        }
-      },
-      providesTags: [{ type: 'Product', id: 'SEARCH' }],
-    }),
-
-    /** 홈 베스트셀러 섹션 (메인페이지 전용) */
-    getMainBestSellers: builder.query({
-      query: () => ({ url: '/main/best-sellers' }),
-      transformResponse: (res) => {
-        const items = res.data ?? res ?? []
-        return items.map((item) => ({
-          id: item.id,
-          name: item.title ?? item.name,
-          img: item.imageUrl ?? item.img,
-          price: item.price,
-          productUrl: item.productUrl,
-        }))
-      },
-      providesTags: [{ type: 'Product', id: 'MAIN_BEST' }],
-    }),
-
-    /** 홈 배너 슬라이드 목록 (메인페이지 전용) */
-    getBannerSlides: builder.query({
-      query: () => ({ url: '/main/banners' }),
-      transformResponse: (res) => {
-        const items = res.data ?? res ?? []
-        return items.map((item) => ({
-          id: item.id ?? item.bannerId,
-          img: item.imageUrl ?? item.img,
-          alt: item.altText ?? item.alt ?? '',
-          href: item.productUrl ?? item.href ?? '#',
-        }))
-      },
-      providesTags: [{ type: 'Product', id: 'BANNERS' }],
     }),
 
     /** 홈 해시태그 상품 탭 (메인페이지 전용) */
@@ -161,11 +101,6 @@ export const productApi = apiSlice.injectEndpoints({
 export const {
   useGetProductsQuery,
   useGetProductByIdQuery,
-  useGetBestProductsQuery,
   useGetNewProductsQuery,
-  useSearchProductsQuery,
-  useLazySearchProductsQuery,
-  useGetMainBestSellersQuery,
   useGetTagProductsQuery,
-  useGetBannerSlidesQuery,
 } = productApi

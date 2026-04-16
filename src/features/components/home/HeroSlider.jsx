@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useGetBannerSlidesQuery } from '@/api/productApi'
+import { Link } from 'react-router-dom'
+import { useGetMainBannersQuery } from '@/api/searchApi'
 
 export default function HeroSlider() {
-  const { data: slides = [], isLoading } = useGetBannerSlidesQuery()
+  const { data: slides = [], isLoading } = useGetMainBannersQuery()
   const [current, setCurrent] = useState(0)
 
   const total = slides.length
@@ -34,7 +35,7 @@ export default function HeroSlider() {
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
           {slides.map((slide) => (
-            <a key={slide.id} href={slide.href} className="flex-none w-full block relative bg-white">
+            <Link key={slide.id} to={slide.href} className="flex-none w-full block relative bg-white">
               <div className="absolute inset-0 bg-[#3ea76e]/[0.01] pointer-events-none z-10" />
               <div className="relative aspect-[21/8] flex items-center justify-center overflow-hidden">
                 <img
@@ -43,7 +44,7 @@ export default function HeroSlider() {
                   className="w-full h-full object-contain p-10 transition-transform duration-[2000ms] group-hover:scale-105"
                 />
               </div>
-            </a>
+            </Link>
           ))}
         </div>
 

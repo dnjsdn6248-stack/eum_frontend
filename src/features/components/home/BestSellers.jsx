@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { useGetMainBestSellersQuery } from '@/api/productApi'
+import { useGetHomeBestsellerQuery } from '@/api/searchApi'
 import Spinner from '@/shared/components/Spinner'
 
 export default function BestSellers() {
-  const { data: products = [], isLoading } = useGetMainBestSellersQuery()
+  const { data: products = [], isLoading } = useGetHomeBestsellerQuery()
 
   return (
     <div className="bg-white w-full max-w-[1200px] mx-auto mb-4 px-6">
