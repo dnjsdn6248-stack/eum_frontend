@@ -2,8 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 
 // ─── Feature Slices (클라이언트 UI 상태) ──────────────────────────────────────
-import authReducer     from '@/features/auth/authSlice'
-import { logout }      from '@/features/auth/authSlice'
+import authReducer, { logout } from '@/api/authApi'
 import productReducer  from '@/features/product/productSlice'
 import categoryReducer from '@/features/category/categorySlice'
 import cartReducer     from '@/features/cart/cartSlice'
