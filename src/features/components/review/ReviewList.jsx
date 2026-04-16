@@ -1,39 +1,34 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReviewItem from './ReviewItem'
 import ReviewReviewMore from './ReviewReviewMore'
 import Pagination from '../../../shared/components/Pagination'
-
-const INIT_REVIEWS = [
-  { id: 1, name: '네이****', date: '24. 07. 14', views: 156, rating: 5, text: '항상 시켜먹어요 울집 개달이 넘 좋아해요. 배송도 빠르고 포장도 꼼꼼하게 잘 돼있어요. 재구매 계속 할 예정이에요.', imgs: ['https://swiffy.cafe24.com/web/product/tiny/202412/99ac4306c7aa1a40ec93ac76910bf7aa.jpg'], helpfulCount: 0, optionText: '구매옵션: 미니 흰태 60g (2/24 순차배송)' },
-  { id: 2, name: 'je****', date: '25. 03. 22', views: 89, rating: 5, text: '넘좋아요 내가먹어두 야채에 꼬신맛이 굿~~~~ 우리 강아지가 엄청 좋아해요.', imgs: [], helpfulCount: 0, optionText: '구매옵션: 오독오독 샘플팩' },
-  { id: 3, name: 'je****', date: '25. 02. 19', views: 44, rating: 5, text: '잘먹어요 늘구매하는 상품입니다. 재구매 의사 있어요.', imgs: [], helpfulCount: 0, optionText: '구매옵션: 오독오독 미니 3종' },
-  { id: 4, name: '카카****', date: '24. 03. 31', views: 32, rating: 4, text: '만족 너무좋아요~ 강아지가 정말 잘 먹어요. 냄새도 좋고 품질도 좋아요.', imgs: [], helpfulCount: 0, optionText: '구매옵션: 테린 비기너 패키지' },
-  { id: 5, name: 'ho****', date: '24. 02. 15', views: 21, rating: 5, text: '전반적으로 만족스러워요. 상품 자체는 매우 좋습니다. 정기 구매 결정했어요.', imgs: ['https://swiffy.cafe24.com/web/product/tiny/202603/3e38ede9b50f13af99b9ecc5802c2b59.jpg'], helpfulCount: 0, optionText: '구매옵션: 어글어글 육포 50g' },
-]
+import Spinner from '../../../shared/components/Spinner'
+import { useGetProductReviewsQuery } from '@/api/reviewApi'
 
 const PAGE_SIZE = 3
 
 export default function ReviewList({ writeReviewState = null }) {
   const navigate = useNavigate()
-  const [reviews] = useState(INIT_REVIEWS)
   const [page, setPage] = useState(1)
   const [selectedReview, setSelectedReview] = useState(null)
 
-  const totalPages = Math.ceil(reviews.length / PAGE_SIZE)
-  const pagedReviews = reviews.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const productId = writeReviewState?.productId
 
-  useEffect(() => {
-    if (page > Math.max(totalPages, 1)) {
-      setPage(Math.max(totalPages, 1))
-    }
-  }, [page, totalPages])
+  const { data, isLoading } = useGetProductReviewsQuery(
+    { productId, params: { page, size: PAGE_SIZE } },
+    { skip: !productId },
+  )
+
+  const reviews = data?.content ?? []
+  const totalPages = data?.totalPages ?? 1
+  const totalElements = data?.totalElements ?? 0
 
   return (
     <div className="bg-white rounded-[40px] border border-[#eee] p-8 md:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.03)]">
       <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#f5f5f5]">
         <h3 className="text-[18px] font-black tracking-tight text-[#111]">
-          전체 리뷰 <span className="text-[#3ea76e]">{reviews.length}</span>
+          전체 리뷰 <span className="text-[#3ea76e]">{totalElements}</span>
         </h3>
         <button
           onClick={() => navigate('/review/write', { state: writeReviewState ?? undefined })}
@@ -43,13 +38,23 @@ export default function ReviewList({ writeReviewState = null }) {
         </button>
       </div>
 
-      <div>
-        {pagedReviews.map(review => (
-          <ReviewItem key={review.id} review={review} onOpenMore={setSelectedReview} />
-        ))}
-      </div>
+      {isLoading ? (
+        <Spinner />
+      ) : reviews.length === 0 ? (
+        <div className="text-center py-16 text-[#bbb] font-bold text-[14px]">
+          아직 작성된 리뷰가 없습니다.
+        </div>
+      ) : (
+        <div>
+          {reviews.map((review) => (
+            <ReviewItem key={review.id} review={review} onOpenMore={setSelectedReview} />
+          ))}
+        </div>
+      )}
 
-      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      {totalPages > 1 && (
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      )}
 
       {selectedReview && (
         <ReviewReviewMore review={selectedReview} onClose={() => setSelectedReview(null)} />

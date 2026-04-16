@@ -6,13 +6,6 @@ export default function BrandStoryPage() {
       <main className="w-full">
 
         <section className="border-b border-[#f4f4f4]">
-          <div className="w-full aspect-[4/3] bg-[#f4f4f4] overflow-hidden">
-            <img
-              src="https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/ecfab71e5e42861fd9a45e1f887b245b.png"
-              alt="반려인과 반려견의 교감"
-              className="w-full h-full object-cover"
-            />
-          </div>
           <div className="px-6 py-12 md:px-10 md:py-16 max-w-7xl mx-auto">
             <div className="mb-10 relative">
               <span className="text-6xl absolute -top-10 -left-1 font-serif text-[#3ea76e] opacity-30">"</span>
@@ -45,14 +38,6 @@ export default function BrandStoryPage() {
         </section>
 
         <section>
-          <div className="w-full aspect-[4/3] bg-[#f4f4f4] overflow-hidden relative">
-            <img
-              src="https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/ecfab71e5e42861fd9a45e1f887b245b.png"
-              alt="숲속을 산책하는 모습"
-              className="w-full h-full object-cover"
-            />
-            <span className="absolute top-5 left-5 text-lg font-black text-white opacity-80">SWIFFY®</span>
-          </div>
 
           <div className="px-6 py-12 md:px-10 md:py-16 max-w-7xl mx-auto">
             <div className="mb-10 relative">

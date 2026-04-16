@@ -2,11 +2,6 @@ export default function BrandStory() {
   return (
     <a href="/brand-story" className="block bg-white mb-20 group max-w-[1200px] mx-auto px-0">
       <div className="relative w-full aspect-[4/3] lg:aspect-[2/1] rounded-2xl overflow-hidden mb-6">
-        <img
-          src="https://swiffy.cafe24.com/web/upload/appfiles/ZaReJam3QiELznoZeGGkMG/ecfab71e5e42861fd9a45e1f887b245b.png"
-          alt="브랜드 스토리"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
         <div className="absolute inset-0 p-8 flex items-end">
           <h2 className="text-white text-5xl font-black italic leading-tight tracking-tighter opacity-90">
             BRAND<br />STORY

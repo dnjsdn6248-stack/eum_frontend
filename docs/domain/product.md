@@ -1,10 +1,10 @@
 # Product 도메인
 
-기준일: 2026-04-15
+기준일: 2026-04-16
 
 ## 개요
 
-상품 목록 조회, 상세 조회, 검색, 베스트/신상품 조회와 메인 페이지용 섹션 데이터를 담당한다. 카테고리(Category)는 상품 필터링과 긴밀하게 연결되어 이 문서에서 함께 다룬다.
+상품 목록 조회, 상세 조회, 검색, 베스트/신상품 조회와 랜딩페이지용 섹션 데이터를 담당한다. 카테고리(Category)는 상품 필터링과 긴밀하게 연결되어 이 문서에서 함께 다룬다.
 
 ---
 
@@ -77,13 +77,34 @@ category
 | `useSearchProductsQuery(params)` | GET | `/products/search` | 검색 |
 | `useLazySearchProductsQuery` | GET | `/products/search` | 검색창 입력 지연 트리거용 |
 
-### 메인 페이지 전용 Queries
+### 랜딩페이지 전용 Queries
 
-| 훅 | 메서드 | 경로 | 설명 |
+| 훅 | 메서드 | 경로 (실서버) | 설명 |
 |---|---|---|---|
-| `useGetBannerSlidesQuery()` | GET | `/main/banners` | 홈 배너 슬라이더 |
+| `useGetBannerSlidesQuery()` | GET | `/api/v1/product/home/banners` | 홈 배너 슬라이더 |
 | `useGetMainBestSellersQuery()` | GET | `/main/best-sellers` | 홈 베스트셀러 섹션 |
 | `useGetTagProductsQuery()` | GET | `/main/tag-products` | 홈 해시태그 상품 탭 |
+
+#### `useGetBannerSlidesQuery` 응답 구조
+
+서버 원본 (`BannerResponse`):
+
+```js
+{ bannerId, imageUrl, displayOrder, originalFilename }
+```
+
+`productApi.js` `transformResponse` 후 컴포넌트 전달값:
+
+```js
+{ id, img, alt, href }
+// id   ← bannerId ?? id
+// img  ← imageUrl ?? img
+// alt  ← altText ?? alt ?? ''
+// href ← productUrl ?? href ?? '#'
+```
+
+> `HeroSlider.jsx`는 변환된 필드(`slide.id`, `slide.img`, `slide.alt`, `slide.href`)만 사용.  
+> 캐시 태그: `{ type: 'Product', id: 'BANNERS' }`
 
 ---
 

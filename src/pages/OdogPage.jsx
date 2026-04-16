@@ -52,18 +52,6 @@ export default function OdogPage() {
             <p className="text-[12px] text-[#888] mt-0.5">바삭하게 씹히는 자연산 간식</p>
           </div>
         </div>
-        <div className="flex gap-2 px-4 pb-4 overflow-x-auto scrollbar-hide">
-          {['전체', '바삭', '세트', '대용량', '미니'].map((tag, i) => (
-            <button
-              key={tag}
-              className={`flex-none px-4 py-1.5 rounded-full border text-[12px] font-medium cursor-pointer transition-all ${
-                i === 0 ? 'border-[#3ea76e] bg-[#3ea76e] text-white' : 'border-[#ddd] bg-white text-[#555] hover:border-[#3ea76e] hover:text-[#3ea76e]'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="bg-white flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0]">

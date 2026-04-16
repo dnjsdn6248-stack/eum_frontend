@@ -3,20 +3,35 @@ import { setLastCreatedOrder } from '@/features/order/orderSlice'
 
 const normalizeOrder = (o) => ({
   id: o.orderId ?? o.id,
-  date: typeof o.createdAt === 'string' ? o.createdAt.split('T')[0] : (o.date ?? ''),
+  date: typeof o.createdAt === 'string'
+    ? o.createdAt.replace('T', ' ').slice(0, 19)
+    : (o.date ?? ''),
   status: o.orderStatus ?? o.status,
+  ordererName: o.ordererName ?? o.buyerName ?? o.memberName ?? '',
+  paymentMethod: o.paymentMethod ?? o.paymentType ?? '',
+  couponDiscount: o.couponDiscountAmount ?? o.couponDiscount ?? 0,
   items: (o.orderItems ?? o.items ?? []).map((item) => ({
     productId: item.productId,
     name: item.productName ?? item.name,
-    option: item.optionName ?? item.option ?? '기본',
+    option: item.optionName ?? item.option ?? '',
     qty: item.quantity ?? item.qty ?? 1,
     price: item.price,
-    img: item.imageUrl ?? item.img,
+    img: item.imageUrl ?? item.img ?? null,
+    trackingNo: item.trackingNumber ?? item.trackingNo ?? '',
+    company: item.deliveryCompany ?? item.company ?? '',
+    itemStatus: item.itemStatus ?? item.status ?? o.orderStatus ?? o.status ?? '',
   })),
   productPrice: o.productAmount ?? o.productPrice ?? 0,
   shippingPrice: o.shippingFee ?? o.shippingPrice ?? 0,
   discountPrice: o.discountAmount ?? o.discountPrice ?? 0,
   total: o.totalAmount ?? o.total ?? 0,
+  address: {
+    recipient: o.recipientName ?? o.receiver ?? '',
+    zipCode: o.zipCode ?? o.postCode ?? '',
+    address: o.address ?? o.roadAddress ?? '',
+    phone: o.recipientPhone ?? o.receiverPhone ?? o.phone ?? '',
+    memo: o.deliveryMemo ?? o.orderMemo ?? o.memo ?? '',
+  },
 })
 
 export const orderApi = apiSlice.injectEndpoints({

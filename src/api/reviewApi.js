@@ -9,8 +9,62 @@ export const reviewApi = apiSlice.injectEndpoints({
         url: `/products/${productId}/reviews`,
         params,
       }),
+      transformResponse: (res) => {
+        const raw = res.content ?? res.data?.content ?? res.data ?? res ?? []
+        const items = Array.isArray(raw) ? raw : []
+        return {
+          content: items.map((r) => ({
+            id: r.reviewId ?? r.id,
+            name: r.memberName ?? r.name ?? '익명',
+            date: typeof r.createdAt === 'string'
+              ? r.createdAt.slice(0, 10).replace(/-/g, '. ')
+              : (r.date ?? ''),
+            views: r.viewCount ?? r.views ?? 0,
+            rating: r.rating ?? r.starRating ?? 0,
+            text: r.content ?? r.text ?? '',
+            imgs: r.imageUrls ?? r.images ?? r.imgs ?? [],
+            helpfulCount: r.helpfulCount ?? 0,
+            optionText: r.optionName
+              ? `구매옵션: ${r.optionName}`
+              : (r.optionText ?? ''),
+          })),
+          totalPages: res.totalPages ?? res.data?.totalPages ?? 1,
+          totalElements: res.totalElements ?? res.data?.totalElements ?? items.length,
+        }
+      },
       providesTags: (result, error, { productId }) => [
         { type: 'Review', id: `PRODUCT_${productId}` },
+      ],
+    }),
+
+    /** 상품 리뷰 통계 (평균 별점·분포·키워드) */
+    getProductReviewStats: builder.query({
+      query: (productId) => ({ url: `/products/${productId}/reviews/stats` }),
+      transformResponse: (res) => {
+        const d = res.data ?? res
+        const rawDist = d.ratingDistribution ?? {}
+        const distribution = Array.isArray(rawDist)
+          ? rawDist.map((r) => ({
+              stars: r.stars ?? r.rating ?? 0,
+              pct: r.percentage ?? r.pct ?? 0,
+            }))
+          : [5, 4, 3, 2, 1].map((s) => ({
+              stars: s,
+              pct: rawDist[s] ?? rawDist[String(s)] ?? 0,
+            }))
+        return {
+          averageRating: d.averageRating ?? d.starAverage ?? 0,
+          totalCount: d.totalCount ?? d.totalReviewAmount ?? 0,
+          distribution,
+          categoryStats: (d.categoryStats ?? []).map((c) => ({
+            label: c.label ?? c.category ?? '',
+            topAnswer: c.topAnswer ?? c.mostCommonAnswer ?? '',
+            pct: c.percentage ?? c.pct ?? 0,
+          })),
+        }
+      },
+      providesTags: (result, error, productId) => [
+        { type: 'Review', id: `STATS_${productId}` },
       ],
     }),
 
@@ -90,6 +144,7 @@ export const reviewApi = apiSlice.injectEndpoints({
 
 export const {
   useGetProductReviewsQuery,
+  useGetProductReviewStatsQuery,
   useGetMyReviewsQuery,
   useCreateReviewMutation,
   useUpdateReviewMutation,
