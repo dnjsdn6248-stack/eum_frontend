@@ -1,29 +1,28 @@
-import { createSlice } from '@reduxjs/toolkit'
-import { apiSlice } from './apiSlice'
+import { createSlice } from "@reduxjs/toolkit";
+import { apiSlice } from "./apiSlice";
 
 // ─── Auth Redux Slice ─────────────────────────────────────────────────────────
 // user 상태는 RTK Query의 getMe 캐시가 단일 출처.
 // logout 액션은 store.js의 logoutMiddleware가 getMe 캐시를 초기화한다.
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState: {},
   reducers: {
     /** API 401 또는 로그아웃 시 호출 → logoutMiddleware가 getMe 캐시 초기화 */
     logout() {},
   },
-})
+});
 
-export const { logout } = authSlice.actions
-export default authSlice.reducer
+export const { logout } = authSlice.actions;
+export default authSlice.reducer;
 
 export const authApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-
     // ─── CSRF 초기화 ────────────────────────────────────────────────────────────
 
     /** 앱 최초 로드 시 1회 호출 → XSRF-TOKEN 쿠키 발급 */
     getCsrf: builder.query({
-      query: () => ({ url: '/api/v1/csrf' }),
+      query: () => ({ url: "/csrf" }),
     }),
 
     // ─── 인증 Mutations ─────────────────────────────────────────────────────────
@@ -35,14 +34,16 @@ export const authApi = apiSlice.injectEndpoints({
      */
     login: builder.mutation({
       query: (credentials) => ({
-        url: '/auth/login',
-        method: 'POST',
+        url: "/auth/login",
+        method: "POST",
         body: credentials,
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
-          await queryFulfilled
-          dispatch(authApi.endpoints.getMe.initiate(undefined, { forceRefetch: true }))
+          await queryFulfilled;
+          dispatch(
+            authApi.endpoints.getMe.initiate(undefined, { forceRefetch: true }),
+          );
         } catch {}
       },
     }),
@@ -50,20 +51,20 @@ export const authApi = apiSlice.injectEndpoints({
     /** POST /auth/signup — 약관 동의 포함 */
     signup: builder.mutation({
       query: (userData) => ({
-        url: '/auth/signup',
-        method: 'POST',
+        url: "/auth/signup",
+        method: "POST",
         body: userData,
       }),
     }),
 
     /** POST /auth/logout — 서버에서 쿠키 삭제 */
     logout: builder.mutation({
-      query: () => ({ url: '/auth/logout', method: 'POST' }),
+      query: () => ({ url: "/auth/logout", method: "POST" }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
-          await queryFulfilled
+          await queryFulfilled;
         } finally {
-          dispatch(logout())
+          dispatch(logout());
         }
       },
     }),
@@ -73,8 +74,8 @@ export const authApi = apiSlice.injectEndpoints({
     /** POST /auth/email/send?email= — 인증 코드 발송 */
     sendEmailVerify: builder.mutation({
       query: (email) => ({
-        url: '/auth/email/send',
-        method: 'POST',
+        url: "/auth/email/send",
+        method: "POST",
         params: { email },
       }),
     }),
@@ -82,8 +83,8 @@ export const authApi = apiSlice.injectEndpoints({
     /** POST /auth/email/verify?email=&code= — 인증 코드 확인 */
     verifyEmail: builder.mutation({
       query: ({ email, code }) => ({
-        url: '/auth/email/verify',
-        method: 'POST',
+        url: "/auth/email/verify",
+        method: "POST",
         params: { email, code },
       }),
     }),
@@ -92,8 +93,8 @@ export const authApi = apiSlice.injectEndpoints({
 
     /** GET /auth/social/accounts — 연동된 소셜 계정 목록 조회 */
     getSocialAccounts: builder.query({
-      query: () => ({ url: '/auth/social/accounts' }),
-      providesTags: ['Auth'],
+      query: () => ({ url: "/auth/social/accounts" }),
+      providesTags: ["Auth"],
     }),
 
     /**
@@ -102,7 +103,7 @@ export const authApi = apiSlice.injectEndpoints({
      */
     startSocialLink: builder.query({
       query: (provider) => ({
-        url: '/auth/social/link/start',
+        url: "/auth/social/link/start",
         params: { provider },
       }),
     }),
@@ -110,11 +111,11 @@ export const authApi = apiSlice.injectEndpoints({
     /** DELETE /auth/social/unlink?provider= — 소셜 계정 연동 해제 */
     unlinkSocial: builder.mutation({
       query: (provider) => ({
-        url: '/auth/social/unlink',
-        method: 'DELETE',
+        url: "/auth/social/unlink",
+        method: "DELETE",
         params: { provider },
       }),
-      invalidatesTags: ['Auth'],
+      invalidatesTags: ["Auth"],
     }),
 
     // ─── 인증 Queries ───────────────────────────────────────────────────────────
@@ -126,18 +127,17 @@ export const authApi = apiSlice.injectEndpoints({
      * 응답: { status, data: { userId, name, email, phoneNumber, smsAllowed, emailAllowed, updatedAt } }
      */
     getMe: builder.query({
-      query: () => ({ url: '/users/me' }),
+      query: () => ({ url: "/users/me" }),
       transformResponse: (res) => res.data,
-      providesTags: ['Auth'],
+      providesTags: ["Auth"],
     }),
 
     /** GET /auth/terms — 약관 목록 조회 (인증 불필요) */
     getTerms: builder.query({
-      query: () => ({ url: '/auth/terms' }),
+      query: () => ({ url: "/auth/terms" }),
     }),
-
   }),
-})
+});
 
 export const {
   useGetCsrfQuery,
@@ -152,4 +152,4 @@ export const {
   useGetMeQuery,
   useLazyGetMeQuery,
   useGetTermsQuery,
-} = authApi
+} = authApi;
