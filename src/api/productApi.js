@@ -32,34 +32,49 @@ export const productApi = apiSlice.injectEndpoints({
           : [{ type: 'Product', id: 'LIST' }],
     }),
 
-    /** 상품 상세 */
+    /** 상품 상세 — Product Server: GET /api/v1/product/{productId} */
     getProductById: builder.query({
       query: (id) => ({ url: `/products/${id}` }),
       transformResponse: (res) => {
         const p = res.data ?? res
+        const imageUrls = p.imageUrls ?? (p.imageUrl ? [p.imageUrl] : [])
         return {
-          id: p.productId ?? p.id,
-          name: p.title ?? p.name,
-          brand: p.brand,
-          desc: p.description ?? p.desc,
-          price: p.price,
-          img: p.imageUrl ?? p.thumbnailUrl ?? p.img,
-          images: p.images ?? (p.imageUrl ? [p.imageUrl] : []),
+          id:            p.productId ?? p.id,
+          name:          p.productName ?? p.title ?? p.name,
+          brand:         p.brandName  ?? p.brand,
+          brandId:       p.brandId    ?? null,
+          categoryId:    p.categoryId ?? null,
+          category:      p.categoryName ?? p.category,
+          desc:          p.content ?? p.description ?? p.desc,
+          price:         p.price,
+          status:        p.status ?? null,
+          tags:          p.tags   ?? null,
+          salesCount:    p.salesCount    ?? 0,
+          stockQuantity: p.stockQuantity ?? 0,
+          stockStatus:   p.stockStatus   ?? 'IN_STOCK',
+          img:           imageUrls[0] ?? null,
+          images:        imageUrls,
+          // detaiimagelUrl — 서버 오타 그대로 수용
+          detailImgs:    p.detaiimagelUrl
+                           ? [p.detaiimagelUrl]
+                           : (p.detailImages ?? p.detailImgs ?? []),
           options: (p.options ?? []).map((opt) => ({
-            label: opt.optionName ?? opt.label,
-            extra: opt.additionalPrice ?? opt.extra ?? 0,
+            id:            opt.optionId    ?? null,
+            label:         opt.optionName  ?? opt.label,
+            extra:         opt.extraPrice  ?? opt.additionalPrice ?? opt.extra ?? 0,
+            stockQuantity: opt.stockQuantity ?? 0,
+            stockStatus:   opt.stockStatus   ?? 'IN_STOCK',
           })),
-          detailImgs: p.detailImages ?? p.detailImgs ?? [],
-          isSubscribable: p.isSubscribable ?? false,
+          isSubscribable:       p.isSubscribable       ?? false,
           subscriptionDiscount: p.subscriptionDiscount ?? 0,
-          bundleOptions: p.bundleOptions ?? [],
+          bundleOptions:        p.bundleOptions        ?? [],
           relatedProducts: (p.relatedProducts ?? []).map((rp) => ({
-            id: rp.productId ?? rp.id,
-            name: rp.title ?? rp.name,
+            id:           rp.productId    ?? rp.id,
+            name:         rp.productName  ?? rp.title ?? rp.name,
             originalPrice: rp.originalPrice ?? rp.price,
             discountPrice: rp.discountPrice ?? null,
-            img: rp.imageUrl ?? rp.img,
-            options: rp.options ?? [],
+            img:          (rp.imageUrls?.[0]) ?? rp.imageUrl ?? rp.img,
+            options:      rp.options ?? [],
           })),
         }
       },

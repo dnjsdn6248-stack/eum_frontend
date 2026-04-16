@@ -116,15 +116,106 @@ category
 
 ---
 
+## Product Server API
+
+> **Base URL:** `https://localhost:8072/api/v1/product`
+
+### 공통 응답 구조
+
+```json
+{ "message": "처리 결과 메시지", "data": {} }
+```
+
+### 공통 에러 응답
+
+```json
+{ "message": "에러 메시지", "code": 401 }
+```
+
+| Code | 설명 |
+|---|---|
+| `400` | 입력값 검증 실패 또는 필수 파라미터 누락 |
+| `401` | 비즈니스 로직 에러 |
+| `500` | 서버 내부 오류 |
+
+---
+
+### `GET /api/v1/product/{productId}` — 상품 상세 조회
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---|---|:---:|---|
+| `productId` | Long | ✅ | 조회할 상품 ID |
+
+**성공 응답 (200 OK)**
+
+```json
+{
+  "message": "상품 상세 조회 성공",
+  "data": {
+    "productId": 1,
+    "productName": "어글어글 스테이크",
+    "categoryId": 1,
+    "categoryName": "Meal",
+    "brandName": "스위피테린",
+    "brandId": 10,
+    "content": "",
+    "detaiimagelUrl": "",
+    "price": 15000,
+    "status": "판매중",
+    "tags": "[판매1위]",
+    "keywords": "",
+    "salesCount": 5200,
+    "stockQuantity": 50,
+    "stockStatus": "IN_STOCK",
+    "imageUrls": [
+      "https://bucket.s3.ap-northeast-2.amazonaws.com/..."
+    ],
+    "options": [
+      {
+        "optionId": 1,
+        "optionName": "1인분",
+        "extraPrice": 0,
+        "stockQuantity": 30,
+        "stockStatus": "IN_STOCK"
+      }
+    ]
+  }
+}
+```
+
+#### 서버 → 프론트 필드 매핑 (`productApi.js` `transformResponse`)
+
+| 서버 필드 | 프론트 필드 | 비고 |
+|---|---|---|
+| `productId` | `id` | |
+| `productName` | `name` | |
+| `brandName` | `brand` | |
+| `content` | `desc` | 타이틀 아래 설명 |
+| `detaiimagelUrl` | `detailImgs[0]` | 상세 이미지 URL (오타 포함, 서버 원본 그대로) |
+| `price` | `price` | |
+| `imageUrls` | `images` | 배열 |
+| `imageUrls[0]` | `img` | 대표 이미지 |
+| `stockStatus` | `stockStatus` | `IN_STOCK` / `OUT_OF_STOCK` |
+| `stockQuantity` | `stockQuantity` | |
+| `options[].optionName` | `options[].label` | |
+| `options[].extraPrice` | `options[].extra` | |
+| `options[].stockStatus` | `options[].stockStatus` | 옵션별 재고 상태 |
+
+> `detaiimagelUrl` 오타는 서버 원본 필드명. 수정 시 백엔드와 협의 필요.
+
+---
+
 ## 상품 상세 데이터 구조
 
 ```js
 {
   id, name, brand, desc, price,
-  img,         // 대표 이미지
-  images,      // 이미지 배열
-  options: [{ label, extra }],
-  detailImgs,
+  img,              // 대표 이미지 (imageUrls[0])
+  images,           // 이미지 배열 (imageUrls)
+  stockStatus,      // 'IN_STOCK' | 'OUT_OF_STOCK'
+  stockQuantity,    // 전체 재고 수량
+  options: [{ label, extra, stockStatus, stockQuantity }],
+  detailImgs,       // 상세 이미지 (detaiimagelUrl)
   isSubscribable: boolean,
   subscriptionDiscount: number,
   bundleOptions: [],
