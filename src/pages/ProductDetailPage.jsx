@@ -83,7 +83,12 @@ function TabContent({ activeTab, product, setActiveTab }) {
 
       {activeTab === 'detail' && (
         <div className="flex flex-col items-center">
-          {product.detailImgs?.map((src, i) => <img key={i} src={src} alt={`상세 ${i + 1}`} className="w-full max-w-[860px]" />)}
+          {product.detailImgs?.length > 0
+            ? product.detailImgs.map((src, i) => (
+                <img key={i} src={src} alt={`상세 ${i + 1}`} className="w-full max-w-[860px]" />
+              ))
+            : <p className="py-24 text-[#bbb] font-bold text-[15px]">상세 이미지가 없습니다.</p>
+          }
         </div>
       )}
       {(activeTab === 'review' || activeTab === 'review-all') && (

@@ -25,10 +25,26 @@ export const productApi = apiSlice.injectEndpoints({
           stockStatus:   p.stockStatus   ?? 'IN_STOCK',
           img:           imageUrls[0] ?? null,
           images:        imageUrls,
-          // detaiimagelUrl — 서버 오타 그대로 수용. 배열(중첩 포함)로 변경됨
-          detailImgs:    Array.isArray(p.detaiimagelUrl)
-                           ? p.detaiimagelUrl.flat()
-                           : (p.detaiimagelUrl ? [p.detaiimagelUrl] : (p.detailImages ?? p.detailImgs ?? [])),
+          // detaiimagelUrl — 서버 오타 그대로 수용
+          // 서버가 string / flat array / 중첩 array / JSON 문자열 중 어느 형태로 줘도 처리
+          detailImgs: (() => {
+            const raw = p.detaiimagelUrl
+            if (!raw) return p.detailImages ?? p.detailImgs ?? []
+            if (typeof raw === 'string') {
+              try {
+                const parsed = JSON.parse(raw)
+                return Array.isArray(parsed)
+                  ? parsed.flat(Infinity).filter(s => typeof s === 'string' && s)
+                  : [raw]
+              } catch {
+                return [raw]
+              }
+            }
+            if (Array.isArray(raw)) {
+              return raw.flat(Infinity).filter(s => typeof s === 'string' && s)
+            }
+            return []
+          })(),
           options: (p.options ?? []).map((opt) => ({
             id:            opt.optionId    ?? null,
             label:         opt.optionName  ?? opt.label,
