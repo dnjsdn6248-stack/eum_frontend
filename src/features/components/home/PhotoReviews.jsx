@@ -3,13 +3,15 @@ import { useGetReviewHighlightsQuery } from '@/api/reviewApi'
 import Spinner from '@/shared/components/Spinner'
 
 export default function PhotoReviews() {
-  const { data: reviews = [], isLoading } = useGetReviewHighlightsQuery()
+  const { data, isLoading } = useGetReviewHighlightsQuery()
+  const sectionTitle = data?.title ?? ''
+  const reviews = data?.items ?? []
 
   return (
     <div className="bg-white w-full max-w-[1200px] mx-auto px-6 pb-4">
       <div className="flex items-center justify-start pt-16 pb-8">
         <h2 className="text-[24px] font-black text-[#111111] tracking-tighter">
-          베스트 포토리뷰
+          {sectionTitle}
         </h2>
       </div>
 

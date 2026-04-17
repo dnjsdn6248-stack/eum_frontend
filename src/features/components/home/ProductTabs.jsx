@@ -1,27 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useGetCategoriesQuery } from '@/api/categoryApi'
-import { useSearchProductsQuery } from '@/api/searchApi'
+import { useGetTastePicksQuery } from '@/api/searchApi'
 import Spinner from '@/shared/components/Spinner'
 
-const PRODUCTS_PER_TAB = 8
-
 export default function ProductTabs() {
-  const { data: categories = [], isLoading: catsLoading } = useGetCategoriesQuery()
-  const [activeCategory, setActiveCategory] = useState(null)
+  // null = 서버 기본값(오독오독). 탭 클릭 시 brandName 문자열로 변경
+  const [activeBrand, setActiveBrand] = useState(null)
 
-  // activeCategory는 cat.id (코드값: "ALL", "SNACK_JERKY", ...)
-  const currentCategory = activeCategory ?? categories[0]?.id ?? 'ALL'
+  const { data, isLoading, isFetching } = useGetTastePicksQuery(activeBrand)
 
-  const { data, isFetching } = useSearchProductsQuery(
-    {
-      category: currentCategory === 'ALL' ? undefined : currentCategory,
-      page: 0,
-    },
-    { skip: catsLoading }
-  )
-
-  const products = data?.content?.slice(0, PRODUCTS_PER_TAB) ?? []
+  const tags     = data?.tags     ?? []
+  const products = data?.products ?? []
 
   return (
     <div className="bg-white pb-16 w-full max-w-[1200px] mx-auto px-6">
@@ -31,20 +20,20 @@ export default function ProductTabs() {
         </h2>
       </div>
 
-      {catsLoading ? (
+      {isLoading ? (
         <Spinner />
       ) : (
         <>
           <div className="flex flex-wrap gap-2.5 pb-10">
-            {categories.map((cat) => (
+            {tags.map((tag) => (
               <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+                key={tag.brandName}
+                onClick={() => setActiveBrand(tag.brandName)}
                 className={`hover-primary px-6 py-2.5 text-[14px] !font-medium tracking-tighter transition-all cursor-pointer ${
-                  currentCategory === cat.id ? 'active shadow-sm' : ''
+                  tag.selected ? 'active shadow-sm' : ''
                 }`}
               >
-                {cat.name}
+                {tag.tagName}
               </button>
             ))}
           </div>
@@ -56,7 +45,7 @@ export default function ProductTabs() {
               {products.map((product) => (
                 <Link
                   key={product.id}
-                  to={`/product/detail/${product.id}`}
+                  to={product.productUrl}
                   className="flex flex-col group"
                 >
                   <div className="relative aspect-square overflow-hidden rounded-[15px] mb-4 bg-[#f9f9f9]">
@@ -71,21 +60,9 @@ export default function ProductTabs() {
                     <h3 className="text-[14px] !font-normal text-[#333333] leading-snug line-clamp-1 tracking-tight mb-1">
                       {product.name}
                     </h3>
-                    {product.discountTag && (
-                      <span className="text-[11px] text-[#3ea76e] font-bold mb-1">
-                        {product.discountTag}
-                      </span>
-                    )}
-                    <div className="flex items-center gap-2">
-                      {product.originalPrice && product.originalPrice !== product.price && (
-                        <span className="text-[12px] text-[#bbb] line-through">
-                          {product.originalPrice.toLocaleString()}원
-                        </span>
-                      )}
-                      <p className="text-[15px] font-bold text-[#111111] tracking-tight">
-                        {product.price?.toLocaleString()}원
-                      </p>
-                    </div>
+                    <p className="text-[15px] font-bold text-[#111111] tracking-tight">
+                      {product.price?.toLocaleString()}원
+                    </p>
                   </div>
                 </Link>
               ))}

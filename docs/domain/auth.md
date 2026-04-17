@@ -1,6 +1,6 @@
 # Auth 도메인
 
-기준일: 2026-04-15
+기준일: 2026-04-17
 
 ## 개요
 
@@ -111,7 +111,7 @@ export default function ProtectedRoute({ children }) {
 
 ## withReauth 패턴 (현재 구현)
 
-`src/api/baseQuery.js`:
+`src/api/apiSlice.js` 내부 (별도 `baseQuery.js` 파일 없음):
 
 ```js
 // 401 수신 시 = Gateway 갱신까지 실패 → 로그아웃만 처리 (재시도 없음)

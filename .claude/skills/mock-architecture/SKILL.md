@@ -1,13 +1,13 @@
 ---
 name: mock-architecture
-description: "멍샵 Mock 개발 환경 구조와 운용 규칙. mockBaseQuery URL 라우팅 방식, 가변·불변 데이터의 let 변수 관리 원칙, 백엔드 실서버 전환 절차를 정의한다. TRIGGER when: 새 도메인이나 API 엔드포인트를 Mock 환경에 추가할 때, Mock 데이터를 수정하거나 초기화 로직을 변경할 때, mockBaseQuery 라우팅 규칙을 수정할 때, Mock에서 실서버로 전환 작업을 할 때. Do NOT use for: 실서버 API 연동이 완료된 도메인의 RTK Query 엔드포인트 수정."
+description: "멍샵 실서버 API 연동 구조. Mock 시스템은 제거됨. TRIGGER when: 새 도메인이나 API 엔드포인트를 추가할 때, 기존 엔드포인트의 baseURL이나 경로 라우팅을 변경할 때, 다중 백엔드 서버 간 라우팅 구조를 파악해야 할 때. Do NOT use for: 실서버 연동이 완료된 엔드포인트의 비즈니스 로직 수정."
 user-invocable: false
 ---
 
-# Mock 아키텍처
+# API 연동 구조
 
-백엔드 없이 개발하는 현재 단계에서의 Mock 시스템 구조와 운용 규칙을 정의한다.  
-`.claude/rules/mock-architecture.md`의 구체적 적용 방법.
+> **Mock 시스템 완전 제거됨** (2026-04). `src/mocks/`, `mockBaseQuery.js` 없음.  
+> 현재 실서버와 직접 연동 중.
 
 ---
 
@@ -16,157 +16,109 @@ user-invocable: false
 ```
 컴포넌트
   └─ RTK Query 훅 (useXxxQuery / useXxxMutation)
-       └─ apiSlice (withReauth)
-            └─ mockBaseQuery           ← 실제 HTTP 요청 없음
-                 └─ handleRequest()    ← URL 패턴 매칭 라우터
-                      └─ src/mocks/   ← 정적 원본 데이터
-```
-
-**핵심:** 컴포넌트는 Mock인지 Real인지 알 필요 없다. RTK Query 훅 인터페이스가 동일.
-
----
-
-## mockBaseQuery 작동 방식 (`src/api/mockBaseQuery.js`)
-
-```js
-export const mockBaseQuery = async (args) => {
-  const { url, method = 'GET', body, params } =
-    typeof args === 'string' ? { url: args } : args
-
-  await delay(500)                    // 네트워크 레이턴시 시뮬레이션 (500ms)
-  return handleRequest({ url, method, body, params })
-}
-```
-
-- `handleRequest()`: URL 패턴 매칭 → 적절한 핸들러 호출
-- `ok(data)`: `{ data }` 형태로 반환 (RTK Query 성공 포맷)
-- `fail(status, msg)`: `{ error: { status, data: { message } } }` 형태 반환
-
----
-
-## 인증 상태 시뮬레이션
-
-```js
-// mockBaseQuery.js 모듈 레벨 변수
-let isLoggedIn = false    // 쿠키 기반 인증을 모듈 변수로 시뮬레이션
-
-// 로그인: POST /auth/login → isLoggedIn = true
-// 로그아웃: POST /auth/logout → isLoggedIn = false
-// 인증 필요 엔드포인트: if (!isLoggedIn) return fail(401, '...')
-```
-
-실제 환경에서는 HttpOnly 쿠키가 이 역할을 하지만, Mock에서는 모듈 변수로 대체.
-
----
-
-## 데이터 가변성 규칙 (Mock 변경)
-
-### 불변 데이터 (예: 상품)
-```js
-// src/mocks/products.js
-export const mockProducts = [...] // 원본, 변경 없음
-
-// mockBaseQuery.js
-// mockProducts를 직접 참조만 함 (복사·변경 없음)
-if (url === '/products') return ok([...mockProducts])
-```
-
-### 가변 데이터 (예: 주문, 리뷰, 문의)
-```js
-// src/mocks/orders.js
-export const mockOrders = [...]   // 원본 — 직접 변경 금지
-
-// mockBaseQuery.js 모듈 레벨
-let orders = [...mockOrders]      // 원본을 복사한 가변 사본
-
-// mutation 시 사본만 변경
-orders = [newOrder, ...orders]    // 원본 mockOrders는 불변 유지
+       └─ apiSlice (baseQuery)
+            └─ fetchBaseQuery
+                 └─ 게이트웨이 (VITE_API_BASE_URL, 기본: localhost:8072/api/v1)
+                      ├─ /auth/*         → auth-server
+                      ├─ /users/*        → user-server
+                      ├─ /products/*     → product-server
+                      ├─ /main/*         → product-server (랜딩페이지 전용)
+                      ├─ /search/*       → search-server
+                      ├─ /cart/*         → cart-server
+                      ├─ /orders/*       → order-server
+                      └─ /reviews/*      → review-server
 ```
 
 ---
 
-## URL 라우팅 패턴
+## 다중 서버 라우팅
 
-```js
-// 정적 경로
-if (url === '/orders' && method === 'GET') { ... }
-if (url === '/orders' && method === 'POST') { ... }
+게이트웨이가 경로 prefix로 백엔드 서버를 라우팅한다.  
+프론트는 게이트웨이 단일 엔드포인트만 사용.
 
-// 동적 경로 (정규식)
-const orderMatch = url.match(/^\/orders\/(\d+)$/)
-if (orderMatch && method === 'GET') {
-  const id = Number(orderMatch[1])
-  ...
-}
-
-// 중첩 경로
-const productReviewsMatch = url.match(/^\/products\/(\d+)\/reviews$/)
-if (productReviewsMatch && method === 'GET') { ... }
-```
-
-**순서 중요:** 구체적인 패턴(`/cart/clear`)을 동적 패턴(`/cart/:id`) 앞에 배치.
+| 경로 prefix | 담당 서버 | API 파일 |
+|---|---|---|
+| `/auth/*` | auth-server | `authApi.js` |
+| `/users/*` | user-server | `authApi.js`, `userApi.js` |
+| `/csrf` | auth-server | `authApi.js` |
+| `/products/*` | product-server | `productApi.js` |
+| `/main/*` | product-server | `productApi.js` (랜딩페이지 전용) |
+| `/search/*` | search-server | `searchApi.js`, `categoryApi.js` |
+| `/cart/*` | cart-server | `cartApi.js` |
+| `/orders/*` | order-server | `orderApi.js` |
+| `/reviews/*` | review-server | `reviewApi.js` |
+| `/wishlists/*` | wishlist-server | `wishlistApi.js` |
 
 ---
 
-## 라우트 블록 구분 주석 (형식 강제)
+## baseQuery 설정 (`src/api/apiSlice.js`)
 
 ```js
-// ── Auth ──────────────────────────────────────────────────────────────────
-// ── Products ──────────────────────────────────────────────────────────────
-// ── Orders ────────────────────────────────────────────────────────────────
-// ── Reviews ───────────────────────────────────────────────────────────────
-// ── Points ────────────────────────────────────────────────────────────────
-// ── Inquiries ─────────────────────────────────────────────────────────────
-// ── Users ─────────────────────────────────────────────────────────────────
-```
-
-새 도메인 추가 시 이 형식으로 구분 주석 추가 (**Mock 소스**).
-
----
-
-## 새 도메인 추가 절차 (Mock 소스)
-
-자세한 예제는 `examples/add-domain.md` 참조.
-
-1. `src/mocks/{domain}.js` — 원본 데이터 정의
-2. `mockBaseQuery.js` — import 추가 + 가변이면 let 변수 추가 + 라우트 블록 추가
-3. `src/features/{domain}/{domain}Api.js` — `injectEndpoints`로 엔드포인트 정의
-4. `src/api/apiSlice.js` — tagTypes에 새 타입 추가
-5. `src/app/store.js` — import 추가
-6. `docs/domain/{domain}.md` — 비즈니스 명세 작성 (**New Domain Doc** — 필수)
-
----
-
-## 백엔드 연결 전환 절차
-
-Mock → Real 전환 시 수정 파일:
-
-| 파일 | 변경 내용 |
-|---|---|
-| `src/api/apiSlice.js` | `mockBaseQuery` → `realBaseQuery`(fetchBaseQuery) 교체 |
-| (선택) 삭제 | `src/api/mockBaseQuery.js`, `src/mocks/` 폴더 |
-
-`withReauth`, `injectEndpoints`, 훅 — 모두 그대로 유지.
-
-```js
-// apiSlice.js — 이 한 줄만 교체
-baseQuery: withReauth(mockBaseQuery),      // 현재
-baseQuery: withReauth(realBaseQuery),      // 백엔드 연결 시
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:8072/api/v1',
+  credentials: 'include',  // HttpOnly 쿠키 자동 전송
+  prepareHeaders: (headers) => {
+    const csrfToken = getCsrfToken()
+    if (csrfToken) headers.set('X-XSRF-TOKEN', csrfToken)
+    return headers
+  },
+})
 ```
 
 ---
 
-## 절대 금지 (Mock 소스 · Mock 변경)
+## 환경 변수
+
+```bash
+# .env
+VITE_API_BASE_URL=http://localhost:8072/api/v1
+```
+
+개발·스테이징·프로덕션 환경별로 게이트웨이 주소만 교체하면 된다.
+
+---
+
+## 새 도메인 추가 절차 (실서버)
+
+1. `src/api/{domain}Api.js` — `injectEndpoints`로 엔드포인트 정의
+2. `src/api/apiSlice.js` — `tagTypes` 배열에 새 타입 추가
+3. `src/store/store.js` — `import '@/api/{domain}Api'` 추가
+4. `docs/domain/{domain}.md` — 비즈니스 명세 작성 (**Docs First** 필수)
+
+---
+
+## 응답 정규화 패턴
+
+각 `transformResponse`에서 서버 DTO → 프론트 모델로 변환:
 
 ```js
-// ❌ 컴포넌트에서 mocks/ 직접 import
-import { mockProducts } from '../mocks/products'
+// 공통 페이지 응답 (searchApi.js 패턴)
+const normalizePage = (res, mapFn) => ({
+  content:       (res.data ?? []).map(mapFn),
+  totalPages:    res.totalPages    ?? 1,
+  totalElements: res.totalElements ?? 0,
+  currentPage:   res.currentPage   ?? 0,
+})
 
-// ❌ mocks/ 원본 배열 직접 변경
-mockOrders.push(newOrder)
-mockOrders[0].status = 'cancelled'
+// 단건 응답 (Result 래퍼)
+transformResponse: (res) => res.data   // { message, status, data: {...} }
 
-// ✅ 올바른 방법: mockBaseQuery 모듈 변수에서만 변경
-let orders = [...mockOrders]
-orders = orders.map(o => o.id === id ? { ...o, status: 'cancelled' } : o)
+// 직접 배열 반환 (카테고리 API)
+transformResponse: (res) => res.data ?? []
+```
+
+---
+
+## 절대 금지
+
+```js
+// ❌ fetchBaseQuery 외부에서 직접 fetch/axios 사용
+fetch('/api/products')
+axios.get('/products')
+
+// ❌ 여러 createApi() 인스턴스 생성
+const newApi = createApi({ ... })   // apiSlice.injectEndpoints() 사용
+
+// ❌ 토큰을 로컬 저장소에 저장
+localStorage.setItem('token', ...)
 ```

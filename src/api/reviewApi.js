@@ -127,14 +127,17 @@ export const reviewApi = apiSlice.injectEndpoints({
     getReviewHighlights: builder.query({
       query: () => ({ url: '/main/review-highlights' }),
       transformResponse: (res) => {
-        const items = res.data ?? res ?? []
-        return items.map((item) => ({
-          id: item.id,
-          img: item.reviewImageUrl ?? item.img,
-          title: item.title ?? item.productName ?? '',
-          rating: `★ ${item.starAverage ?? item.star ?? 0}(${item.totalReviewAmount ?? 0})`,
-          href: item.reviewUrl ?? '/review',
-        }))
+        const raw = res.data ?? res.items ?? (Array.isArray(res) ? res : [])
+        return {
+          title: res.title ?? res.sectionTitle ?? '',
+          items: raw.map((item) => ({
+            id: item.id,
+            img: item.reviewImageUrl ?? item.img,
+            title: item.title ?? item.productName ?? '',
+            rating: `★ ${item.starAverage ?? item.star ?? 0}(${item.totalReviewAmount ?? 0})`,
+            href: item.reviewUrl ?? '/review',
+          })),
+        }
       },
       providesTags: [{ type: 'Review', id: 'HIGHLIGHTS' }],
     }),

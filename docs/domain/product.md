@@ -1,6 +1,6 @@
 # Product 도메인
 
-기준일: 2026-04-16
+기준일: 2026-04-17
 
 ## 개요
 
@@ -79,32 +79,39 @@ category
 
 ### 랜딩페이지 전용 Queries
 
-| 훅 | 메서드 | 경로 (실서버) | 설명 |
+> **주의:** 랜딩페이지 섹션 데이터는 현재 **Search Server** (`searchApi.js`)에서 조회.  
+> `productApi.js`의 `useGetMainBestSellersQuery` / `useGetTagProductsQuery`는 정의되어 있으나 랜딩페이지에서 미사용.
+
+| 섹션 | 컴포넌트 | 훅 (searchApi.js) | 엔드포인트 |
 |---|---|---|---|
-| `useGetBannerSlidesQuery()` | GET | `/api/v1/product/home/banners` | 홈 배너 슬라이더 |
-| `useGetMainBestSellersQuery()` | GET | `/main/best-sellers` | 홈 베스트셀러 섹션 |
-| `useGetTagProductsQuery()` | GET | `/main/tag-products` | 홈 해시태그 상품 탭 |
+| 히어로 배너 | `HeroSlider.jsx` | `useGetMainBannersQuery()` | `GET /search/products/main-banners` |
+| 베스트셀러 | `BestSellers.jsx` | `useGetHomeBestsellerQuery()` | `GET /search/products/home-bestseller` |
+| 취향저격 탭 | `ProductTabs.jsx` | `useGetTastePicksQuery(brandName?)` | `GET /search/products/taste-picks` |
+| 포토리뷰 | `PhotoReviews.jsx` | `useGetReviewHighlightsQuery()` (reviewApi) | `GET /main/review-highlights` |
 
-#### `useGetBannerSlidesQuery` 응답 구조
+#### 배너 (`useGetMainBannersQuery`) 응답
 
-서버 원본 (`BannerResponse`):
-
-```js
-{ bannerId, imageUrl, displayOrder, originalFilename }
-```
-
-`productApi.js` `transformResponse` 후 컴포넌트 전달값:
+서버 원본: `{ productId, imageUrl, displayOrder, isHero }`
 
 ```js
-{ id, img, alt, href }
-// id   ← bannerId ?? id
-// img  ← imageUrl ?? img
-// alt  ← altText ?? alt ?? ''
-// href ← productUrl ?? href ?? '#'
+// transformResponse 후
+{ id, img, href, alt, displayOrder }
 ```
 
-> `HeroSlider.jsx`는 변환된 필드(`slide.id`, `slide.img`, `slide.alt`, `slide.href`)만 사용.  
-> 캐시 태그: `{ type: 'Product', id: 'BANNERS' }`
+#### 베스트셀러 (`useGetHomeBestsellerQuery`) 응답
+
+```js
+// transformResponse 후 (배열)
+[{ id, rank, name, img, price, score, salesCount, createdAt, productUrl }]
+```
+
+#### 취향저격 탭 (`useGetTastePicksQuery`) 응답
+
+- `tags[]`: 탭 버튼 목록 (`brandName`, `tagName`, `selected`)
+- `selectedBrandName`: 현재 선택된 브랜드
+- `products[]`: 해당 브랜드 상품 목록 (`id`, `name`, `img`, `price`, `brandName`, `productUrl`)
+
+브랜드 고정 3종: `오독오독` | `어글어글` | `스위피`
 
 ---
 
@@ -112,7 +119,11 @@ category
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetCategoriesQuery()` | GET | `/categories` | 전체 목록 — `AuthInitializer`에서 앱 init 시 프리패치 |
+| `useGetCategoriesQuery()` | GET | `/search/categories` | 전체 목록 — `AuthInitializer`에서 앱 init 시 프리패치, GNB에서 동적 구성 |
+
+> `id`는 **문자열 코드** (`"ALL"`, `"SNACK_JERKY"` 등). Search Server의 `category` 파라미터로 직접 사용.  
+> GNB 카테고리 링크: `/product/list?categoryId={cat.id}`  
+> **GNB 정책:** 카테고리 목록 하드코딩 금지 — 반드시 API에서 동적으로 구성.
 
 ---
 

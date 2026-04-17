@@ -1,6 +1,6 @@
 # RTK Query API Hooks 명세
 
-기준일: 2026-04-16
+기준일: 2026-04-17
 
 프로젝트의 모든 RTK Query 훅 상세 명세. 단일 `createApi`(`src/api/apiSlice.js`)에 `injectEndpoints`로 도메인별 주입.
 
@@ -311,6 +311,8 @@
 
 ## Category (`src/api/categoryApi.js`)
 
+> Search Server (`/search/categories`) 경유. GNB·상품 필터에 사용.
+
 ---
 
 ### `useGetCategoriesQuery`
@@ -318,26 +320,42 @@
 | 항목 | 값 |
 |---|---|
 | **메서드** | `GET` |
-| **URL** | `/categories` |
+| **URL** | `/search/categories` |
 
 **Request**
 - Parameters: 없음
 - Body: 없음
 
-**Response Body** (래퍼 없이 직접 반환)
+**Response Body (서버 원본)**
+```json
+{
+  "status": 200,
+  "data": [
+    {
+      "id": "SNACK_JERKY",
+      "label": "Snack & Jerky",
+      "subCategories": [
+        { "id": 11, "code": "JERKY", "label": "육포" }
+      ]
+    }
+  ]
+}
+```
+
+**컴포넌트 수신값** (`transformResponse` 후)
 ```json
 [
   {
-    "categoryId": 1,
-    "name": "사료",
-    "displayOrder": 0,
-    "children": [
-      { "categoryId": 11, "name": "건식사료", "displayOrder": 0, "children": [] }
-    ]
+    "id": "SNACK_JERKY",
+    "name": "Snack & Jerky",
+    "subCategories": [ { "id": 11, "code": "JERKY", "label": "육포" } ],
+    "children": [ { "id": 11, "code": "JERKY", "label": "육포" } ]
   }
 ]
 ```
 
+> `id`는 **문자열 코드** (예: `"SNACK_JERKY"`) — Search Server의 `category` 파라미터로 그대로 전달.  
+> `children`은 `subCategories`의 별칭(alias).  
 > Cache Tag: `[{ type: 'Category', id: 'LIST' }]`
 
 ---
@@ -514,7 +532,7 @@
 | 항목 | 값 |
 |---|---|
 | **메서드** | `GET` |
-| **URL** | `/api/v1/product/home/banners` |
+| **URL** | `/main/banners` |
 
 **Request**
 - Parameters: 없음
@@ -559,12 +577,16 @@
 
 **컴포넌트 수신값** (`transformResponse` 후)
 ```json
-[
-  { "id": 1, "name": "사료명", "img": "https://...", "price": 30000, "productUrl": "/product/1" }
-]
+{
+  "title": "베스트셀러",
+  "items": [
+    { "id": 1, "name": "사료명", "img": "https://...", "price": 30000, "productUrl": "/product/1" }
+  ]
+}
 ```
 
-> Cache Tag: `[{ type: 'Product', id: 'MAIN_BEST' }]`
+> Cache Tag: `[{ type: 'Product', id: 'MAIN_BEST' }]`  
+> **주의:** 랜딩페이지 `BestSellers.jsx`는 현재 `searchApi.js`의 `useGetHomeBestsellerQuery`를 사용. 이 훅은 `productApi.js`에 정의되어 있으나 랜딩페이지에서는 미사용.
 
 ---
 
@@ -581,64 +603,95 @@
 
 **컴포넌트 수신값** (`transformResponse` 후)
 ```json
-[
-  {
-    "tagName": "#강아지간식",
-    "products": [
-      { "id": 1, "name": "사료명", "img": "https://...", "price": 30000, "description": "..." }
-    ]
-  }
-]
+{
+  "title": "우리 아이 취향 저격 제품",
+  "groups": [
+    {
+      "tagName": "#강아지간식",
+      "products": [
+        { "id": 1, "name": "사료명", "img": "https://...", "price": 30000 }
+      ]
+    }
+  ]
+}
 ```
 
-> Cache Tag: `[{ type: 'Product', id: 'TAGS' }]`
+> Cache Tag: `[{ type: 'Product', id: 'TAGS' }]`  
+> **주의:** 랜딩페이지 `ProductTabs.jsx`는 현재 `searchApi.js`의 `useSearchProductsQuery`를 사용. 이 훅은 `productApi.js`에 정의되어 있으나 랜딩페이지에서는 미사용.
 
 ---
 
 ## Cart (`src/api/cartApi.js`)
 
+> 모든 Mutation: `invalidatesTags: [{ type: 'Cart', id: 'LIST' }]`  
+> **선택 상태는 서버 관리** — 체크 토글 시 반드시 API 호출.
+
 ---
 
-### `useGetCartQuery`
+### `useGetCartQuery` / `useGetCartSummaryQuery`
 
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/cart` |
+| 훅 | 메서드 | URL |
+|---|---|---|
+| `useGetCartQuery` | GET | `/cart` |
+| `useGetCartSummaryQuery` | GET | `/cart/summary` |
 
-**Request**
-- Parameters: 없음
-- Body: 없음
-
-**Response Body (서버 원본)**
+**서버 원본 응답 (CartResponse)**
 ```json
 {
-  "status": 200,
-  "data": {
-    "items": [
-      {
-        "cartItemId": 10,
-        "productName": "사료명",
-        "imageUrl": "https://...",
-        "price": 27000,
-        "quantity": 2,
-        "selectedOption": "1kg",
-        "options": ["1kg", "2kg"],
-        "deliveryType": "PARCEL"
-      }
-    ]
-  }
+  "cartId": 12,
+  "totalAmount": 28000,
+  "totalProductPrice": 25000,
+  "totalShippingFee": 3000,
+  "estimatedPaymentAmount": 28000,
+  "estimatedRewardPoints": 280,
+  "memberRewardPoints": 0,
+  "isSelectedAll": false,
+  "selectedItemCount": 2,
+  "remainingItemCount": 2,
+  "items": [
+    {
+      "cartItemId": 101,
+      "productId": 55,
+      "optionId": 3,
+      "productName": "유기농 사료",
+      "optionName": "2kg",
+      "quantity": 2,
+      "unitPrice": 12500,
+      "totalPrice": 25000,
+      "imageUrl": "https://...",
+      "stockStatus": "IN_STOCK",
+      "isSelected": true
+    }
+  ]
 }
 ```
 
-**컴포넌트 수신값** (`transformResponse` 후)
+**컴포넌트 수신값** (`normalizeCart` 후)
 ```json
-[
-  { "id": 10, "cartItemId": 10, "name": "사료명", "img": "https://...", "price": 27000, "qty": 2, "option": "1kg", "options": ["1kg","2kg"], "delivery": "PARCEL" }
-]
+{
+  "cartId": 12,
+  "totalAmount": 28000,
+  "totalProductPrice": 25000,
+  "totalShippingFee": 3000,
+  "estimatedPaymentAmount": 28000,
+  "estimatedRewardPoints": 280,
+  "memberRewardPoints": 0,
+  "isSelectedAll": false,
+  "selectedItemCount": 2,
+  "remainingItemCount": 2,
+  "items": [
+    {
+      "id": 101, "cartItemId": 101, "productId": 55, "optionId": 3,
+      "name": "유기농 사료", "optionName": "2kg",
+      "img": "https://...", "unitPrice": 12500, "totalPrice": 25000,
+      "qty": 2, "isSelected": true, "stockStatus": "IN_STOCK"
+    }
+  ]
+}
 ```
 
-> 성공 시 `initCheckedItems(ids[])` 자동 dispatch.  
+> `getCart` 성공 시 `isSelected === true`인 항목만 `initCheckedItems(ids[])` dispatch.  
+> `getCartSummary`는 헤더 배지·요약 영역 부분 갱신용.  
 > Cache Tag: `[{ type: 'Cart', id }, ..., { type: 'Cart', id: 'LIST' }]`
 
 ---
@@ -652,76 +705,85 @@
 
 **Request Body**
 ```json
-{ "productId": 1, "optionId": 10, "quantity": 2 }
+{
+  "productId": 55,
+  "quantity": 2,
+  "optionId": 3,
+  "optionName": "2kg",
+  "snapshot": {
+    "productName": "유기농 사료",
+    "unitPrice": 12500,
+    "imageUrl": "https://...",
+    "stockStatus": "IN_STOCK"
+  }
+}
 ```
 
-**Response Body**
-```json
-{ "status": 201, "message": "장바구니에 추가되었습니다." }
-```
-
-> `invalidatesTags: [{ type: 'Cart', id: 'LIST' }]`
+> `productId`, `quantity` 필수. 동일 상품/옵션이 있으면 수량 합산.  
+> 응답: CartResponse (전체 장바구니)
 
 ---
 
-### `useUpdateCartItemMutation`
+### `useSelectAllCartItemsMutation`
 
 | 항목 | 값 |
 |---|---|
 | **메서드** | `PUT` |
-| **URL** | `/cart/items/:cartItemId` |
+| **URL** | `/cart/select-all` |
 
-**Request Path Parameters**
-| 파라미터 | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| `cartItemId` | number | Y | 장바구니 아이템 ID |
+**Request Body**: `{ "isSelectedAll": true }`  
+**응답**: CartResponse
+
+---
+
+### `useSelectCartItemMutation`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `PUT` |
+| **URL** | `/cart/{cartItemId}/select` |
+
+**Request Body**: `{ "isSelected": false }`  
+**응답**: CartResponse
+
+---
+
+### `useUpdateCartItemQuantityMutation`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `PUT` |
+| **URL** | `/cart/{cartItemId}/quantity` |
+
+**Request Body**: `{ "quantity": 3 }`  
+> `quantity = 0` 이면 서버에서 해당 아이템 삭제 처리.
+
+---
+
+### `useUpdateCartItemOptionMutation`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `PUT` |
+| **URL** | `/cart/{cartItemId}/option` |
 
 **Request Body**
 ```json
-{ "quantity": 3, "optionId": 10 }
+{ "optionId": 4, "optionName": "5kg", "snapshot": { ... } }
 ```
-
-**Response Body**
-```json
-{ "status": 200, "message": "수정되었습니다." }
-```
-
-> `invalidatesTags: [{ type: 'Cart', id: 'LIST' }]`
 
 ---
 
-### `useRemoveCartItemMutation`
+### `useRemoveCartItemsMutation`
 
 | 항목 | 값 |
 |---|---|
 | **메서드** | `DELETE` |
-| **URL** | `/cart/items/:cartItemId` |
+| **URL** | `/cart/items` |
 
-**Request Path Parameters**
-| 파라미터 | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| `cartItemId` | number | Y | 장바구니 아이템 ID |
-
-**Request Body**: 없음
-
-**Response**: `204 No Content`
-
-> `invalidatesTags: [{ type: 'Cart', id: 'LIST' }]`
-
----
-
-### `useClearCartMutation`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `DELETE` |
-| **URL** | `/cart` |
-
-**Request Body**: 없음
-
-**Response**: `204 No Content`
-
-> `invalidatesTags: [{ type: 'Cart', id: 'LIST' }]`
+**Request Body**: `{ "cartItemIds": [101, 102] }`  
+> 단일 삭제도 배열 `[cartItemId]`로 전달.  
+> 응답: CartResponse
 
 ---
 
@@ -953,11 +1015,15 @@
 
 **컴포넌트 수신값** (`transformResponse` 후)
 ```json
-[
-  { "id": 1, "img": "https://...", "title": "상품명", "rating": "★ 4.8(32)", "href": "/review" }
-]
+{
+  "title": "베스트 포토리뷰",
+  "items": [
+    { "id": 1, "img": "https://...", "title": "상품명", "rating": "★ 4.8(32)", "href": "/review" }
+  ]
+}
 ```
 
+> `title`은 `res.title ?? res.sectionTitle ?? ''` 순으로 추출.  
 > Cache Tag: `[{ type: 'Review', id: 'HIGHLIGHTS' }]`
 
 ---
@@ -1239,6 +1305,328 @@
 **Response**: `204 No Content`
 
 > `invalidatesTags: ['Address']`
+
+---
+
+## Search (`src/api/searchApi.js`)
+
+> Search Server 전용 — `/search/*` 경로.
+
+### 공통 응답 포맷
+
+```json
+{
+  "status": "success",
+  "totalElements": 100,
+  "totalPages": 9,
+  "currentPage": 0,
+  "size": 12,
+  "isFirst": true,
+  "isLast": false,
+  "hasNext": true,
+  "hasPrevious": false,
+  "extra": {},
+  "data": []
+}
+```
+
+`normalizePage()` 후 컴포넌트 수신 공통 필드: `content[]`, `totalPages`, `totalElements`, `currentPage`, `hasNext`, `hasPrevious`, `isFirst`, `isLast`, `extra`
+
+---
+
+### `useSearchProductsQuery` / `useLazySearchProductsQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products` |
+
+**Request Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| `title` | string | N | — | 상품명 검색 |
+| `keyword` | string | N | — | 키워드 검색 |
+| `category` | string | N | `ALL` | 카테고리 코드 (예: `"SNACK_JERKY"`) |
+| `subCategory` | string | N | — | 서브카테고리 |
+| `minPrice` | number | N | — | 최소 가격 |
+| `maxPrice` | number | N | — | 최대 가격 |
+| `searchScope` | string | N | — | 검색 범위 |
+| `sortType` | string | N | `최신순` | 정렬 방식 |
+| `page` | number | N | `0` | 페이지 번호 (0-based) |
+| `size` | number | N | `12` | 페이지 크기 |
+
+**컴포넌트 수신값** (`normalizePage` + `normalizeSearchProduct` 후)
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "name": "사료명",
+      "img": "https://...",
+      "price": 30000,
+      "originalPrice": 35000,
+      "discountRate": 14,
+      "discountTag": "14% 할인",
+      "isNew": false,
+      "productTag": "베스트",
+      "productUrl": "/product/detail/1",
+      "category": "SNACK_JERKY"
+    }
+  ],
+  "totalPages": 5,
+  "totalElements": 48,
+  "currentPage": 0,
+  "hasNext": true,
+  "extra": { "trendingKeywords": ["사료", "간식"] }
+}
+```
+
+> `extra.trendingKeywords`는 검색 액션일 때만 포함.  
+> Cache Tag: `[{ type: 'Search', id: 'PRODUCTS' }]`
+
+---
+
+### `useGetHomeBestsellerQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/home-bestseller` |
+
+**Request Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| `size` | number | N | `3` | 조회 개수 |
+
+**컴포넌트 수신값** (`transformResponse` 후)
+```json
+[
+  {
+    "id": 1,
+    "rank": 1,
+    "name": "사료명",
+    "img": "https://...",
+    "price": 30000,
+    "score": 4.8,
+    "salesCount": 320,
+    "createdAt": "2026-04-01T00:00:00",
+    "productUrl": "/product/detail/1"
+  }
+]
+```
+
+> 랜딩페이지 `BestSellers.jsx`가 이 훅을 사용.  
+> Cache Tag: `[{ type: 'Search', id: 'HOME_BESTSELLER' }]`
+
+---
+
+### `useGetTastePicksQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/taste-picks` |
+
+**Request Query Parameters**
+| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
+|---|---|---|---|---|
+| `brandName` | string | N | `오독오독` | 허용값: `오독오독` \| `어글어글` \| `스위피` (`#오독오독` 형식도 허용) |
+
+**컴포넌트 수신값** (`transformResponse` 후)
+```json
+{
+  "tags": [
+    { "brandName": "오독오독", "tagName": "#오독오독", "selected": true },
+    { "brandName": "어글어글", "tagName": "#어글어글", "selected": false },
+    { "brandName": "스위피",   "tagName": "#스위피",   "selected": false }
+  ],
+  "selectedBrandName": "오독오독",
+  "products": [
+    {
+      "id": 1,
+      "name": "오독오독 바삭한 간식",
+      "img": "https://...",
+      "price": 12000,
+      "brandName": "오독오독",
+      "productUrl": "/product/detail/1"
+    }
+  ]
+}
+```
+
+> 랜딩페이지 `ProductTabs.jsx`가 이 훅을 사용. `tags[].selected`로 활성 탭 결정.  
+> Cache Tag: `[{ type: 'Search', id: 'TASTE_PICKS_{brandName}' }]`
+
+---
+
+### `useGetBestsellerProductsQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/bestseller` |
+
+베스트셀러 탭 6개 조회.
+
+**컴포넌트 수신값**
+```json
+{
+  "content": [
+    { "id": 1, "name": "사료명", "img": "https://...", "price": 30000, "salesRank": 1, "rankTag": "판매 1위", "productUrl": "/product/detail/1" }
+  ]
+}
+```
+
+> Cache Tag: `[{ type: 'Search', id: 'BESTSELLER' }]`
+
+---
+
+### `useGetSubscriptionProductsQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/subscription` |
+
+**Request Query Parameters**: `{ page }`
+
+> Cache Tag: `[{ type: 'Search', id: 'SUBSCRIPTION' }]`
+
+---
+
+### `useGetMainBannersQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/main-banners` |
+
+**컴포넌트 수신값** (`transformResponse` 후)
+```json
+[
+  {
+    "id": 1,
+    "img": "https://...",
+    "href": "/product/detail/1",
+    "alt": "배너 상품 1",
+    "displayOrder": 0
+  }
+]
+```
+
+> 서버 원본 필드: `productId`, `imageUrl`, `displayOrder`, `isHero`.  
+> 랜딩페이지 `HeroSlider.jsx`가 이 훅을 사용.  
+> Cache Tag: `[{ type: 'Search', id: 'MAIN_BANNERS' }]`
+
+---
+
+### `useGetSimilarProductsQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/:productId/similar` |
+
+**Request**: `{ productId: number, size?: number }` (기본 size=3)
+
+**컴포넌트 수신값**
+```json
+[
+  { "id": 1, "name": "사료명", "img": "https://...", "tags": ["NEW"], "price": 30000, "productUrl": "/product/detail/1" }
+]
+```
+
+> 태그 우선순위: `[NEW]` > `[판매 1위]` > `[판매 2위]` > `[판매 3위]`  
+> Cache Tag: `[{ type: 'Search', id: 'SIMILAR_{productId}' }]`
+
+---
+
+### `useGetAutocompleteQuery` / `useLazyGetAutocompleteQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/autocomplete` |
+
+**Request**: `name` (string, 필수)  
+**응답**: `[{ id, title }]`
+
+---
+
+### `useGetTrendingKeywordsQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/products/trending` |
+
+**응답**: `[{ rank, keyword, score }]`
+
+---
+
+### `useSearchReviewsQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/reviews` |
+
+**Request**: `{ productId?, keyword?, sortType?, reviewType?, page?, size? }`
+
+---
+
+### `useSearchNoticesQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/notices` |
+
+**Request**: `{ searchRange?, searchType?, keyword?, page?, size? }`  
+> `extra.menuTitle`: `"NOTICE"`
+
+---
+
+### `useGetBrandStoryQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/brand-story` |
+
+**컴포넌트 수신값** (`transformResponse` 후)
+```json
+{
+  "mainCard": {
+    "imageUrl": "https://...",
+    "buttonText": "브랜드 스토리",
+    "buttonUrl": "/brand"
+  },
+  "brandPage": [
+    {
+      "imageUrl": "https://...",
+      "buttonText": "자세히 보기",
+      "buttonUrl": "/brand#section1",
+      "displayOrder": 1,
+      "isActive": true
+    }
+  ]
+}
+```
+
+> Cache Tag: `[{ type: 'Search', id: 'BRAND_STORY' }]`
+
+---
+
+### `useGetSearchCategoriesQuery`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `GET` |
+| **URL** | `/search/categories` |
+
+> `categoryApi.js`의 `useGetCategoriesQuery`와 동일 엔드포인트. 검색 필터에서 직접 사용 시 이 훅 사용.  
+> Cache Tag: `[{ type: 'Search', id: 'CATEGORIES' }]`
 
 ---
 

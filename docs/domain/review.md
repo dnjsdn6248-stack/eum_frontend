@@ -1,6 +1,6 @@
 # Review 도메인
 
-기준일: 2026-04-15
+기준일: 2026-04-16
 
 ## 개요
 
@@ -69,7 +69,26 @@ review
 |---|---|---|---|
 | `useGetProductReviewsQuery({ productId, params })` | GET | `/products/:productId/reviews` | 상품별 리뷰 목록 |
 | `useGetMyReviewsQuery(params)` | GET | `/reviews/mine` | 내 리뷰 목록 |
-| `useGetReviewHighlightsQuery()` | GET | `/main/review-highlights` | 홈 포토리뷰 하이라이트 (메인 전용) |
+| `useGetReviewHighlightsQuery()` | GET | `/main/review-highlights` | 홈 포토리뷰 하이라이트 (메인 전용) — `{ title, items }` 반환 |
+
+#### `useGetReviewHighlightsQuery` 응답 구조
+
+```js
+{
+  title: string,   // 섹션 타이틀 (서버 응답 title ?? sectionTitle)
+  items: [
+    {
+      id: number,
+      img: string,    // reviewImageUrl ?? img
+      title: string,  // title ?? productName
+      rating: string, // "★ {starAverage}({totalReviewAmount})" 포맷
+      href: string,   // reviewUrl ?? '/review'
+    }
+  ]
+}
+```
+
+> **섹션 타이틀 정책**: 포토리뷰 섹션 타이틀도 백엔드 응답에서 수신. 하드코딩 금지.
 
 ### Mutations
 

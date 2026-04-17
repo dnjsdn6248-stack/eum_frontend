@@ -2,12 +2,17 @@ import { apiSlice } from './apiSlice'
 
 // ─── 공통 응답 정규화 ──────────────────────────────────────────────────────────
 
-/** Search Server 공통 페이지 응답 → { content, totalPages, totalElements } */
+/** Search Server 공통 페이지 응답 → { content, totalPages, totalElements, hasNext, ... } */
 const normalizePage = (res, mapFn) => ({
   content:       (res.data ?? []).map(mapFn),
   totalPages:    res.totalPages    ?? 1,
   totalElements: res.totalElements ?? 0,
   currentPage:   res.currentPage   ?? 0,
+  hasNext:       res.hasNext       ?? false,
+  hasPrevious:   res.hasPrevious   ?? false,
+  isFirst:       res.isFirst       ?? true,
+  isLast:        res.isLast        ?? true,
+  extra:         res.extra         ?? {},
 })
 
 /** 검색 상품 DTO 정규화 */
@@ -92,12 +97,50 @@ export const searchApi = apiSlice.injectEndpoints({
         price:      item.price,
         score:      item.score      ?? null,
         salesCount: item.salesCount ?? 0,
+        createdAt:  item.createdAt  ?? null,
         productUrl: item.productUrl ?? `/product/detail/${item.id}`,
       })),
       providesTags: [{ type: 'Search', id: 'HOME_BESTSELLER' }],
     }),
 
-    // ── 5. 유사 상품 추천 (상세 페이지용) ────────────────────────────────────
+    // ── 5. 우리 아이 취향 저격 (브랜드별 최신 상품) ──────────────────────────
+    /**
+     * GET /search/products/taste-picks
+     * @param {string | null} brandName  허용: '오독오독' | '어글어글' | '스위피' | null(기본 오독오독)
+     * '#오독오독' 형식도 허용.
+     *
+     * 응답:
+     *   extra.tags[]           → 탭 버튼 목록 (brandName, tagName, selected)
+     *   extra.selectedBrandName → 현재 선택된 브랜드명
+     *   data[]                 → 해당 브랜드 상품 목록
+     */
+    getTastePicks: builder.query({
+      query: (brandName = null) => ({
+        url: '/search/products/taste-picks',
+        params: brandName ? { brandName } : {},
+      }),
+      transformResponse: (res) => ({
+        tags: (res.extra?.tags ?? []).map((t) => ({
+          brandName: t.brandName,
+          tagName:   t.tagName,
+          selected:  t.selected ?? false,
+        })),
+        selectedBrandName: res.extra?.selectedBrandName ?? null,
+        products: (res.data ?? []).map((item) => ({
+          id:         item.productId,
+          name:       item.title,
+          img:        item.imageUrl,
+          price:      item.price,
+          brandName:  item.brandName,
+          productUrl: item.productUrl ?? `/product/detail/${item.productId}`,
+        })),
+      }),
+      providesTags: (result, error, brandName) => [
+        { type: 'Search', id: `TASTE_PICKS_${brandName ?? 'DEFAULT'}` },
+      ],
+    }),
+
+    // ── 6. 유사 상품 추천 (상세 페이지용) ────────────────────────────────────
     /**
      * GET /search/products/{productId}/similar
      * @param {{ productId: number, size?: number }} params  기본 size=3
@@ -181,7 +224,22 @@ export const searchApi = apiSlice.injectEndpoints({
       providesTags: [{ type: 'Search', id: 'MAIN_BANNERS' }],
     }),
 
-    // ── 11. 카테고리 목록 ─────────────────────────────────────────────────────
+    // ── 11. 브랜드 스토리 리소스 ──────────────────────────────────────────────
+    /**
+     * GET /search/brand-story
+     * 브랜드 스토리 카드/페이지 이미지·버튼 리소스 (Vault/Config 기반)
+     *
+     * 응답:
+     *   data.mainCard    → { imageUrl, buttonText, buttonUrl }
+     *   data.brandPage[] → [{ imageUrl, buttonText, buttonUrl, displayOrder, isActive }]
+     */
+    getBrandStory: builder.query({
+      query: () => ({ url: '/search/brand-story' }),
+      transformResponse: (res) => res.data ?? null,
+      providesTags: [{ type: 'Search', id: 'BRAND_STORY' }],
+    }),
+
+    // ── 12. 카테고리 목록 ─────────────────────────────────────────────────────
     /**
      * GET /search/categories
      * Vault 설정 기준 카테고리/서브카테고리 목록.
@@ -218,6 +276,7 @@ export const {
   useGetSubscriptionProductsQuery,
   useGetBestsellerProductsQuery,
   useGetHomeBestsellerQuery,
+  useGetTastePicksQuery,
   useGetSimilarProductsQuery,
   useGetAutocompleteQuery,
   useLazyGetAutocompleteQuery,
@@ -225,5 +284,6 @@ export const {
   useSearchReviewsQuery,
   useSearchNoticesQuery,
   useGetMainBannersQuery,
+  useGetBrandStoryQuery,
   useGetSearchCategoriesQuery,
 } = searchApi

@@ -47,7 +47,7 @@ toast.success('저장되었습니다.')
 toast.error('네트워크 오류')
 ```
 
-daisyUI의 `toast toast-top toast-end` + `alert alert-*` 클래스로 렌더링.
+`src/features/components/ui/Toast.jsx` 컴포넌트로 렌더링 — daisyUI 클래스 **미사용** (daisyUI 비활성화 상태).
 
 ---
 
@@ -65,7 +65,7 @@ const isOpen = useAppSelector(selectIsModalOpen('cartAlert'))
 const data   = useAppSelector(selectModalData)
 ```
 
-daisyUI `modal modal-box` 클래스 사용 권장.
+모달 컨테이너는 커스텀 Tailwind 클래스 사용 (daisyUI `modal` 클래스 비활성화 상태 — 직접 포지셔닝 클래스 사용).
 
 ---
 
@@ -78,7 +78,7 @@ dispatch(setGlobalLoading(true))
 dispatch(setGlobalLoading(false))
 ```
 
-로딩 스피너 컴포넌트: `src/shared/components/Spinner.jsx` — daisyUI `loading loading-spinner` 사용.
+로딩 스피너 컴포넌트: `src/shared/components/Spinner.jsx` — daisyUI 비활성화로 커스텀 CSS 사용.
 
 ---
 
@@ -96,23 +96,28 @@ useAppSelector(selectIsSearchOpen)
 
 ---
 
-## 상태별 UI 패턴 (daisyUI)
+## 상태별 UI 패턴
+
+> daisyUI 거의 비활성화 — `loading loading-spinner`, `alert alert-*`, `text-base-content` 등 daisyUI 클래스 **사용 불가**.
 
 ```jsx
-// 로딩
-if (isLoading) return <div className="loading loading-spinner loading-lg" />
+import Spinner from '@/shared/components/Spinner'
+
+// 로딩 — 공유 Spinner 컴포넌트 사용
+if (isLoading) return <Spinner />
 
 // 에러
 if (error) return (
-  <div className="alert alert-error">
-    <span>{error.data?.message || '오류가 발생했습니다'}</span>
+  <div className="text-center py-20 text-[#999]">
+    <p className="text-[15px]">오류가 발생했습니다</p>
   </div>
 )
 
 // 빈 상태
 if (!data?.length) return (
-  <div className="text-center py-20 text-base-content/50">
-    <p>결과가 없습니다</p>
+  <div className="text-center py-20 text-[#999]">
+    <p className="text-[40px] mb-4">🔍</p>
+    <p className="text-[15px]">결과가 없습니다</p>
   </div>
 )
 ```

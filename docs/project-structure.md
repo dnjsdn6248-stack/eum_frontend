@@ -1,6 +1,6 @@
 # 프로젝트 구조
 
-기준일: 2026-04-15
+기준일: 2026-04-17
 
 ---
 
@@ -10,10 +10,10 @@
 src/
 ├── api/                          RTK Query API 레이어
 │   ├── apiSlice.js               단일 createApi + withReauth (인프라 전용, 수정 금지)
-│   ├── baseQuery.js              fetchBaseQuery + withReauth (401 → logout)
 │   ├── authApi.js                인증 엔드포인트 (injectEndpoints)
-│   ├── productApi.js             상품·메인 엔드포인트
-│   ├── categoryApi.js            카테고리 엔드포인트
+│   ├── productApi.js             상품·메인 엔드포인트 (Product Server)
+│   ├── searchApi.js              검색·베스트셀러·배너 엔드포인트 (Search Server)
+│   ├── categoryApi.js            카테고리 엔드포인트 (Search Server)
 │   ├── cartApi.js                장바구니 엔드포인트
 │   ├── orderApi.js               주문 엔드포인트
 │   ├── reviewApi.js              리뷰 엔드포인트
@@ -32,7 +32,7 @@ src/
 │   │   ├── useSignupForm.js
 │   │   └── useEmailVerify.js
 │   ├── cart/
-│   │   └── cartSlice.js          checkedItemIds UI 상태만
+│   │   └── cartSlice.js          checkedItemIds — 서버 isSelected와 동기화 (initCheckedItems)
 │   ├── category/
 │   │   └── categorySlice.js      selectedCategoryId UI 상태만
 │   ├── order/
@@ -106,9 +106,6 @@ src/
 │   ├── useAppSelector.js
 │   └── useToast.js
 │
-├── mock/
-│   └── index.js                  대용량 Mock 샘플 데이터 (현재 비활성 — 직접 import 금지)
-│
 ├── router.jsx                    BrowserRouter + Route 트리
 ├── main.jsx                      React root (Provider + Router)
 └── index.css                     Tailwind CSS v4 설정 + 커스텀 클래스
@@ -170,7 +167,7 @@ store = {
     selectedCategoryId: number | null,
   },
   cart: {
-    checkedItemIds: number[],       // 체크박스 UI 상태
+    checkedItemIds: number[],       // 서버 isSelected 기준으로 동기화 — 직접 조작 금지
   },
   order: {
     lastCreatedOrder: Order | null, // 주문완료 직후 임시 보관
@@ -204,16 +201,20 @@ store = {
 
 ### 도메인별 API 파일 (`src/api/`)
 
-| 파일 | 담당 도메인 | 주요 태그 |
-|---|---|---|
-| `authApi.js` | 인증·소셜·이메일 인증·약관 | `Auth` |
-| `productApi.js` | 상품·메인 섹션 데이터 | `Product` |
-| `categoryApi.js` | 카테고리 목록 | `Category` |
-| `cartApi.js` | 장바구니 CRUD | `Cart` |
-| `orderApi.js` | 주문 생성·조회·취소·환불 | `Order` |
-| `reviewApi.js` | 리뷰 CRUD·도움돼요·홈 하이라이트 | `Review` |
-| `userApi.js` | 프로필·비밀번호·배송지 CRUD | `User`, `Address` |
-| `wishlistApi.js` | 위시리스트 CRUD | `Wishlist` |
+| 파일 | 담당 도메인 | 백엔드 서버 | 주요 태그 |
+|---|---|---|---|
+| `authApi.js` | 인증·소셜·이메일 인증·약관·getMe | auth-server / user-server | `Auth` |
+| `productApi.js` | 상품 상세·목록·메인 섹션 데이터 | product-server | `Product` |
+| `searchApi.js` | 검색·베스트셀러·배너·해시태그탭 | search-server | `Search` |
+| `categoryApi.js` | 카테고리 목록 (GNB·필터용) | search-server | `Category` |
+| `cartApi.js` | 장바구니 CRUD | cart-server | `Cart` |
+| `orderApi.js` | 주문 생성·조회·취소·환불 | order-server | `Order` |
+| `reviewApi.js` | 리뷰 CRUD·도움돼요·홈 하이라이트 | review-server | `Review` |
+| `userApi.js` | 프로필·비밀번호·배송지 CRUD | user-server | `User`, `Address` |
+| `wishlistApi.js` | 위시리스트 CRUD | wishlist-server | `Wishlist` |
+
+> `tagTypes` 전체 목록 (`src/api/apiSlice.js`):  
+> `['Auth', 'Product', 'Category', 'Cart', 'Order', 'Review', 'User', 'Address', 'Wishlist', 'Search']`
 
 ---
 
@@ -240,5 +241,6 @@ GET /users/me ─────────►  로그인 사용자 정보 반환
 |---|---|
 | 파일명 오타 | `UserAddressPage .jsx` (공백 포함) — import 시 주의 |
 | review.md · reviews.md | 두 파일이 중복 존재 (review.md가 최신) |
-| `src/mock/index.js` | 현재 어디에서도 import되지 않는 것으로 파악됨 — 삭제 전 최종 확인 필요 |
+| Mock 시스템 | 완전 제거됨 (2026-04). 실서버 직접 연동. `src/mock/` 폴더는 잔류할 수 있으나 어디에서도 import 안 됨 |
 | MyPageLayout | CLAUDE.md 목표 아키텍처에는 존재하나 현재 미구현 (각 마이페이지는 독립 페이지) |
+| baseQuery.js | 별도 파일 없음 — withReauth 로직이 `src/api/apiSlice.js` 내부에 포함됨 |
