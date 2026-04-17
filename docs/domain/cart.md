@@ -51,8 +51,8 @@ api.queries.getCart → {
 }
 ```
 
-> 표시용 이름·이미지·옵션명은 `useGetProductSummaryQuery(productId)`(`GET /product/frontend/{productId}`)로 별도 조회.  
-> 가격 정보(`price`)는 상품 요약 API에 포함되지 않음 — CartPage에서 금액 미표시.
+> 표시용 이름·이미지·가격·옵션명은 `useGetProductSummaryQuery(productId)`(`GET /product/frontend/{productId}`)로 별도 조회.  
+> `price` 필드 포함 — CartItemRow에서 `price × quantity`로 금액 계산.
 
 ---
 
@@ -74,7 +74,7 @@ const itemKey = (item) => `${item.productId}-${item.optionId ?? 'none'}`
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetCartQuery()` | GET | `/cart/` | 전체 조회 — `{userId, items: [{productId, optionId, quantity}]}` |
+| `useGetCartQuery()` | GET | `/cart` | 전체 조회 — `{userId, items: [{productId, optionId, quantity}]}` |
 
 ### Mutations
 
