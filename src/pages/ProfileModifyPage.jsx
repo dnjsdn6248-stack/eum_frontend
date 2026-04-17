@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle, X } from 'lucide-react'
-import { useGetMeQuery, useGetSocialAccountsQuery, useLazyStartSocialLinkQuery, useUnlinkSocialMutation, useLogoutMutation } from '@/api/authApi'
+import { AlertCircle, CheckCircle } from 'lucide-react'
+import { useGetMeQuery, useLogoutMutation } from '@/api/authApi'
 import { useUpdateProfileMutation, useDeleteAccountMutation } from '@/api/userApi'
 import Spinner from '@/shared/components/Spinner'
-import { PROVIDER_LABELS } from '@/shared/utils/oauth2'
 
 const SwiffyInput = ({ label, readOnly, ...props }) => (
   <div className="flex items-center border-b border-[#ececec] py-6 last:border-none">
@@ -20,94 +19,6 @@ const SwiffyInput = ({ label, readOnly, ...props }) => (
     />
   </div>
 )
-
-const ALL_PROVIDERS = ['google', 'kakao', 'naver']
-
-function SocialAccountsSection() {
-  const { data: socialAccounts = [], isLoading } = useGetSocialAccountsQuery()
-  const [triggerLink] = useLazyStartSocialLinkQuery()
-  const [unlinkSocial] = useUnlinkSocialMutation()
-  const [unlinkError, setUnlinkError] = useState('')
-
-  const connectedSet = new Set(socialAccounts.map(a => a.provider))
-
-  const handleLink = async (provider) => {
-    try {
-      const { data } = await triggerLink(provider)
-      if (data?.authUrl) {
-        window.location.href = data.authUrl
-      }
-    } catch {}
-  }
-
-  const handleUnlink = async (provider) => {
-    setUnlinkError('')
-    try {
-      await unlinkSocial(provider).unwrap()
-    } catch (err) {
-      setUnlinkError(err?.data?.message || '연동 해제에 실패했습니다.')
-    }
-  }
-
-  if (isLoading) return (
-    <div className="flex justify-center py-6">
-      <div className="w-5 h-5 border-2 border-[#3ea76e] border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  return (
-    <section className="bg-white rounded-[40px] border border-[#eee] px-10 pb-10 shadow-[0_10px_40px_rgba(0,0,0,0.03)] mb-8">
-      <div className="py-12">
-        <h3 className="text-[18px] font-black text-[#111] tracking-tight text-center">소셜 계정 연동</h3>
-      </div>
-
-      {unlinkError && (
-        <div className="flex items-center gap-2 px-5 py-3 bg-red-50 border border-red-100 rounded-2xl mb-5">
-          <AlertCircle size={15} className="text-red-400 shrink-0" />
-          <p className="text-[13px] font-bold text-red-500">{unlinkError}</p>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {ALL_PROVIDERS.map((provider) => {
-          const connected = connectedSet.has(provider)
-          const account   = socialAccounts.find(a => a.provider === provider)
-          const label     = PROVIDER_LABELS[provider] ?? provider
-
-          return (
-            <div key={provider} className="flex items-center justify-between px-6 py-4 bg-[#f7f7f7] border border-[#efefef] rounded-2xl">
-              <div>
-                <p className="text-[14px] font-black text-[#333]">{label}</p>
-                {connected && account?.connectedAt && (
-                  <p className="text-[12px] font-medium text-[#aaa] mt-0.5">
-                    {new Date(account.connectedAt).toLocaleDateString('ko-KR')} 연동됨
-                  </p>
-                )}
-              </div>
-              {connected ? (
-                <button
-                  type="button"
-                  onClick={() => handleUnlink(provider)}
-                  className="h-9 px-4 bg-white border border-[#eee] text-[#aaa] rounded-full text-[12px] font-bold hover:border-red-300 hover:text-red-400 transition-all cursor-pointer"
-                >
-                  연동 해제
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleLink(provider)}
-                  className="h-9 px-4 bg-[#3ea76e] text-white rounded-full text-[12px] font-bold border-none hover:bg-[#318a57] transition-all cursor-pointer"
-                >
-                  연동하기
-                </button>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
 
 export default function ProfileModifyPage() {
   const navigate = useNavigate()
@@ -298,9 +209,6 @@ export default function ProfileModifyPage() {
             ))}
           </div>
         </section>
-
-        {/* 소셜 계정 연동 */}
-        <SocialAccountsSection />
 
         {/* 에러 / 성공 메시지 */}
         {error && (
