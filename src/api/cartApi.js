@@ -8,14 +8,17 @@ export const cartApi = apiSlice.injectEndpoints({
     // ACTIVE Cart가 없으면 빈 목록 반환 (새로 생성 안 함)
     getCart: builder.query({
       query: () => ({ url: '/cart/all' }),
-      transformResponse: (res) => ({
-        userId: res.userId,
-        items:  (res.items ?? []).map((item) => ({
-          productId: item.productId,
-          optionId:  item.optionId ?? null,
-          quantity:  item.quantity ?? 1,
-        })),
-      }),
+      transformResponse: (res) => {
+        const d = res.data ?? res
+        return {
+          userId: d.userId,
+          items:  (d.items ?? []).map((item) => ({
+            productId: item.productId,
+            optionId:  item.optionId ?? null,
+            quantity:  item.quantity ?? 1,
+          })),
+        }
+      },
       providesTags: (result) =>
         result
           ? [
