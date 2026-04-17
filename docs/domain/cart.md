@@ -74,7 +74,7 @@ const itemKey = (item) => `${item.productId}-${item.optionId ?? 'none'}`
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetCartQuery()` | GET | `/cart` | 전체 조회 — `{userId, items: [{productId, optionId, quantity}]}` |
+| `useGetCartQuery()` | GET | `/cart/all` | 전체 조회 — `{userId, items: [{productId, optionId, quantity}]}` |
 
 ### Mutations
 

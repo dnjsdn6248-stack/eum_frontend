@@ -7,7 +7,7 @@ export const cartApi = apiSlice.injectEndpoints({
     // 응답: { userId, items: [{ productId, optionId, quantity }] }
     // ACTIVE Cart가 없으면 빈 목록 반환 (새로 생성 안 함)
     getCart: builder.query({
-      query: () => ({ url: '/cart' }),
+      query: () => ({ url: '/cart/all' }),
       transformResponse: (res) => ({
         userId: res.userId,
         items:  (res.items ?? []).map((item) => ({
