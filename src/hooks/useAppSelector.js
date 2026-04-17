@@ -7,4 +7,5 @@ import { useSelector } from 'react-redux'
  * @returns {T}
  */
 const useAppSelector = (selector) => useSelector(selector)
+export { useAppSelector }
 export default useAppSelector

@@ -5,4 +5,5 @@ import { useDispatch } from 'react-redux'
  * @returns {import('@reduxjs/toolkit').AppDispatch}
  */
 const useAppDispatch = () => useDispatch()
+export { useAppDispatch }
 export default useAppDispatch
