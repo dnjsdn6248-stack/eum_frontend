@@ -1,4 +1,4 @@
-const GATEWAY = import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:8072'
+const GATEWAY = import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:8072/api/v1'
 
 const PROVIDER_LABELS = {
   google: 'Google',
