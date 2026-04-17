@@ -70,17 +70,14 @@ category
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetProductsQuery(params)` | GET | `/products` | 목록 — `filters + pagination` 파라미터. 응답: `{ content, totalPages, totalElements }` |
-| `useGetProductByIdQuery(id)` | GET | `/products/:id` | 상세 |
-| `useGetBestProductsQuery(params?)` | GET | `/products/best` | 베스트 상품 목록 |
-| `useGetNewProductsQuery(limit?)` | GET | `/products/new` | 신상품 목록 (기본 8개) |
-| `useSearchProductsQuery(params)` | GET | `/products/search` | 검색 |
-| `useLazySearchProductsQuery` | GET | `/products/search` | 검색창 입력 지연 트리거용 |
+| `useGetProductByIdQuery(id)` | GET | `/product/:id` | 상품 상세 — Product Server |
+| `useGetProductSummaryQuery(id)` | GET | `/product/frontend/:id` | 상품 요약 (이미지·이름·옵션) — 장바구니·주문 경량 조회용 |
+
+> 상품 목록·검색·베스트셀러·신상품 등은 **Search Server** (`searchApi.js`)에서 조회.
 
 ### 랜딩페이지 전용 Queries
 
-> **주의:** 랜딩페이지 섹션 데이터는 현재 **Search Server** (`searchApi.js`)에서 조회.  
-> `productApi.js`의 `useGetMainBestSellersQuery` / `useGetTagProductsQuery`는 정의되어 있으나 랜딩페이지에서 미사용.
+> 랜딩페이지 섹션 데이터는 모두 **Search Server** (`searchApi.js`)에서 조회.
 
 | 섹션 | 컴포넌트 | 훅 (searchApi.js) | 엔드포인트 |
 |---|---|---|---|
@@ -131,23 +128,6 @@ category
 
 > **Base URL:** `https://localhost:8072/api/v1/product`
 
-### 공통 응답 구조
-
-```json
-{ "message": "처리 결과 메시지", "data": {} }
-```
-
-### 공통 에러 응답
-
-```json
-{ "message": "에러 메시지", "code": 401 }
-```
-
-| Code | 설명 |
-|---|---|
-| `400` | 입력값 검증 실패 또는 필수 파라미터 누락 |
-| `401` | 비즈니스 로직 에러 |
-| `500` | 서버 내부 오류 |
 
 ---
 
@@ -160,9 +140,7 @@ category
 **성공 응답 (200 OK)**
 
 ```json
-{
-  "message": "상품 상세 조회 성공",
-  "data": {
+{  
     "productId": 1,
     "productName": "어글어글 스테이크",
     "categoryId": 1,
@@ -170,7 +148,7 @@ category
     "brandName": "스위피테린",
     "brandId": 10,
     "content": "",
-    "detaiimagelUrl": [
+    "detailImagelUrl": [
       "https://bucket.s3.ap-northeast-2.amazonaws.com/..."
     ],
     "price": 15000,
@@ -191,8 +169,7 @@ category
         "stockQuantity": 30,
         "stockStatus": "IN_STOCK"
       }
-    ]
-  }
+    ]  
 }
 ```
 
@@ -204,7 +181,7 @@ category
 | `productName` | `name` | |
 | `brandName` | `brand` | |
 | `content` | `desc` | 타이틀 아래 설명 |
-| `detaiimagelUrl` | `detailImgs` | **배열** (중첩 배열 포함, `.flat()` 처리). 오타 포함 서버 원본 그대로 |
+| `detailImagelUrl` | `detailImgs` | **배열** (중첩 배열 포함, `.flat()` 처리). 오타 포함 서버 원본 그대로 |
 | `price` | `price` | |
 | `imageUrls` | `images` | 배열 |
 | `imageUrls[0]` | `img` | 대표 이미지 |
@@ -214,7 +191,7 @@ category
 | `options[].extraPrice` | `options[].extra` | |
 | `options[].stockStatus` | `options[].stockStatus` | 옵션별 재고 상태 |
 
-> `detaiimagelUrl` 오타는 서버 원본 필드명. 수정 시 백엔드와 협의 필요.
+> `detailImagelUrl` 오타는 서버 원본 필드명. 수정 시 백엔드와 협의 필요.
 
 ---
 
@@ -228,7 +205,7 @@ category
   stockStatus,      // 'IN_STOCK' | 'OUT_OF_STOCK'
   stockQuantity,    // 전체 재고 수량
   options: [{ label, extra, stockStatus, stockQuantity }],
-  detailImgs,       // 상세 이미지 (detaiimagelUrl)
+  detailImgs,       // 상세 이미지 (detailImagelUrl)
   isSubscribable: boolean,
   subscriptionDiscount: number,
   bundleOptions: [],
@@ -267,3 +244,41 @@ const { data } = useGetProductsQuery({ ...filters, page, size })
 ```
 
 `setFilters` 호출 시 `pagination.page`가 자동으로 1로 리셋된다.
+
+---
+
+### `GET /api/v1/product/frontend/{productId}` — 상품 요약 조회
+
+장바구니·주문 등 경량 상품 정보가 필요한 컨텍스트에서 사용.
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---|---|:---:|---|
+| `productId` | Long | ✅ | 조회할 상품 ID |
+
+**성공 응답 (200 OK)**
+
+```json
+{
+  "imageUrl": "https://bucket.s3.ap-northeast-2.amazonaws.com/product/images/uuid.png",
+  "productId": 1,
+  "price": 13000,
+  "productName": "어글어글 동물복지 연어마들렌",
+  "options": [
+    { "optionId": 1, "optionName": "단품" },
+    { "optionId": 2, "optionName": "3개 세트" }
+  ]
+}
+```
+
+#### 서버 → 프론트 필드 매핑
+
+| 서버 필드 | 프론트 필드 |
+|---|---|
+| `productId` | `id` |
+| `productName` | `name` |
+| `imageUrl` | `img` |
+| `price` | `price` |
+| `options[].optionId` | `options[].id` |
+| `options[].optionName` | `options[].label` |
+
+> 훅: `useGetProductSummaryQuery(id)` — `src/api/productApi.js`

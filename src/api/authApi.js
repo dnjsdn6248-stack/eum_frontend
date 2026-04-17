@@ -57,6 +57,11 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    /** POST /auth/refresh — 토큰 갱신 (Gateway 자동 갱신 보조용) */
+    refresh: builder.mutation({
+      query: () => ({ url: "/auth/refresh", method: "POST" }),
+    }),
+
     /** POST /auth/logout — 서버에서 쿠키 삭제 */
     logout: builder.mutation({
       query: () => ({ url: "/auth/logout", method: "POST" }),
@@ -89,35 +94,6 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // ─── 소셜 계정 연동 ─────────────────────────────────────────────────────────
-
-    /** GET /auth/social/accounts — 연동된 소셜 계정 목록 조회 */
-    getSocialAccounts: builder.query({
-      query: () => ({ url: "/auth/social/accounts" }),
-      providesTags: ["Auth"],
-    }),
-
-    /**
-     * GET /auth/social/link/start?provider= — 소셜 계정 연동 시작
-     * 응답의 authUrl로 브라우저를 이동시켜야 한다
-     */
-    startSocialLink: builder.query({
-      query: (provider) => ({
-        url: "/auth/social/link/start",
-        params: { provider },
-      }),
-    }),
-
-    /** DELETE /auth/social/unlink?provider= — 소셜 계정 연동 해제 */
-    unlinkSocial: builder.mutation({
-      query: (provider) => ({
-        url: "/auth/social/unlink",
-        method: "DELETE",
-        params: { provider },
-      }),
-      invalidatesTags: ["Auth"],
-    }),
-
     // ─── 인증 Queries ───────────────────────────────────────────────────────────
 
     /**
@@ -132,9 +108,19 @@ export const authApi = apiSlice.injectEndpoints({
       providesTags: ["Auth"],
     }),
 
-    /** GET /auth/terms — 약관 목록 조회 (인증 불필요) */
+    /**
+     * GET /auth/terms — 약관 목록 조회 (인증 불필요)
+     * 서버 필드명 `required` 로 통일 (구버전 `isRequired` fallback 포함)
+     */
     getTerms: builder.query({
       query: () => ({ url: "/auth/terms" }),
+      transformResponse: (res) => ({
+        ...res,
+        terms: (res.terms ?? []).map((t) => ({
+          ...t,
+          required: t.required ?? t.isRequired ?? false,
+        })),
+      }),
     }),
   }),
 });
@@ -143,12 +129,10 @@ export const {
   useGetCsrfQuery,
   useLoginMutation,
   useSignupMutation,
+  useRefreshMutation,
   useLogoutMutation,
   useSendEmailVerifyMutation,
   useVerifyEmailMutation,
-  useGetSocialAccountsQuery,
-  useLazyStartSocialLinkQuery,
-  useUnlinkSocialMutation,
   useGetMeQuery,
   useLazyGetMeQuery,
   useGetTermsQuery,

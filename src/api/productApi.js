@@ -28,7 +28,7 @@ export const productApi = apiSlice.injectEndpoints({
           // detailImagelUrls — 상세 이미지 URL 배열
           // 서버가 string / flat array / 중첩 array / JSON 문자열 중 어느 형태로 줘도 처리
           detailImgs: (() => {
-            const raw = p.detailImageUrls
+            const raw = p.detailImagelUrl ?? p.detailImageUrls  // 서버 오타 필드명 우선, 폴백 유지
             if (!raw) return p.detailImages ?? p.detailImgs ?? []
             if (typeof raw === 'string') {
               try {
@@ -68,9 +68,26 @@ export const productApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: 'Product', id }],
     }),
 
+    /** 상품 요약 — Product Server: GET /api/v1/product/frontend/{productId} */
+    getProductSummary: builder.query({
+      query: (id) => ({ url: `/product/frontend/${id}` }),
+      transformResponse: (res) => ({
+        id:      res.productId,
+        name:    res.productName,
+        img:     res.imageUrl ?? null,
+        price:   res.price    ?? 0,
+        options: (res.options ?? []).map((opt) => ({
+          id:    opt.optionId,
+          label: opt.optionName,
+        })),
+      }),
+      providesTags: (result, error, id) => [{ type: 'Product', id: `summary-${id}` }],
+    }),
+
   }),
 })
 
 export const {
   useGetProductByIdQuery,
+  useGetProductSummaryQuery,
 } = productApi

@@ -18,7 +18,7 @@ GET /api/v1/csrf ──────►   XSRF-TOKEN 쿠키 발급 (JS readable)
 POST /auth/login ──────►   access_token  (HttpOnly 쿠키)
                             refresh_token (HttpOnly 쿠키)
 
-GET /users/me ─────────►   { data: { userId, name, email, phoneNumber, smsAllowed, emailAllowed, updatedAt } }
+GET /users/me ─────────►   { data: { userId(string), name, email, phoneNumber, smsAllowed, emailAllowed, updatedAt } }
 
 401 수신 → Gateway 자동 갱신 시도 → 실패 → dispatch(logout())
 ```
@@ -61,8 +61,6 @@ const { user, isInitialized, isLoggedIn, isAdmin } = useAuth()
 | `useGetCsrfQuery()` | GET | `/api/v1/csrf` | XSRF-TOKEN 쿠키 발급 — 앱 최초 로드 시 1회 |
 | `useGetMeQuery()` | GET | `/users/me` | 로그인 사용자 정보 — `user` 상태의 단일 출처 |
 | `useGetTermsQuery()` | GET | `/auth/terms` | 약관 목록 (인증 불필요) |
-| `useGetSocialAccountsQuery()` | GET | `/auth/social/accounts` | 연동된 소셜 계정 목록 |
-| `useLazyStartSocialLinkQuery` | GET | `/auth/social/link/start?provider=` | 소셜 계정 연동 시작 — 응답의 authUrl로 리다이렉트 |
 
 ### Mutations
 
@@ -70,10 +68,10 @@ const { user, isInitialized, isLoggedIn, isAdmin } = useAuth()
 |---|---|---|---|
 | `useLoginMutation` | POST | `/auth/login` | 로그인 → getMe forceRefetch |
 | `useSignupMutation` | POST | `/auth/signup` | 회원가입 (약관 동의 포함) |
+| `useRefreshMutation` | POST | `/auth/refresh` | 토큰 갱신 (Gateway 자동 갱신 보조) |
 | `useLogoutMutation` | POST | `/auth/logout` | 로그아웃 → dispatch(logout()) |
 | `useSendEmailVerifyMutation` | POST | `/auth/email/send?email=` | 이메일 인증 코드 발송 |
 | `useVerifyEmailMutation` | POST | `/auth/email/verify?email=&code=` | 이메일 인증 코드 확인 |
-| `useUnlinkSocialMutation` | DELETE | `/auth/social/unlink?provider=` | 소셜 계정 연동 해제 |
 
 ---
 
@@ -141,12 +139,28 @@ if (action.type === logout.type) {
 ```json
 {
   "terms": [
-    { "id": "service_terms",   "title": "서비스 이용약관",       "content": "...", "isRequired": true,  "version": "1.0" },
-    { "id": "privacy_policy",  "title": "개인정보보호정책",       "content": "...", "isRequired": true,  "version": "1.0" },
-    { "id": "marketing_sms",   "title": "SMS 마케팅 정보 수신",   "content": "...", "isRequired": false, "version": "1.0" },
-    { "id": "marketing_email", "title": "이메일 마케팅 정보 수신", "content": "...", "isRequired": false, "version": "1.0" }
+    { "id": "service_terms",   "title": "서비스 이용약관",       "content": "...", "required": true,  "version": "1.0", "lastUpdated": "2024-01-01" },
+    { "id": "privacy_policy",  "title": "개인정보보호정책",       "content": "...", "required": true,  "version": "1.0", "lastUpdated": "2024-01-01" },
+    { "id": "marketing_sms",   "title": "SMS 마케팅 정보 수신",   "content": "...", "required": false, "version": "1.0", "lastUpdated": "2024-01-01" },
+    { "id": "marketing_email", "title": "이메일 마케팅 정보 수신", "content": "...", "required": false, "version": "1.0", "lastUpdated": "2024-01-01" }
   ]
 }
+```
+
+> 필드명: `required` (구버전 `isRequired` → 변경됨). `transformResponse`에서 `required ?? isRequired`로 normalize.
+
+### POST /auth/login / POST /auth/signup 응답
+
+```json
+{ "accessToken": "eyJ..." }
+```
+
+토큰은 HttpOnly 쿠키로도 동시 발급. 프론트는 응답 바디의 `accessToken`을 저장하지 않는다 (No Token Storage 원칙).
+
+### POST /auth/refresh
+
+**경로:** `POST /auth/refresh`  
+응답: 새 accessToken HttpOnly 쿠키 갱신 (응답 바디 없음).
 ```
 
 ### POST /auth/signup

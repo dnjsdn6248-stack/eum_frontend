@@ -44,17 +44,19 @@ RTK Query 엔드포인트는 `src/api/searchApi.js`(`injectEndpoints`)에 정의
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useSearchProductsQuery` | GET | `/search/products` | 상품 검색 (필터·페이지) |
+| `useSearchProductsQuery` / `useLazySearchProductsQuery` | GET | `/search/products` | 상품 검색 (필터·페이지) |
 | `useGetSubscriptionProductsQuery` | GET | `/search/products/subscription` | 정기배송 상품 목록 |
 | `useGetBestsellerProductsQuery` | GET | `/search/products/bestseller` | 베스트셀러 (랭킹) |
 | `useGetHomeBestsellerQuery` | GET | `/search/products/home-bestseller` | 홈 베스트셀러 섹션 (기본 3개) |
+| `useGetTastePicksQuery(brandName?)` | GET | `/search/products/taste-picks` | 우리 아이 취향 저격 — 브랜드별 최신 상품 + 탭 목록 |
 | `useGetSimilarProductsQuery` | GET | `/search/products/{productId}/similar` | 유사 상품 추천 |
-| `useGetAutocompleteQuery` | GET | `/search/products/autocomplete` | 검색어 자동완성 |
+| `useGetAutocompleteQuery` / `useLazyGetAutocompleteQuery` | GET | `/search/products/autocomplete` | 검색어 자동완성 |
 | `useGetTrendingKeywordsQuery` | GET | `/search/products/trending` | 인기 검색어 |
 | `useSearchReviewsQuery` | GET | `/search/reviews` | 리뷰 검색 |
 | `useSearchNoticesQuery` | GET | `/search/notices` | 공지 검색 |
 | `useGetMainBannersQuery` | GET | `/search/products/main-banners` | 메인 히어로 배너 (3개) |
-| `useGetCategoriesQuery` | GET | `/search/categories` | 카테고리·서브카테고리 목록 |
+| `useGetBrandStoryQuery` | GET | `/search/brand-story` | 브랜드 스토리 카드·페이지 이미지 리소스 |
+| `useGetSearchCategoriesQuery` | GET | `/search/categories` | 카테고리·서브카테고리 목록 (GNB·필터용) |
 
 ---
 
@@ -128,7 +130,65 @@ RTK Query 엔드포인트는 `src/api/searchApi.js`(`injectEndpoints`)에 정의
 
 컴포넌트에서 사용할 정규화 형태:
 ```js
-{ id: item.productId, img: item.imageUrl, href: item.productUrl ?? `/product/detail/${item.productId}`, displayOrder: item.displayOrder }
+{ id: item.productId, img: item.imageUrl, href: `/product/detail/${item.productId}`, displayOrder: item.displayOrder }
+```
+
+---
+
+## 우리 아이 취향 저격 (`/v1/search/products/taste-picks`)
+
+홈 "우리 아이 취향 저격 제품" 섹션. 브랜드별 최신 상품 + 탭 목록을 함께 반환.
+
+### Query 파라미터
+| 파라미터 | 설명 |
+|---|---|
+| `brandName` | 브랜드명 (생략 시 서버 기본값 `오독오독`) |
+
+허용 브랜드: `오독오독` | `어글어글` | `스위피` (또는 `#오독오독` 형식도 허용)
+
+### 응답 구조 (transformResponse 후)
+
+```js
+{
+  tags: [                         // 탭 버튼 목록 (extra.tags)
+    { brandName, tagName, selected }
+  ],
+  selectedBrandName: string,      // 현재 선택된 브랜드명 (extra.selectedBrandName)
+  products: [                     // 해당 브랜드 상품 목록 (data[])
+    { id, name, img, price, brandName, productUrl }
+  ]
+}
+```
+
+### 사용 패턴 (`ProductTabs.jsx`)
+
+```js
+const [activeBrand, setActiveBrand] = useState(null)  // null = 서버 기본값
+const { data } = useGetTastePicksQuery(activeBrand)
+
+// 탭 클릭 시
+setActiveBrand(tag.brandName)  // 브랜드명 문자열로 변경 → 자동 재조회
+```
+
+---
+
+## 브랜드 스토리 (`/v1/search/brand-story`)
+
+브랜드 스토리 카드·페이지 이미지·버튼 리소스 (Vault/Config 기반).
+
+### 응답 구조 (transformResponse: `res.data`)
+
+```js
+{
+  mainCard: {
+    imageUrl: string,
+    buttonText: string,
+    buttonUrl: string,
+  },
+  brandPage: [
+    { imageUrl, buttonText, buttonUrl, displayOrder, isActive }
+  ]
+}
 ```
 
 ---

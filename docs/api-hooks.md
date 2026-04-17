@@ -10,6 +10,9 @@
 
 ## 공통 사항
 
+> **Base URL:** `https://localhost:8072/api/v1/`
+
+
 ### Request Headers (전체 공통)
 
 | 헤더 | 값 | 설명 |
@@ -25,17 +28,8 @@
 | `Content-Type` | `application/json` | 일반 응답 |
 | `Set-Cookie` | `access_token=...; HttpOnly` | 로그인·토큰 갱신 시만 서버가 세팅 |
 
-### 공통 응답 래퍼
 
-```json
-{
-  "message": "성공 메시지",
-  "status": 200,
-  "data": {}
-}
-```
 
-> 예외: 카테고리 API는 래퍼 없이 본문 직접 반환.
 
 ---
 
@@ -72,12 +66,12 @@
 - Parameters: 없음
 - Body: 없음
 
-**Response Body**
+**Response Body (서버 원본)**
 ```json
 {
   "status": 200,
   "data": {
-    "userId": 1,
+    "userId": "username123",
     "name": "홍길동",
     "email": "user@example.com",
     "phoneNumber": "010-1234-5678",
@@ -85,6 +79,19 @@
     "emailAllowed": false,
     "updatedAt": "2026-04-16T00:00:00"
   }
+}
+```
+
+**컴포넌트 수신값** (`transformResponse: res.data` 후)
+```json
+{
+  "userId": "username123",
+  "name": "홍길동",
+  "email": "user@example.com",
+  "phoneNumber": "010-1234-5678",
+  "smsAllowed": true,
+  "emailAllowed": false,
+  "updatedAt": "2026-04-16T00:00:00"
 }
 ```
 
@@ -109,62 +116,15 @@
 ```json
 {
   "terms": [
-    { "id": "service_terms",   "title": "서비스 이용약관",        "content": "...", "isRequired": true,  "version": "1.0" },
-    { "id": "privacy_policy",  "title": "개인정보보호정책",        "content": "...", "isRequired": true,  "version": "1.0" },
-    { "id": "marketing_sms",   "title": "SMS 마케팅 정보 수신",    "content": "...", "isRequired": false, "version": "1.0" },
-    { "id": "marketing_email", "title": "이메일 마케팅 정보 수신", "content": "...", "isRequired": false, "version": "1.0" }
+    { "id": "service_terms",   "title": "서비스 이용약관",        "content": "...", "required": true,  "version": "1.0", "lastUpdated": "2024-01-01" },
+    { "id": "privacy_policy",  "title": "개인정보보호정책",        "content": "...", "required": true,  "version": "1.0", "lastUpdated": "2024-01-01" },
+    { "id": "marketing_sms",   "title": "SMS 마케팅 정보 수신",    "content": "...", "required": false, "version": "1.0", "lastUpdated": "2024-01-01" },
+    { "id": "marketing_email", "title": "이메일 마케팅 정보 수신", "content": "...", "required": false, "version": "1.0", "lastUpdated": "2024-01-01" }
   ]
 }
 ```
 
----
-
-### `useGetSocialAccountsQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/auth/social/accounts` |
-
-**Request**
-- Parameters: 없음
-- Body: 없음
-
-**Response Body**
-```json
-{
-  "status": 200,
-  "data": [
-    { "provider": "GOOGLE", "linkedAt": "2026-04-01T00:00:00" }
-  ]
-}
-```
-
-> Cache Tag: `['Auth']`
-
----
-
-### `useLazyStartSocialLinkQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/auth/social/link/start` |
-
-**Request Query Parameters**
-| 파라미터 | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| `provider` | string | Y | `GOOGLE` \| `KAKAO` \| `NAVER` |
-
-**Response Body**
-```json
-{
-  "status": 200,
-  "data": { "authUrl": "https://accounts.google.com/o/oauth2/auth?..." }
-}
-```
-
-> 응답의 `authUrl`로 브라우저 리다이렉트 필요.
+> `transformResponse`: 각 약관에 `required: t.required ?? t.isRequired ?? false` normalize 적용.
 
 ---
 
@@ -183,11 +143,13 @@
 }
 ```
 
-**Response**
-- Status: `200`
-- Body: 없음 (토큰은 Set-Cookie로만 전달)
-- Headers: `Set-Cookie: access_token=...; HttpOnly`, `Set-Cookie: refresh_token=...; HttpOnly`
+**Response Body**
+```json
+{ "accessToken": "eyJ..." }
+```
+Headers: `Set-Cookie: access_token=...; HttpOnly`, `Set-Cookie: refresh_token=...; HttpOnly`
 
+> 응답 바디의 `accessToken`은 저장하지 않는다 (No Token Storage 원칙). 토큰은 HttpOnly 쿠키로만 사용.  
 > 성공 후 `getMe` forceRefetch 자동 실행.
 
 ---
@@ -220,8 +182,26 @@
 
 **Response Body**
 ```json
-{ "status": 201, "message": "회원가입 성공" }
+{ "accessToken": "eyJ..." }
 ```
+Headers: `Set-Cookie: access_token=...; HttpOnly`, `Set-Cookie: refresh_token=...; HttpOnly`
+
+> 응답 바디의 `accessToken`은 저장하지 않는다 (No Token Storage 원칙).
+
+---
+
+### `useRefreshMutation`
+
+| 항목 | 값 |
+|---|---|
+| **메서드** | `POST` |
+| **URL** | `/auth/refresh` |
+
+**Request Body**: 없음 (쿠키의 refresh_token 사용)
+
+**Response**
+- Status: `200`
+- 새 access_token HttpOnly 쿠키 갱신
 
 ---
 
@@ -286,29 +266,6 @@
 
 ---
 
-### `useUnlinkSocialMutation`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `DELETE` |
-| **URL** | `/auth/social/unlink` |
-
-**Request Query Parameters**
-| 파라미터 | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| `provider` | string | Y | `GOOGLE` \| `KAKAO` \| `NAVER` |
-
-**Request Body**: 없음
-
-**Response Body**
-```json
-{ "status": 200, "message": "연동 해제 완료" }
-```
-
-> `invalidatesTags: ['Auth']`
-
----
-
 ## Category (`src/api/categoryApi.js`)
 
 > Search Server (`/search/categories`) 경유. GNB·상품 필터에 사용.
@@ -362,52 +319,7 @@
 
 ## Product (`src/api/productApi.js`)
 
----
-
-### `useGetProductsQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/products` |
-
-**Request Query Parameters**
-| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|
-| `categoryId` | number | N | — | 카테고리 필터 |
-| `isSubscribable` | boolean | N | — | 정기배송 가능 필터 |
-| `page` | number | N | `0` | 페이지 번호 |
-| `size` | number | N | `10` | 페이지 크기 |
-| `sort` | string | N | — | 예: `createdDate,desc` |
-
-**Response Body**
-```json
-{
-  "status": 200,
-  "data": {
-    "content": [
-      {
-        "productId": 1,
-        "productName": "사료명",
-        "productUrl": "/product/1",
-        "price": 30000,
-        "discountPrice": 27000,
-        "priceDisplay": "27,000원",
-        "mainImageUrl": "https://...",
-        "tags": ["강아지", "건식"],
-        "isSubscribable": true,
-        "stockQuantity": 100,
-        "stockStatus": "IN_STOCK"
-      }
-    ],
-    "totalPages": 5,
-    "totalElements": 48
-  }
-}
-```
-
-> `transformResponse`: `content[]`를 `normalizeProduct`로 변환.  
-> Cache Tag: `[{ type: 'Product', id }, ..., { type: 'Product', id: 'LIST' }]`
+Product Server(`/api/v1/product`)의 상품 상세·요약 조회. 목록·검색·베스트셀러는 `searchApi.js` 참조.
 
 ---
 
@@ -416,208 +328,95 @@
 | 항목 | 값 |
 |---|---|
 | **메서드** | `GET` |
-| **URL** | `/products/:id` |
+| **URL** | `/product/:id` |
 
 **Request Path Parameters**
 | 파라미터 | 타입 | 필수 | 설명 |
 |---|---|---|---|
-| `id` | number | Y | 상품 ID |
-
-**Response Body**
-```json
-{
-  "status": 200,
-  "data": {
-    "productId": 1,
-    "productName": "사료명",
-    "categoryName": "건식사료",
-    "brandName": "브랜드",
-    "brandId": 10,
-    "content": "상품 설명",
-    "price": 30000,
-    "discountPrice": 27000,
-    "priceDisplay": "27,000원",
-    "rewardRate": 1,
-    "tier1Quantity": 2, "tier1Rate": 5,
-    "tier2Quantity": 4, "tier2Rate": 10,
-    "status": "ACTIVE",
-    "tags": ["강아지"],
-    "keywords": ["사료", "건식"],
-    "salesCount": 320,
-    "isSubscribable": true,
-    "deliveryFee": 0,
-    "deliveryMethod": "PARCEL",
-    "stockQuantity": 100,
-    "stockStatus": "IN_STOCK",
-    "imageUrls": ["https://..."],
-    "options": [{ "optionId": 1, "optionName": "1kg", "extraPrice": 0 }]
-  }
-}
-```
-
-> `transformResponse` 후 컴포넌트 수신 구조: `{ id, name, brand, desc, price, img, images, options, detailImgs, isSubscribable, subscriptionDiscount, bundleOptions, relatedProducts }`.  
-> Cache Tag: `[{ type: 'Product', id }]`
-
----
-
-### `useGetBestProductsQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/products/best` |
-
-**Request Query Parameters**: `params` 객체 (선택, 서버 스펙에 따라 가변)
-
-**Response Body**
-```json
-{
-  "status": 200,
-  "data": [ { "productId": 1, "productName": "...", "price": 30000, "imageUrl": "..." } ]
-}
-```
-
-> Cache Tag: `[{ type: 'Product', id: 'BEST' }]`
-
----
-
-### `useGetNewProductsQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/products/new` |
-
-**Request Query Parameters**
-| 파라미터 | 타입 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|
-| `limit` | number | N | `8` | 조회 개수 |
-
-**Response Body**
-```json
-{
-  "status": 200,
-  "data": [ { "productId": 1, "productName": "...", "price": 30000 } ]
-}
-```
-
-> Cache Tag: `[{ type: 'Product', id: 'NEW' }]`
-
----
-
-### `useSearchProductsQuery` / `useLazySearchProductsQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/products/search` |
-
-**Request Query Parameters**: `params` 객체 (keyword 등 서버 스펙에 따라 가변)
-
-**Response Body**
-```json
-{
-  "content": [ { "productId": 1, "productName": "..." } ],
-  "totalPages": 2,
-  "totalElements": 15
-}
-```
-
-> Cache Tag: `[{ type: 'Product', id: 'SEARCH' }]`
-
----
-
-### `useGetBannerSlidesQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/main/banners` |
-
-**Request**
-- Parameters: 없음
-- Body: 없음
+| `id` | Long | Y | 상품 ID |
 
 **Response Body (서버 원본)**
 ```json
 {
-  "status": 200,
-  "data": [
-    {
-      "bannerId": 1,
-      "imageUrl": "https://...",
-      "displayOrder": 0,
-      "originalFilename": "banner1.jpg"
-    }
+  "productId": 1,
+  "productName": "어글어글 스테이크",
+  "categoryId": 1,
+  "categoryName": "Meal",
+  "brandName": "스위피테린",
+  "brandId": 10,
+  "content": "",
+  "detailImagelUrl": ["https://bucket.s3.ap-northeast-2.amazonaws.com/..."],
+  "price": 15000,
+  "status": "판매중",
+  "tags": "[판매1위]",
+  "salesCount": 5200,
+  "stockQuantity": 50,
+  "stockStatus": "IN_STOCK",
+  "imageUrls": ["https://bucket.s3.ap-northeast-2.amazonaws.com/..."],
+  "options": [
+    { "optionId": 1, "optionName": "1인분", "extraPrice": 0, "stockQuantity": 30, "stockStatus": "IN_STOCK" }
   ]
 }
 ```
 
 **컴포넌트 수신값** (`transformResponse` 후)
-```json
-[
-  { "id": 1, "img": "https://...", "alt": "", "href": "#" }
-]
+```js
+{
+  id, name, brand, brandId, categoryId, category,
+  desc,          // content
+  price, status, tags, salesCount,
+  img,           // imageUrls[0]
+  images,        // imageUrls
+  stockStatus, stockQuantity,
+  detailImgs,    // detailImagelUrl (flat 처리)
+  options: [{ id, label, extra, stockQuantity, stockStatus }],
+  isSubscribable, subscriptionDiscount,
+  bundleOptions, relatedProducts,
+}
 ```
 
-> Cache Tag: `[{ type: 'Product', id: 'BANNERS' }]`
+> Cache Tag: `[{ type: 'Product', id }]`
 
 ---
 
-### `useGetMainBestSellersQuery`
+### `useGetProductSummaryQuery`
 
 | 항목 | 값 |
 |---|---|
 | **메서드** | `GET` |
-| **URL** | `/main/best-sellers` |
+| **URL** | `/product/frontend/:id` |
 
-**Request**
-- Parameters: 없음
-- Body: 없음
+장바구니·주문 등 경량 상품 정보가 필요한 컨텍스트 전용.
 
-**컴포넌트 수신값** (`transformResponse` 후)
+**Request Path Parameters**
+| 파라미터 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `id` | Long | Y | 상품 ID |
+
+**Response Body (서버 원본)**
 ```json
 {
-  "title": "베스트셀러",
-  "items": [
-    { "id": 1, "name": "사료명", "img": "https://...", "price": 30000, "productUrl": "/product/1" }
+  "imageUrl": "https://bucket.s3.ap-northeast-2.amazonaws.com/product/images/uuid.png",
+  "productId": 1,
+  "productName": "어글어글 동물복지 연어마들렌",
+  "options": [
+    { "optionId": 1, "optionName": "단품" },
+    { "optionId": 2, "optionName": "3개 세트" }
   ]
 }
 ```
 
-> Cache Tag: `[{ type: 'Product', id: 'MAIN_BEST' }]`  
-> **주의:** 랜딩페이지 `BestSellers.jsx`는 현재 `searchApi.js`의 `useGetHomeBestsellerQuery`를 사용. 이 훅은 `productApi.js`에 정의되어 있으나 랜딩페이지에서는 미사용.
-
----
-
-### `useGetTagProductsQuery`
-
-| 항목 | 값 |
-|---|---|
-| **메서드** | `GET` |
-| **URL** | `/main/tag-products` |
-
-**Request**
-- Parameters: 없음
-- Body: 없음
-
 **컴포넌트 수신값** (`transformResponse` 후)
-```json
+```js
 {
-  "title": "우리 아이 취향 저격 제품",
-  "groups": [
-    {
-      "tagName": "#강아지간식",
-      "products": [
-        { "id": 1, "name": "사료명", "img": "https://...", "price": 30000 }
-      ]
-    }
-  ]
+  id,       // productId
+  name,     // productName
+  img,      // imageUrl
+  options: [{ id, label }]   // optionId, optionName
 }
 ```
 
-> Cache Tag: `[{ type: 'Product', id: 'TAGS' }]`  
-> **주의:** 랜딩페이지 `ProductTabs.jsx`는 현재 `searchApi.js`의 `useSearchProductsQuery`를 사용. 이 훅은 `productApi.js`에 정의되어 있으나 랜딩페이지에서는 미사용.
+> Cache Tag: `[{ type: 'Product', id: 'summary-{id}' }]`
 
 ---
 
@@ -1140,12 +939,29 @@
 **Response Body**
 ```json
 {
-  "status": 200,
+  "status": "success",
   "data": {
-    "points": 1200,
-    "couponCount": 3,
-    "orderCount": 15,
-    "reviewCount": 8
+    "userSummary": {
+      "id": "username123",
+      "name": "홍길동",
+      "greetingMessage": "안녕하세요, 홍길동 님!",
+      "membershipLevel": "GOLD"
+    },
+    "benefits": {
+      "points": 12500,
+      "couponCount": 3,
+      "orderTotalCount": 27
+    },
+    "orderStatusSummary": {
+      "paymentPending": 0,
+      "preparing": 1,
+      "shipping": 2,
+      "delivered": 24
+    },
+    "activityCounts": {
+      "wishlistCount": 5,
+      "reviewCount": 10
+    }
   }
 }
 ```
@@ -1223,12 +1039,15 @@
     "addresses": [
       {
         "addressId": 1,
+        "addressName": "집",
+        "default": true,
+        "recipientName": "홍길동",
+        "phoneNumber": "010-1234-5678",
         "postcode": "06234",
         "baseAddress": "서울특별시 강남구",
         "detailAddress": "101동 101호",
         "extraAddress": "(역삼동)",
-        "addressType": "HOME",
-        "default": true
+        "addressType": "HOME"
       }
     ]
   }
@@ -1250,6 +1069,7 @@
 **Request Body**
 ```json
 {
+  "addressName": "집",
   "postcode": "06234",
   "baseAddress": "서울특별시 강남구",
   "detailAddress": "101동 101호",

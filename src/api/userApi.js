@@ -7,7 +7,7 @@ export const userApi = apiSlice.injectEndpoints({
 
     /**
      * GET /users/profile — 마이페이지 요약 정보 조회
-     * (적립금, 쿠폰 수, 주문 건수 등 집계 데이터 포함)
+     * 응답: { status, data: { userSummary, benefits, orderStatusSummary, activityCounts } }
      */
     getProfile: builder.query({
       query: () => ({ url: '/users/profile' }),

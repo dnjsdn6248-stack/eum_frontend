@@ -1,69 +1,209 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   useGetCartQuery,
-  useAddCartItemMutation,
-  useSelectAllCartItemsMutation,
-  useSelectCartItemMutation,
   useUpdateCartItemQuantityMutation,
-  useUpdateCartItemOptionMutation,
-  useRemoveCartItemsMutation,
+  useRemoveCartItemMutation,
+  useSelectCartItemMutation,
 } from '../api/cartApi'
+import { useGetProductSummaryQuery } from '../api/productApi'
+import { useAppDispatch } from '../hooks/useAppDispatch'
+import { useAppSelector } from '../hooks/useAppSelector'
+import {
+  selectCheckedItemIds,
+  toggleCheckItem,
+  checkAllItems,
+  uncheckAllItems,
+} from '../features/cart/cartSlice'
 import Pagination from '../shared/components/Pagination'
 import Spinner from '../shared/components/Spinner'
 
+const SHIPPING_FREE_THRESHOLD = 50000
+const SHIPPING_FEE = 5000
 const PAGE_SIZE = 3
 
+/** productId + optionId 조합으로 고유 키 생성 */
+const itemKey = (item) => `${item.productId}-${item.optionId ?? 'none'}`
+
+// ─── CartItemRow ──────────────────────────────────────────────────────────────
+// GET /product/frontend/{productId} 로 이름·이미지·가격·옵션명 조회
+function CartItemRow({ item, checked, onToggle, onQtyChange, onRemove, onOrder, onPriceReady }) {
+  const { data: product, isLoading } = useGetProductSummaryQuery(item.productId)
+
+  const optionLabel  = product?.options?.find((o) => o.id === item.optionId)?.label ?? null
+  const unitPrice    = product?.price ?? 0
+  const totalItemPrice = unitPrice * item.quantity
+
+  // 부모에게 단가 × 수량 보고 (합계 계산용)
+  const reportedRef = useRef(null)
+  useEffect(() => {
+    if (product && reportedRef.current !== totalItemPrice) {
+      reportedRef.current = totalItemPrice
+      onPriceReady(itemKey(item), totalItemPrice)
+    }
+  }, [totalItemPrice, product]) // eslint-disable-line
+
+  if (isLoading || !product) {
+    return (
+      <div className="bg-white p-10 rounded-[40px] border border-[#eee] flex items-center justify-center h-40">
+        <Spinner />
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white p-10 relative rounded-[40px] border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.02)]">
+      <div className="absolute top-10 left-8">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          className="w-5 h-5 accent-[#3ea76e] cursor-pointer"
+        />
+      </div>
+
+      <div className="flex gap-8 items-start mb-8 pl-10">
+        <div className="w-32 h-32 rounded-[24px] overflow-hidden shrink-0 border border-[#eee]">
+          <img src={product.img} alt={product.name} className="w-full h-full object-cover" />
+        </div>
+        <div className="flex-1 space-y-2">
+          <div className="flex justify-between items-start">
+            <h3 className="text-[18px] font-black tracking-tight text-[#111]">{product.name}</h3>
+            <button
+              onClick={onRemove}
+              className="text-[#ccc] hover:text-red-400 bg-transparent border-none cursor-pointer transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          {optionLabel && (
+            <p className="text-[13px] font-bold text-[#aaa]">옵션 : {optionLabel}</p>
+          )}
+
+          <span className="text-[22px] font-black block tracking-tighter text-[#111] pt-2">
+            {totalItemPrice.toLocaleString()}원
+          </span>
+          {item.quantity > 1 && (
+            <p className="text-[13px] text-[#bbb]">{unitPrice.toLocaleString()}원 × {item.quantity}</p>
+          )}
+
+          <div className="flex items-center gap-3 pt-3">
+            <div className="flex items-center bg-[#f8f8f8] rounded-full border border-[#eee] px-2">
+              <button
+                onClick={() => onQtyChange(item, -1)}
+                className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer"
+              >
+                －
+              </button>
+              <span className="w-8 text-center font-bold text-[14px]">{item.quantity}</span>
+              <button
+                onClick={() => onQtyChange(item, 1)}
+                className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer"
+              >
+                ＋
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-6 border-t border-[#f5f5f5]">
+        <button
+          onClick={onRemove}
+          className="h-10 px-6 rounded-full bg-[#f5f5f5] text-[#666] font-bold text-[13px] hover:bg-[#efefef] transition-all cursor-pointer border-none"
+        >
+          삭제
+        </button>
+        <button
+          onClick={onOrder}
+          className="h-10 px-6 rounded-full bg-[#3ea76e] text-white font-bold text-[13px] border-none hover:bg-[#318a57] transition-all cursor-pointer"
+        >
+          주문하기
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── CartPage ─────────────────────────────────────────────────────────────────
 export default function CartPage() {
-  const navigate = useNavigate()
+  const navigate   = useNavigate()
+  const dispatch   = useAppDispatch()
   const [page, setPage] = useState(1)
 
+  // itemKey → 단가×수량 맵 (CartItemRow에서 상품 로드 후 보고)
+  const [priceMap, setPriceMap] = useState({})
+
   const { data, isLoading } = useGetCartQuery()
-  const [selectAllItems]      = useSelectAllCartItemsMutation()
-  const [selectItem]          = useSelectCartItemMutation()
-  const [updateQty]           = useUpdateCartItemQuantityMutation()
-  const [removeItems]         = useRemoveCartItemsMutation()
+  const [updateQty]  = useUpdateCartItemQuantityMutation()
+  const [removeItem] = useRemoveCartItemMutation()
+  const [selectItem] = useSelectCartItemMutation()
 
-  const items    = data?.items    ?? []
-  const totalPages = Math.ceil(items.length / PAGE_SIZE)
-  const pagedItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const items      = data?.items ?? []
+  const checkedIds = useAppSelector(selectCheckedItemIds)
 
-  // 서버 계산값
-  const totalProductPrice      = data?.totalProductPrice      ?? 0
-  const totalShippingFee       = data?.totalShippingFee       ?? 0
-  const estimatedPaymentAmount = data?.estimatedPaymentAmount ?? 0
-  const estimatedRewardPoints  = data?.estimatedRewardPoints  ?? 0
-  const isSelectedAll          = data?.isSelectedAll          ?? false
-  const selectedItemCount      = data?.selectedItemCount      ?? 0
+  const totalPages    = Math.ceil(items.length / PAGE_SIZE)
+  const pagedItems    = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const isSelectedAll = items.length > 0 && items.every((i) => checkedIds.includes(itemKey(i)))
+
+  // ── 합계 계산 ────────────────────────────────────────────────────────────────
+  const totalProductPrice = items
+    .filter((i) => checkedIds.includes(itemKey(i)))
+    .reduce((sum, i) => sum + (priceMap[itemKey(i)] ?? 0), 0)
+  const shippingFee  = totalProductPrice > 0
+    ? (totalProductPrice >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FEE)
+    : 0
+  const finalPayment = totalProductPrice + shippingFee
 
   useEffect(() => {
-    if (page > Math.max(totalPages, 1)) {
-      setPage(Math.max(totalPages, 1))
-    }
+    if (page > Math.max(totalPages, 1)) setPage(Math.max(totalPages, 1))
   }, [page, totalPages])
 
+  // ── 핸들러 ───────────────────────────────────────────────────────────────────
+  const handlePriceReady = (key, price) => {
+    setPriceMap((prev) => prev[key] === price ? prev : { ...prev, [key]: price })
+  }
+
   const handleToggleAll = () => {
-    selectAllItems(!isSelectedAll)
+    if (isSelectedAll) {
+      dispatch(uncheckAllItems())
+      items.forEach((i) => selectItem({ productId: i.productId, optionId: i.optionId, isSelected: false }))
+    } else {
+      dispatch(checkAllItems(items.map(itemKey)))
+      items.forEach((i) => selectItem({ productId: i.productId, optionId: i.optionId, isSelected: true }))
+    }
   }
 
   const handleToggleItem = (item) => {
-    selectItem({ cartItemId: item.cartItemId, isSelected: !item.isSelected })
+    const key  = itemKey(item)
+    const next = !checkedIds.includes(key)
+    dispatch(toggleCheckItem(key))
+    selectItem({ productId: item.productId, optionId: item.optionId, isSelected: next })
   }
 
   const handleUpdateQty = (item, delta) => {
-    const newQty = Math.max(1, item.qty + delta)
-    updateQty({ cartItemId: item.cartItemId, quantity: newQty })
+    const newQty = Math.max(1, item.quantity + delta)
+    updateQty({ productId: item.productId, optionId: item.optionId, quantity: newQty })
   }
 
-  const handleRemoveOne = (cartItemId) => {
-    removeItems([cartItemId])
+  const handleRemoveOne = (item) => {
+    const key = itemKey(item)
+    if (checkedIds.includes(key)) dispatch(toggleCheckItem(key))
+    setPriceMap((prev) => { const next = { ...prev }; delete next[key]; return next })
+    removeItem({ productId: item.productId, optionId: item.optionId })
     setPage(1)
   }
 
-  const handleRemoveSelected = () => {
-    const selectedIds = items.filter((i) => i.isSelected).map((i) => i.cartItemId)
-    if (selectedIds.length === 0) return
-    removeItems(selectedIds)
+  const handleRemoveSelected = async () => {
+    const selected = items.filter((i) => checkedIds.includes(itemKey(i)))
+    if (selected.length === 0) return
+    dispatch(uncheckAllItems())
+    for (const item of selected) {
+      await removeItem({ productId: item.productId, optionId: item.optionId })
+    }
     setPage(1)
   }
 
@@ -88,7 +228,7 @@ export default function CartPage() {
                 className="w-5 h-5 accent-[#3ea76e] cursor-pointer"
               />
               <span className="text-[15px] font-extrabold text-[#111]">
-                전체선택 ({selectedItemCount}/{items.length})
+                전체선택 ({checkedIds.length}/{items.length})
               </span>
             </label>
             <button
@@ -106,94 +246,16 @@ export default function CartPage() {
           )}
 
           {pagedItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white p-10 relative rounded-[40px] border border-[#eee] shadow-[0_10px_40px_rgba(0,0,0,0.02)]"
-            >
-              <div className="absolute top-10 left-8">
-                <input
-                  type="checkbox"
-                  checked={item.isSelected}
-                  onChange={() => handleToggleItem(item)}
-                  className="w-5 h-5 accent-[#3ea76e] cursor-pointer"
-                />
-              </div>
-
-              <div className="flex gap-8 items-start mb-8 pl-10">
-                <div className="w-32 h-32 rounded-[24px] overflow-hidden shrink-0 border border-[#eee]">
-                  <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-[18px] font-black tracking-tight text-[#111]">{item.name}</h3>
-                    <button
-                      onClick={() => handleRemoveOne(item.cartItemId)}
-                      className="text-[#ccc] hover:text-red-400 bg-transparent border-none cursor-pointer transition-colors"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M18 6L6 18M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  </div>
-
-                  {item.optionName && (
-                    <p className="text-[13px] font-bold text-[#aaa]">옵션 : {item.optionName}</p>
-                  )}
-
-                  <span className="text-[22px] font-black block tracking-tighter text-[#111] pt-2">
-                    {item.totalPrice.toLocaleString()}원
-                  </span>
-                  {item.unitPrice !== item.totalPrice && (
-                    <p className="text-[13px] text-[#bbb]">
-                      {item.unitPrice.toLocaleString()}원 × {item.qty}
-                    </p>
-                  )}
-
-                  {item.stockStatus === 'OUT_OF_STOCK' && (
-                    <p className="text-[13px] font-bold text-red-400">품절</p>
-                  )}
-
-                  <div className="flex items-center gap-3 pt-3">
-                    <div className="flex items-center bg-[#f8f8f8] rounded-full border border-[#eee] px-2">
-                      <button
-                        onClick={() => handleUpdateQty(item, -1)}
-                        className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer"
-                      >
-                        －
-                      </button>
-                      <span className="w-8 text-center font-bold text-[14px]">{item.qty}</span>
-                      <button
-                        onClick={() => handleUpdateQty(item, 1)}
-                        className="w-8 h-8 flex items-center justify-center font-bold text-[#aaa] hover:text-[#111] bg-transparent border-none cursor-pointer"
-                      >
-                        ＋
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-6 border-t border-[#f5f5f5]">
-                <button
-                  onClick={() => handleRemoveOne(item.cartItemId)}
-                  className="h-10 px-6 rounded-full bg-[#f5f5f5] text-[#666] font-bold text-[13px] border border-[#eee] hover:bg-[#efefef] transition-all cursor-pointer border-none"
-                >
-                  삭제
-                </button>
-                <button
-                  onClick={() => navigate('/wishlist')}
-                  className="h-10 px-6 rounded-full bg-[#f5f5f5] text-[#666] font-bold text-[13px] border border-[#eee] hover:bg-[#efefef] transition-all cursor-pointer border-none"
-                >
-                  관심상품
-                </button>
-                <button
-                  onClick={() => navigate('/checkout')}
-                  className="h-10 px-6 rounded-full bg-[#3ea76e] text-white font-bold text-[13px] border-none hover:bg-[#318a57] transition-all cursor-pointer"
-                >
-                  주문하기
-                </button>
-              </div>
-            </div>
+            <CartItemRow
+              key={itemKey(item)}
+              item={item}
+              checked={checkedIds.includes(itemKey(item))}
+              onToggle={() => handleToggleItem(item)}
+              onQtyChange={handleUpdateQty}
+              onRemove={() => handleRemoveOne(item)}
+              onOrder={() => navigate('/checkout')}
+              onPriceReady={handlePriceReady}
+            />
           ))}
 
           <Pagination
@@ -219,29 +281,24 @@ export default function CartPage() {
               <div className="flex justify-between text-[15px] font-bold">
                 <span className="text-[#aaa]">배송비</span>
                 <span className="text-[#111] font-black">
-                  {totalShippingFee === 0 ? '무료' : `${totalShippingFee.toLocaleString()}원`}
+                  {shippingFee === 0 ? '무료' : `${shippingFee.toLocaleString()}원`}
                 </span>
               </div>
             </div>
 
             <div className="pt-8 mb-8 border-t border-dashed border-[#eee]">
-              <div className="flex justify-between items-center mb-5">
+              <div className="flex justify-between items-center">
                 <span className="text-[15px] font-bold text-[#111]">최종 결제 금액</span>
                 <span className="text-[26px] font-black tracking-tighter text-[#111]">
-                  {estimatedPaymentAmount.toLocaleString()}원
-                </span>
-              </div>
-              <div className="flex justify-between items-center bg-[#f9f9f9] rounded-2xl p-4 border border-[#f0f0f0]">
-                <span className="text-[13px] font-bold text-[#666]">적립 예정 금액</span>
-                <span className="text-[15px] font-black text-[#3ea76e]">
-                  {estimatedRewardPoints.toLocaleString()}원
+                  {finalPayment.toLocaleString()}원
                 </span>
               </div>
             </div>
 
             <button
               onClick={() => navigate('/checkout')}
-              className="h-16 w-full rounded-full bg-[#3ea76e] text-white font-black text-[17px] tracking-tight border-none cursor-pointer hover:bg-[#318a57] transition-all active:scale-[0.97]"
+              disabled={checkedIds.length === 0}
+              className="h-16 w-full rounded-full bg-[#3ea76e] text-white font-black text-[17px] tracking-tight border-none cursor-pointer hover:bg-[#318a57] transition-all active:scale-[0.97] disabled:bg-[#ccc] disabled:cursor-not-allowed"
             >
               결제하기
             </button>

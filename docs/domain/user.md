@@ -1,6 +1,6 @@
 # User 도메인
 
-기준일: 2026-04-15
+기준일: 2026-04-17
 
 ## 개요
 
@@ -23,6 +23,39 @@
 | `useDeleteAccountMutation` | DELETE | `/users` | 회원 탈퇴 — `body: { password }` |
 
 `updateProfile` 성공 시 `invalidatesTags: ['Auth', 'User']` → `getMe` + `getProfile` 캐시 모두 갱신.
+
+### GET /users/profile 응답 구조
+
+```json
+{
+  "status": "success",
+  "data": {
+    "userSummary": {
+      "id": "username123",
+      "name": "홍길동",
+      "greetingMessage": "안녕하세요, 홍길동 님!",
+      "membershipLevel": "GOLD"
+    },
+    "benefits": {
+      "points": 12500,
+      "couponCount": 3,
+      "orderTotalCount": 27
+    },
+    "orderStatusSummary": {
+      "paymentPending": 0,
+      "preparing": 1,
+      "shipping": 2,
+      "delivered": 24
+    },
+    "activityCounts": {
+      "wishlistCount": 5,
+      "reviewCount": 10
+    }
+  }
+}
+```
+
+`transformResponse`: `res.data` 그대로 반환.
 
 ### updateProfile 요청 바디
 
@@ -54,10 +87,28 @@
 
 모든 배송지 Mutation은 `invalidatesTags: ['Address']`로 목록을 자동 재조회한다.
 
+### GET /users/addresses 응답 주소 구조
+
+```json
+{
+  "addressId": 1,
+  "addressName": "집",
+  "default": true,
+  "recipientName": "홍길동",
+  "phoneNumber": "010-1234-5678",
+  "postcode": "12345",
+  "baseAddress": "서울특별시 강남구 테헤란로",
+  "detailAddress": "101동 202호",
+  "extraAddress": "(역삼동)",
+  "addressType": "HOME"
+}
+```
+
 ### createAddress / updateAddress 요청 바디
 
 ```js
 {
+  addressName: string,    // 배송지 별칭 (예: '집', '회사')
   postcode: string,
   baseAddress: string,
   detailAddress: string,

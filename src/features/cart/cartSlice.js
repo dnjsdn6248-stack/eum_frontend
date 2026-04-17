@@ -3,17 +3,14 @@ import { createSlice } from '@reduxjs/toolkit'
 /**
  * cartSlice — 장바구니 체크 UI 상태만 관리
  *
- * 실제 장바구니 데이터(items)는 cartApi(RTK Query)의
- * useGetCartQuery 훅으로 조회합니다.
- * getCart 성공 시 onQueryStarted에서 initCheckedItems를 dispatch해
- * 초기 체크 상태를 설정합니다.
+ * 서버 GET /cart/ 응답에 선택 상태가 포함되지 않으므로 Redux가 UI 선택 상태를 관리.
+ * checkedItemIds 원소: `${productId}-${optionId ?? 'none'}` 형식의 문자열 키.
  *
- * 계산 셀렉터(totalCount, checkedTotalPrice 등)는
- * RTK Query 훅 반환값과 이 슬라이스 상태를 조합해 컴포넌트 내에서 계산하세요.
+ * 체크 토글 시 selectCartItem mutation도 함께 호출하여 서버에 선택 상태 저장.
  */
 
 const initialState = {
-  /** 선택된(체크된) 장바구니 아이템 id 목록 */
+  /** 선택된(체크된) 장바구니 아이템 키 목록 — `${productId}-${optionId ?? 'none'}` */
   checkedItemIds: [],
 }
 
@@ -21,7 +18,7 @@ const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
-    /** getCart 성공 시 cartApi.onQueryStarted에서 호출 */
+    /** 예약 — 향후 서버 선택 상태 반환 시 사용 */
     initCheckedItems(state, action) {
       state.checkedItemIds = action.payload
     },
@@ -34,7 +31,6 @@ const cartSlice = createSlice({
       }
     },
     checkAllItems(state, action) {
-      // action.payload: 전체 cartItemId 배열 (useGetCartQuery 결과에서 전달)
       state.checkedItemIds = action.payload
     },
     uncheckAllItems(state) {
