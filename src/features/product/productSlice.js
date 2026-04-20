@@ -62,6 +62,10 @@ const productSlice = createSlice({
         state.storeView.activeSubCategory === nextSubCategory ? null : nextSubCategory
       state.pagination.page = 1
     },
+    resetSubCategory(state) {
+      state.storeView.activeSubCategory = null
+      state.pagination.page = 1
+    },
     setStoreSortLabel(state, action) {
       state.storeView.sortLabel = action.payload
       state.pagination.page = 1
@@ -76,6 +80,7 @@ export const {
   setSearchKeyword,
   setStoreActiveTab,
   toggleStoreSubCategory,
+  resetSubCategory,
   setStoreSortLabel,
 } = productSlice.actions
 

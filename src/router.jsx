@@ -4,7 +4,6 @@ import ProtectedRoute from '@/features/auth/ProtectedRoute'
 import Layout from './features/components/layout/Layout'
 import LandingPage from './pages/LandingPage'
 import StorePage from './pages/StorePage'
-import OdogPage from './pages/OdogPage'
 import ProductDetailPage from './pages/ProductDetailPage'
 import OrderPage from './pages/OrderPage'
 import OrderDetailPage from './pages/OrderDetailPage'
@@ -37,7 +36,6 @@ export default function Router() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/product/list" element={<StorePage />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
-            <Route path="/product/list/odog" element={<OdogPage />} />
             <Route path="/product/detail/:id" element={<ProductDetailPage />} />
             <Route path="/subscription/detail/:id" element={<ProductDetailPage />} />
             <Route path="/best" element={<BestSellerPage />} />

@@ -4,7 +4,6 @@ import { User, ShoppingBag, ReceiptText } from 'lucide-react'
 import SearchBar from './SearchBar'
 import useAuth from '@/features/auth/useAuth'
 import { useLogoutMutation } from '@/api/authApi'
-import { useGetCategoriesQuery } from '@/api/categoryApi'
 import { PROVIDER_LABELS } from '@/shared/utils/oauth2'
 import Toast from '../ui/Toast'
 
@@ -13,8 +12,6 @@ export default function Header() {
   const { isLoggedIn, user } = useAuth()
   const [logoutMutation] = useLogoutMutation()
   const [oauthToast, setOauthToast] = useState(null)
-  const { data: categories = [] } = useGetCategoriesQuery()
-
   // OAuth 로그인 완료 감지 — sessionStorage에 provider가 남아있으면 Toast 표시
   useEffect(() => {
     if (!isLoggedIn) return
@@ -122,14 +119,15 @@ export default function Header() {
       {/* GNB */}
       <nav className="bg-white border-t border-gray-100 flex items-center h-[60px]">
         <div className="w-full max-w-[1200px] mx-auto flex items-center justify-center gap-20">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to={`/product/list?categoryId=${cat.id}`}
-              className="group relative py-2"
-            >
+          {[
+            { label: 'STORE',       to: '/product/list' },
+            { label: '정기배송',     to: '/subscription' },
+            { label: '베스트셀러',   to: '/best' },
+            { label: '브랜드 스토리', to: '/brand-story' },
+          ].map(({ label, to }) => (
+            <Link key={to} to={to} className="group relative py-2">
               <span className="text-[17px] font-bold text-[#111] tracking-tighter transition-colors group-hover:text-[#3ea76e]">
-                {cat.name}
+                {label}
               </span>
               <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[3px] bg-[#3ea76e] transition-all group-hover:w-full" />
             </Link>

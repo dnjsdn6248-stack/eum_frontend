@@ -52,6 +52,8 @@ export const productApi = apiSlice.injectEndpoints({
             stockQuantity: opt.stockQuantity ?? 0,
             stockStatus:   opt.stockStatus   ?? 'IN_STOCK',
           })),
+          shippingFee:              p.shippingFee              ?? null,
+          shippingFreeThreshold:    p.shippingFreeThreshold    ?? null,
           isSubscribable:       p.isSubscribable       ?? false,
           subscriptionDiscount: p.subscriptionDiscount ?? 0,
           bundleOptions:        p.bundleOptions        ?? [],
